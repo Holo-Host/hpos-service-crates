@@ -49,6 +49,7 @@ impl AdminWebsocket {
         agent_key: AgentPubKey,
         happ_port: u16,
     ) -> Result<()> {
+        debug!(?agent_key);
         self.instance_dna_for_agent(happ, agent_key).await?;
         self.activate_app(&happ.app_id).await?;
         self.attach_app_interface(happ_port).await?;

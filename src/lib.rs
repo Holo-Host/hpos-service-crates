@@ -25,16 +25,18 @@ pub fn load_happs_yaml(path: impl AsRef<Path>) -> Result<Vec<Happ>> {
 }
 
 pub async fn install_happs(happ_list: &[Happ], config: &Config) -> Result<()> {
-    let mut admin_websocket = AdminWebsocket::connect(config.admin_port).await?;
-    let agent_key = admin_websocket.generate_agent_pubkey().await?;
-    debug!(?agent_key);
-
+    let admin_websocket = AdminWebsocket::connect(config.admin_port).await?;
     let futures: Vec<_> = happ_list
         .iter()
         .map(|happ| {
             let mut admin_websocket = admin_websocket.clone();
-            let agent_key = agent_key.clone();
             let future = async move {
+                // TODO: getting rid of this .expect() is harder than it seems...
+                // See .then(), .and_then() future methods
+                let agent_key = admin_websocket
+                    .generate_agent_pubkey()
+                    .await
+                    .expect("failed to generate agent key");
                 let install_happ = admin_websocket.install_happ(happ, agent_key, config.happ_port);
                 let install_ui = install_ui(happ, config);
                 futures::try_join!(install_happ, install_ui)
