@@ -9,7 +9,7 @@ use url::Url;
 #[derive(Debug, StructOpt)]
 pub struct Config {
     /// Holochain conductor port
-    #[structopt(long, env, default_value = "9000")]
+    #[structopt(long, env, default_value = "4444")]
     pub admin_port: u16,
     /// hApp listening port
     #[structopt(long, env, default_value = "42233")]
