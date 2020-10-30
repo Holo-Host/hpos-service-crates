@@ -7,16 +7,10 @@ use holochain_types::{
     dna::AgentPubKey,
 };
 use holochain_websocket::{websocket_connect, WebsocketConfig, WebsocketSender};
-use serde::Deserialize;
 use tracing::{debug, info, instrument};
 use url::Url;
 
-#[derive(Debug, Deserialize)]
-pub struct Happ {
-    pub app_id: AppId,
-    pub ui_url: Url,
-    pub dna_url: Url,
-}
+use crate::Happ;
 
 #[derive(Clone)]
 pub struct AdminWebsocket {

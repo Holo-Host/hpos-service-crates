@@ -1,8 +1,8 @@
 mod config;
-pub use config::Config;
+pub use config::{Config, Happ};
 
 mod websocket;
-pub use websocket::{AdminWebsocket, Happ};
+pub use websocket::AdminWebsocket;
 
 use std::fs;
 use std::io;

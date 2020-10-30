@@ -1,7 +1,10 @@
 use std::path::PathBuf;
 
+use holochain_types::app::AppId;
+use serde::Deserialize;
 use structopt::StructOpt;
 use tracing::info;
+use url::Url;
 
 #[derive(Debug, StructOpt)]
 pub struct Config {
@@ -25,4 +28,12 @@ impl Config {
         info!(?config, "loaded");
         config
     }
+}
+
+/// Configuration of a single hApp from config.yaml
+#[derive(Debug, Deserialize)]
+pub struct Happ {
+    pub app_id: AppId,
+    pub ui_url: Url,
+    pub dna_url: Url,
 }
