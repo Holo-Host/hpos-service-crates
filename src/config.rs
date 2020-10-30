@@ -3,7 +3,7 @@ use std::path::PathBuf;
 use holochain_types::app::AppId;
 use serde::Deserialize;
 use structopt::StructOpt;
-use tracing::info;
+use tracing::debug;
 use url::Url;
 
 #[derive(Debug, StructOpt)]
@@ -25,7 +25,7 @@ impl Config {
     /// Create Config from CLI arguments with logging
     pub fn load() -> Self {
         let config = Config::from_args();
-        info!(?config, "loaded");
+        debug!(?config, "loaded");
         config
     }
 }

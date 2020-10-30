@@ -7,7 +7,7 @@ use holochain_types::{
     dna::AgentPubKey,
 };
 use holochain_websocket::{websocket_connect, WebsocketConfig, WebsocketSender};
-use tracing::{debug, info, instrument};
+use tracing::{debug, info, instrument, trace};
 use url::Url;
 
 use crate::Happ;
@@ -31,7 +31,7 @@ impl AdminWebsocket {
     pub async fn generate_agent_pubkey(&mut self) -> Result<AgentPubKey> {
         let response = self.send(AdminRequest::GenerateAgentPubKey).await?;
         match response {
-            AdminResponse::GenerateAgentPubKey(agent_pubkey) => Ok(agent_pubkey),
+            AdminResponse::AgentPubKeyGenerated(agent_pubkey) => Ok(agent_pubkey),
             _ => Err(anyhow!("unexpected response: {:?}", response)),
         }
     }
@@ -42,7 +42,10 @@ impl AdminWebsocket {
         todo!()
     }
 
-    #[instrument(skip(self, agent_key), err)]
+    #[instrument(
+        skip(self, happ, agent_key, happ_port),
+        fields(?happ.app_id),
+    )]
     pub async fn install_happ(
         &mut self,
         happ: &Happ,
@@ -57,16 +60,20 @@ impl AdminWebsocket {
         Ok(())
     }
 
-    #[instrument(skip(self, agent_key), err)]
+    #[instrument(
+        err,
+        skip(self, happ, agent_key),
+        fields(?happ.app_id)
+    )]
     async fn instance_dna_for_agent(
         &mut self,
         happ: &Happ,
         agent_key: AgentPubKey,
     ) -> Result<AdminResponse> {
-        let path = crate::download_file(&happ.dna_url).await?;
+        let file = crate::download_file(&happ.dna_url).await?;
         let dna = InstallAppDnaPayload {
             nick: happ.app_id.clone(),
-            path: path.to_path_buf(),
+            path: file.path().to_path_buf(),
             properties: None,
             membrane_proof: None,
         };
@@ -88,7 +95,7 @@ impl AdminWebsocket {
         self.send(msg).await
     }
 
-    #[instrument(skip(self), err)]
+    #[instrument(skip(self, happ_port), err)]
     async fn attach_app_interface(&mut self, happ_port: u16) -> Result<AdminResponse> {
         let msg = AdminRequest::AttachAppInterface {
             port: Some(happ_port),
@@ -105,7 +112,7 @@ impl AdminWebsocket {
         match response {
             AdminResponse::Error(error) => Err(anyhow!("error: {:?}", error)),
             _ => {
-                debug!("send successful");
+                trace!("send successful");
                 Ok(response)
             }
         }
