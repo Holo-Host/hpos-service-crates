@@ -49,7 +49,7 @@ impl AdminWebsocket {
         agent_key: AgentPubKey,
         happ_port: u16,
     ) -> Result<()> {
-        self.install_dna(happ, agent_key).await?;
+        self.instance_dna_for_agent(happ, agent_key).await?;
         self.activate_app(&happ.app_id).await?;
         self.attach_app_interface(happ_port).await?;
         info!(?happ.app_id, "installed hApp");
@@ -57,7 +57,11 @@ impl AdminWebsocket {
     }
 
     #[instrument(skip(self, agent_key), err)]
-    async fn install_dna(&mut self, happ: &Happ, agent_key: AgentPubKey) -> Result<AdminResponse> {
+    async fn instance_dna_for_agent(
+        &mut self,
+        happ: &Happ,
+        agent_key: AgentPubKey,
+    ) -> Result<AdminResponse> {
         let path = crate::download_file(&happ.dna_url).await?;
         let dna = InstallAppDnaPayload {
             nick: happ.app_id.clone(),
