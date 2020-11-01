@@ -1,3 +1,6 @@
+// TODO: https://github.com/tokio-rs/tracing/issues/843
+#![allow(clippy::unit_arg)]
+
 mod config;
 pub use config::{Config, Happ};
 
@@ -31,7 +34,7 @@ pub async fn install_happs(happ_list: &[Happ], config: &Config) -> Result<()> {
         .iter()
         .map(|happ| {
             let mut admin_websocket = admin_websocket.clone();
-            let future = async move {
+            async move {
                 let mut agent_websocket = admin_websocket.clone();
                 let install_happ = agent_websocket
                     .generate_agent_pubkey()
@@ -40,8 +43,7 @@ pub async fn install_happs(happ_list: &[Happ], config: &Config) -> Result<()> {
                     });
                 let install_ui = install_ui(happ, config);
                 futures::try_join!(install_happ, install_ui)
-            };
-            future
+            }
         })
         .collect();
     let _: Vec<_> = try_join_all(futures).await?;

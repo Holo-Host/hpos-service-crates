@@ -1,3 +1,6 @@
+// TODO: https://github.com/tokio-rs/tracing/issues/843
+#![allow(clippy::unit_arg)]
+
 use anyhow::Result;
 
 use self_hosted_happs::{install_happs, load_happs_yaml, Config};

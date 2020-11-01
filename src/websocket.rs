@@ -3,7 +3,7 @@ use std::sync::Arc;
 use anyhow::{anyhow, Context, Result};
 use holochain::conductor::api::{AdminRequest, AdminResponse};
 use holochain_types::{
-    app::{AppId, InstallAppDnaPayload, InstallAppPayload},
+    app::{InstallAppDnaPayload, InstallAppPayload},
     dna::AgentPubKey,
 };
 use holochain_websocket::{websocket_connect, WebsocketConfig, WebsocketSender};
@@ -88,9 +88,9 @@ impl AdminWebsocket {
     }
 
     #[instrument(skip(self), err)]
-    async fn activate_app(&mut self, app_id: &AppId) -> Result<AdminResponse> {
+    async fn activate_app(&mut self, app_id: &str) -> Result<AdminResponse> {
         let msg = AdminRequest::ActivateApp {
-            app_id: app_id.clone(),
+            app_id: app_id.to_string(),
         };
         self.send(msg).await
     }
