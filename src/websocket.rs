@@ -70,7 +70,9 @@ impl AdminWebsocket {
         happ: &Happ,
         agent_key: AgentPubKey,
     ) -> Result<AdminResponse> {
-        let file = crate::download_file(&happ.dna_url).await?;
+        let file = crate::download_file(&happ.dna_url)
+            .await
+            .context("failed to download DNA archive")?;
         let dna = InstallAppDnaPayload {
             nick: happ.app_id.clone(),
             path: file.path().to_path_buf(),

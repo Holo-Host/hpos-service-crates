@@ -22,14 +22,17 @@ use zip::ZipArchive;
 pub fn load_happs_yaml(path: impl AsRef<Path>) -> Result<Vec<Happ>> {
     use std::fs::File;
 
-    let file = File::open(path)?;
-    let happ_list = serde_yaml::from_reader(&file).context("failed to read happ list")?;
+    let file = File::open(path).context("failed to open file")?;
+    let happ_list =
+        serde_yaml::from_reader(&file).context("failed to deserialize YAML as Vec<Happ>")?;
     debug!(?happ_list);
     Ok(happ_list)
 }
 
 pub async fn install_happs(happ_list: &[Happ], config: &Config) -> Result<()> {
-    let admin_websocket = AdminWebsocket::connect(config.admin_port).await?;
+    let admin_websocket = AdminWebsocket::connect(config.admin_port)
+        .await
+        .context("failed to connect to holochain")?;
     let futures: Vec<_> = happ_list
         .iter()
         .map(|happ| {
@@ -46,7 +49,9 @@ pub async fn install_happs(happ_list: &[Happ], config: &Config) -> Result<()> {
             }
         })
         .collect();
-    let _: Vec<_> = try_join_all(futures).await?;
+    let _: Vec<_> = try_join_all(futures)
+        .await
+        .context("failed to install some hApps")?;
 
     info!("all hApps installed");
     Ok(())
@@ -58,9 +63,11 @@ pub async fn install_happs(happ_list: &[Happ], config: &Config) -> Result<()> {
     fields(?happ.app_id)
 )]
 async fn install_ui(happ: &Happ, config: &Config) -> Result<()> {
-    let mut ui_archive = download_file(&happ.ui_url).await?;
+    let mut ui_archive = download_file(&happ.ui_url)
+        .await
+        .context("failed to download UI archive")?;
     let unpack_path = config.ui_store_folder.join(&happ.app_id);
-    extract_zip(ui_archive.as_file_mut(), unpack_path)?;
+    extract_zip(ui_archive.as_file_mut(), unpack_path).context("failed to extract UI archive")?;
     info!(?happ.app_id, "installed UI");
     Ok(())
 }
@@ -73,9 +80,13 @@ pub(crate) async fn download_file(url: &Url) -> Result<NamedTempFile> {
     let mut url = Url::clone(&url);
     url.set_scheme("https")
         .map_err(|_| anyhow!("failed to set scheme to https"))?;
-    let mut response = isahc::get_async(url.as_str()).await?;
+    let mut response = isahc::get_async(url.as_str())
+        .await
+        .context("failed to send GET request")?;
     let mut file = NamedTempFile::new().context("failed to create tempfile")?;
-    response.copy_to(&mut file)?;
+    response
+        .copy_to(&mut file)
+        .context("failed to write response to file")?;
     debug!("download successful");
     Ok(file)
 }
