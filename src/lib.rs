@@ -9,7 +9,7 @@ use std::io;
 use std::path::Path;
 
 use anyhow::{anyhow, Context, Result};
-use futures::future::try_join_all;
+use futures::{future::try_join_all, prelude::*};
 use tempfile::NamedTempFile;
 use tracing::{debug, info, instrument, trace};
 use url::Url;
@@ -32,13 +32,12 @@ pub async fn install_happs(happ_list: &[Happ], config: &Config) -> Result<()> {
         .map(|happ| {
             let mut admin_websocket = admin_websocket.clone();
             let future = async move {
-                // TODO: getting rid of this .expect() is harder than it seems...
-                // See .then(), .and_then() future methods
-                let agent_key = admin_websocket
+                let mut agent_websocket = admin_websocket.clone();
+                let install_happ = agent_websocket
                     .generate_agent_pubkey()
-                    .await
-                    .expect("failed to generate agent key");
-                let install_happ = admin_websocket.install_happ(happ, agent_key, config.happ_port);
+                    .and_then(|agent_key| {
+                        admin_websocket.install_happ(happ, agent_key, config.happ_port)
+                    });
                 let install_ui = install_ui(happ, config);
                 futures::try_join!(install_happ, install_ui)
             };
