@@ -116,16 +116,6 @@ pub(crate) fn extract_zip(archive: &mut fs::File, unpack_path: impl AsRef<Path>)
         let mut outfile =
             fs::File::create(outpath.as_path()).context("failed to create destination file")?;
         io::copy(&mut file, &mut outfile).context("failed to copy file to destination")?;
-
-        #[cfg(unix)]
-        {
-            use std::os::unix::fs::PermissionsExt;
-
-            if let Some(mode) = file.unix_mode() {
-                fs::set_permissions(outpath.as_path(), fs::Permissions::from_mode(mode))
-                    .context("failed to set Unix permissions")?;
-            }
-        }
     }
     Ok(())
 }
