@@ -3,13 +3,13 @@ use std::path::PathBuf;
 use holochain_types::app::AppId;
 use serde::Deserialize;
 use structopt::StructOpt;
-use tracing::info;
+use tracing::debug;
 use url::Url;
 
 #[derive(Debug, StructOpt)]
 pub struct Config {
     /// Holochain conductor port
-    #[structopt(long, env, default_value = "9000")]
+    #[structopt(long, env, default_value = "4444")]
     pub admin_port: u16,
     /// hApp listening port
     #[structopt(long, env, default_value = "42233")]
@@ -25,7 +25,7 @@ impl Config {
     /// Create Config from CLI arguments with logging
     pub fn load() -> Self {
         let config = Config::from_args();
-        info!(?config, "loaded");
+        debug!(?config, "loaded");
         config
     }
 }
