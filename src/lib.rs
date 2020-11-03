@@ -98,6 +98,9 @@ pub(crate) async fn download_file(url: &Url) -> Result<NamedTempFile> {
 )]
 // HACK: This has no place in this crate. Well, at least we are cross-platform...
 pub(crate) fn extract_zip(archive: &mut fs::File, unpack_path: impl AsRef<Path>) -> Result<()> {
+    fs::remove_dir_all(unpack_path.as_ref()).context("failed to remove unpack_path")?;
+    fs::create_dir(unpack_path.as_ref()).context("failed to create empty unpack_path")?;
+
     let mut archive = ZipArchive::new(archive).context("failed to interpret file as archive")?;
     for i in 0..archive.len() {
         let mut file = archive.by_index(i)?;
