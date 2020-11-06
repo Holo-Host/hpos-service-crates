@@ -43,21 +43,23 @@ impl AdminWebsocket {
     }
 
     #[instrument(
-        skip(self, happ, agent_key, happ_port),
+        skip(self, happ, agent_key),
         fields(?happ.app_id),
     )]
-    pub async fn install_happ(
-        &mut self,
-        happ: &Happ,
-        agent_key: AgentPubKey,
-        happ_port: u16,
-    ) -> Result<()> {
+    pub async fn install_happ(&mut self, happ: &Happ, agent_key: AgentPubKey) -> Result<()> {
         debug!(?agent_key);
         self.instance_dna_for_agent(happ, agent_key).await?;
         self.activate_app(&happ.app_id).await?;
-        self.attach_app_interface(happ_port).await?;
         info!(?happ.app_id, "installed hApp");
         Ok(())
+    }
+
+    #[instrument(skip(self, happ_port), err)]
+    pub async fn attach_app_interface(&mut self, happ_port: u16) -> Result<AdminResponse> {
+        let msg = AdminRequest::AttachAppInterface {
+            port: Some(happ_port),
+        };
+        self.send(msg).await
     }
 
     #[instrument(
@@ -93,14 +95,6 @@ impl AdminWebsocket {
     async fn activate_app(&mut self, app_id: &str) -> Result<AdminResponse> {
         let msg = AdminRequest::ActivateApp {
             app_id: app_id.to_string(),
-        };
-        self.send(msg).await
-    }
-
-    #[instrument(skip(self, happ_port), err)]
-    async fn attach_app_interface(&mut self, happ_port: u16) -> Result<AdminResponse> {
-        let msg = AdminRequest::AttachAppInterface {
-            port: Some(happ_port),
         };
         self.send(msg).await
     }

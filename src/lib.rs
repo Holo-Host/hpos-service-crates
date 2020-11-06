@@ -29,6 +29,25 @@ pub fn load_happs_yaml(path: impl AsRef<Path>) -> Result<Vec<Happ>> {
     Ok(happ_list)
 }
 
+pub async fn start_happ_interface(config: &Config) -> Result<()> {
+    info!(
+        "trying to start happ interface on port {}",
+        config.happ_port
+    );
+    let mut admin_websocket = AdminWebsocket::connect(config.admin_port)
+        .await
+        .context("failed to connect to holochain")?;
+
+    let result = admin_websocket.attach_app_interface(config.happ_port).await;
+
+    // TODO: instead of ignoring all errors ignore only an error when
+    // interface is already started on given port
+    if let Err(e) = result {
+        info!("Error attaching interface: {}", e);
+    }
+    Ok(())
+}
+
 pub async fn install_happs(happ_list: &[Happ], config: &Config) -> Result<()> {
     let admin_websocket = AdminWebsocket::connect(config.admin_port)
         .await
@@ -41,9 +60,7 @@ pub async fn install_happs(happ_list: &[Happ], config: &Config) -> Result<()> {
                 let mut agent_websocket = admin_websocket.clone();
                 let install_happ = agent_websocket
                     .generate_agent_pubkey()
-                    .and_then(|agent_key| {
-                        admin_websocket.install_happ(happ, agent_key, config.happ_port)
-                    });
+                    .and_then(|agent_key| admin_websocket.install_happ(happ, agent_key));
                 let install_ui = install_ui(happ, config);
                 futures::try_join!(install_happ, install_ui)
             }
