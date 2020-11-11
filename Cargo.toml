@@ -18,7 +18,7 @@ tokio = { version = "0.2", features = ["full"] }
 tracing = { version = "0.1", features = ["attributes"] }
 tracing-futures = "0.2"
 tracing-subscriber = "0.2"
-url = "2.1"
+url = "2.2"
 zip = "0.5.8"
 
 [dependencies.holochain]
