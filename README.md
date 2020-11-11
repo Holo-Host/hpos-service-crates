@@ -1,10 +1,10 @@
-# self-hosted-happs
+# hpos-configure-holochain
 Install self-hosted hApps from a YAML file into holochain
 
 ## Usage
 
 ```
-self-hosted-happs config.yaml
+hpos-configure-holochain config.yaml
 ```
 
 where `config.yaml` is of a format `[{app_id, ui_url, dna_url}]`:
@@ -17,4 +17,4 @@ where `config.yaml` is of a format `[{app_id, ui_url, dna_url}]`:
 ```
 
 All options can be set as a CLI flag or an environment variable.
-See `self-hosted-happs --help` for information on what options are available.
+See `hpos-configure-holochain --help` for information on what options are available.

@@ -3,7 +3,7 @@
 
 use anyhow::{Context, Result};
 
-use self_hosted_happs::{install_happs, load_happs_yaml, Config};
+use hpos_configure_holochain::{install_happs, load_happs_yaml, Config};
 use tracing::instrument;
 
 #[tokio::main]

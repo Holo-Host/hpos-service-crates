@@ -1339,6 +1339,28 @@ dependencies = [
 ]
 
 [[package]]
+name = "hpos-configure-holochain"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "futures",
+ "holochain",
+ "holochain_types",
+ "holochain_websocket",
+ "isahc",
+ "serde",
+ "serde_yaml",
+ "structopt",
+ "tempfile",
+ "tokio",
+ "tracing",
+ "tracing-futures",
+ "tracing-subscriber",
+ "url 2.1.1",
+ "zip",
+]
+
+[[package]]
 name = "http"
 version = "0.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2839,28 +2861,6 @@ checksum = "17bf11d99252f512695eb468de5516e5cf75455521e69dfe343f3b74e4748405"
 dependencies = [
  "core-foundation-sys",
  "libc",
-]
-
-[[package]]
-name = "self-hosted-happs"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "futures",
- "holochain",
- "holochain_types",
- "holochain_websocket",
- "isahc",
- "serde",
- "serde_yaml",
- "structopt",
- "tempfile",
- "tokio",
- "tracing",
- "tracing-futures",
- "tracing-subscriber",
- "url 2.1.1",
- "zip",
 ]
 
 [[package]]
