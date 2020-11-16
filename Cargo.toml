@@ -24,19 +24,19 @@ zip = "0.5.8"
 [dependencies.holochain]
 git = "https://github.com/holochain/holochain"
 #branch = "develop"
-rev = "73912006984886f2ad1f8c46949fca18d3af824e"
+rev = "041ad6c2fd88c06eace450074621be2bace0eb05"
 package = "holochain"
 
 [dependencies.holochain_types]
 git = "https://github.com/holochain/holochain"
 #branch = "develop"
-rev = "73912006984886f2ad1f8c46949fca18d3af824e"
+rev = "041ad6c2fd88c06eace450074621be2bace0eb05"
 package = "holochain_types"
 
 [dependencies.holochain_websocket]
 git = "https://github.com/holochain/holochain"
 #branch = "develop"
-rev = "73912006984886f2ad1f8c46949fca18d3af824e"
+rev = "041ad6c2fd88c06eace450074621be2bace0eb05"
 package = "holochain_websocket"
 
 
