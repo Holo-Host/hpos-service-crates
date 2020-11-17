@@ -770,7 +770,7 @@ dependencies = [
 [[package]]
 name = "fixt"
 version = "0.0.1"
-source = "git+https://github.com/holochain/holochain?branch=develop#d3a991df1732603419adbda96e8fb8e525e829cb"
+source = "git+https://github.com/holochain/holochain?branch=develop#ad3ccd0a126683d5fa44985f7abc18f1d891de01"
 dependencies = [
  "holochain_serialized_bytes",
  "lazy_static",
@@ -1104,7 +1104,7 @@ checksum = "644f9158b2f133fd50f5fb3242878846d9eb792e445c893805ff0e3824006e35"
 [[package]]
 name = "holo_hash"
 version = "0.0.1"
-source = "git+https://github.com/holochain/holochain?branch=develop#d3a991df1732603419adbda96e8fb8e525e829cb"
+source = "git+https://github.com/holochain/holochain?branch=develop#ad3ccd0a126683d5fa44985f7abc18f1d891de01"
 dependencies = [
  "base64 0.12.3",
  "blake2b_simd",
@@ -1121,7 +1121,7 @@ dependencies = [
 [[package]]
 name = "holochain"
 version = "0.0.1"
-source = "git+https://github.com/holochain/holochain?branch=develop#d3a991df1732603419adbda96e8fb8e525e829cb"
+source = "git+https://github.com/holochain/holochain?branch=develop#ad3ccd0a126683d5fa44985f7abc18f1d891de01"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -1182,7 +1182,7 @@ dependencies = [
 [[package]]
 name = "holochain_keystore"
 version = "0.0.1"
-source = "git+https://github.com/holochain/holochain?branch=develop#d3a991df1732603419adbda96e8fb8e525e829cb"
+source = "git+https://github.com/holochain/holochain?branch=develop#ad3ccd0a126683d5fa44985f7abc18f1d891de01"
 dependencies = [
  "ghost_actor",
  "holo_hash",
@@ -1200,7 +1200,7 @@ dependencies = [
 [[package]]
 name = "holochain_legacy"
 version = "0.0.1"
-source = "git+https://github.com/holochain/holochain?branch=develop#d3a991df1732603419adbda96e8fb8e525e829cb"
+source = "git+https://github.com/holochain/holochain?branch=develop#ad3ccd0a126683d5fa44985f7abc18f1d891de01"
 dependencies = [
  "holochain_serialized_bytes",
  "serde",
@@ -1209,7 +1209,7 @@ dependencies = [
 [[package]]
 name = "holochain_p2p"
 version = "0.0.1"
-source = "git+https://github.com/holochain/holochain?branch=develop#d3a991df1732603419adbda96e8fb8e525e829cb"
+source = "git+https://github.com/holochain/holochain?branch=develop#ad3ccd0a126683d5fa44985f7abc18f1d891de01"
 dependencies = [
  "async-trait",
  "fixt",
@@ -1259,7 +1259,7 @@ dependencies = [
 [[package]]
 name = "holochain_state"
 version = "0.0.1"
-source = "git+https://github.com/holochain/holochain?branch=develop#d3a991df1732603419adbda96e8fb8e525e829cb"
+source = "git+https://github.com/holochain/holochain?branch=develop#ad3ccd0a126683d5fa44985f7abc18f1d891de01"
 dependencies = [
  "anyhow",
  "byteorder",
@@ -1295,7 +1295,7 @@ dependencies = [
 [[package]]
 name = "holochain_types"
 version = "0.0.1"
-source = "git+https://github.com/holochain/holochain?branch=develop#d3a991df1732603419adbda96e8fb8e525e829cb"
+source = "git+https://github.com/holochain/holochain?branch=develop#ad3ccd0a126683d5fa44985f7abc18f1d891de01"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -1332,7 +1332,7 @@ dependencies = [
 [[package]]
 name = "holochain_wasm_test_utils"
 version = "0.0.1"
-source = "git+https://github.com/holochain/holochain?branch=develop#d3a991df1732603419adbda96e8fb8e525e829cb"
+source = "git+https://github.com/holochain/holochain?branch=develop#ad3ccd0a126683d5fa44985f7abc18f1d891de01"
 dependencies = [
  "fixt",
  "holo_hash",
@@ -1374,7 +1374,7 @@ dependencies = [
 [[package]]
 name = "holochain_websocket"
 version = "0.0.1"
-source = "git+https://github.com/holochain/holochain?branch=develop#d3a991df1732603419adbda96e8fb8e525e829cb"
+source = "git+https://github.com/holochain/holochain?branch=develop#ad3ccd0a126683d5fa44985f7abc18f1d891de01"
 dependencies = [
  "futures",
  "holochain_serialized_bytes",
@@ -1393,7 +1393,7 @@ dependencies = [
 [[package]]
 name = "holochain_zome_types"
 version = "0.0.1"
-source = "git+https://github.com/holochain/holochain?branch=develop#d3a991df1732603419adbda96e8fb8e525e829cb"
+source = "git+https://github.com/holochain/holochain?branch=develop#ad3ccd0a126683d5fa44985f7abc18f1d891de01"
 dependencies = [
  "fixt",
  "holo_hash",
@@ -1662,7 +1662,7 @@ dependencies = [
 [[package]]
 name = "kitsune_p2p"
 version = "0.0.1"
-source = "git+https://github.com/holochain/holochain?branch=develop#d3a991df1732603419adbda96e8fb8e525e829cb"
+source = "git+https://github.com/holochain/holochain?branch=develop#ad3ccd0a126683d5fa44985f7abc18f1d891de01"
 dependencies = [
  "derive_more",
  "fixt",
@@ -1686,7 +1686,7 @@ dependencies = [
 [[package]]
 name = "kitsune_p2p_proxy"
 version = "0.0.1"
-source = "git+https://github.com/holochain/holochain?branch=develop#d3a991df1732603419adbda96e8fb8e525e829cb"
+source = "git+https://github.com/holochain/holochain?branch=develop#ad3ccd0a126683d5fa44985f7abc18f1d891de01"
 dependencies = [
  "base64 0.12.3",
  "blake2b_simd",
@@ -1709,7 +1709,7 @@ dependencies = [
 [[package]]
 name = "kitsune_p2p_transport_quic"
 version = "0.0.1"
-source = "git+https://github.com/holochain/holochain?branch=develop#d3a991df1732603419adbda96e8fb8e525e829cb"
+source = "git+https://github.com/holochain/holochain?branch=develop#ad3ccd0a126683d5fa44985f7abc18f1d891de01"
 dependencies = [
  "futures",
  "if-addrs",
@@ -1727,7 +1727,7 @@ dependencies = [
 [[package]]
 name = "kitsune_p2p_types"
 version = "0.0.1"
-source = "git+https://github.com/holochain/holochain?branch=develop#d3a991df1732603419adbda96e8fb8e525e829cb"
+source = "git+https://github.com/holochain/holochain?branch=develop#ad3ccd0a126683d5fa44985f7abc18f1d891de01"
 dependencies = [
  "derive_more",
  "futures",
@@ -2160,7 +2160,7 @@ checksum = "8d3b63360ec3cb337817c2dbd47ab4a0f170d285d8e5a2064600f3def1402397"
 [[package]]
 name = "observability"
 version = "0.1.0"
-source = "git+https://github.com/holochain/holochain?branch=develop#d3a991df1732603419adbda96e8fb8e525e829cb"
+source = "git+https://github.com/holochain/holochain?branch=develop#ad3ccd0a126683d5fa44985f7abc18f1d891de01"
 dependencies = [
  "chrono",
  "inferno",
@@ -3419,18 +3419,18 @@ dependencies = [
 
 [[package]]
 name = "thiserror"
-version = "1.0.21"
+version = "1.0.22"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "318234ffa22e0920fe9a40d7b8369b5f649d490980cf7aadcf1eb91594869b42"
+checksum = "0e9ae34b84616eedaaf1e9dd6026dbe00dcafa92aa0c8077cb69df1fcfe5e53e"
 dependencies = [
  "thiserror-impl",
 ]
 
 [[package]]
 name = "thiserror-impl"
-version = "1.0.21"
+version = "1.0.22"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "cae2447b6282786c3493999f40a9be2a6ad20cb8bd268b0a0dbf5a065535c0ab"
+checksum = "9ba20f23e85b10754cd195504aebf6a27e2e6cbe28c17778a0c930724628dd56"
 dependencies = [
  "proc-macro2 1.0.24",
  "quote 1.0.7",
