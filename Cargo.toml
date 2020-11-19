@@ -6,12 +6,12 @@ edition = "2018"
 
 [dependencies]
 anyhow = "1.0"
-futures = "0.3.8"
-isahc = "0.9.12"
+futures = "0.3"
+isahc = "0.9"
 serde = { version = "1.0", features = ["derive"] }
-serde_yaml = "0.8.13"
-structopt = "0.3.20"
-tempfile = "3.1.0"
+serde_yaml = "0.8"
+structopt = "0.3"
+tempfile = "3.1"
 # holochain_websocket uses tokio 0.2
 # TODO: bump to 0.3 after https://github.com/holochain/holochain/pull/461 is merged
 tokio = { version = "0.2", features = ["full"] }
@@ -19,7 +19,7 @@ tracing = { version = "0.1", features = ["attributes"] }
 tracing-futures = "0.2"
 tracing-subscriber = "0.2"
 url = "2.2"
-zip = "0.5.8"
+zip = "0.5"
 
 [dependencies.holochain]
 git = "https://github.com/holochain/holochain"
