@@ -15,7 +15,7 @@ pub struct Config {
     #[structopt(long, env, default_value = "42233")]
     pub happ_port: u16,
     /// Path to the folder where hApp UIs will be extracted
-    #[structopt(long, env, default_value = "/var/lib/self-hosted-happs/uis")]
+    #[structopt(long, env, default_value = "./self-hosted-happs/uis")]
     pub ui_store_folder: PathBuf,
     /// Path to a YAML file containing the list of hApps to install
     pub happ_list_path: PathBuf,
