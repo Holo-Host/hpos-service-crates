@@ -23,7 +23,11 @@ impl AdminWebsocket {
         let url = format!("ws://localhost:{}/", admin_port);
         let url = Url::parse(&url).context("invalid ws:// URL")?;
         let websocket_config = Arc::new(WebsocketConfig::default());
-        let (tx, _rx) = websocket_connect(url.clone().into(), websocket_config).await?;
+        let (tx, _rx) = again::retry(|| {
+            let websocket_config = Arc::clone(&websocket_config);
+            websocket_connect(url.clone().into(), websocket_config)
+        })
+        .await?;
         Ok(Self { tx })
     }
 

@@ -5,6 +5,7 @@ authors = ["Oleksii Filonenko <oleksii.filonenko@holo.host>"]
 edition = "2018"
 
 [dependencies]
+again = "0.1"
 anyhow = "1.0"
 futures = "0.3"
 isahc = "0.9"
