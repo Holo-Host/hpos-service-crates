@@ -70,7 +70,7 @@ impl AdminWebsocket {
     #[instrument(
         err,
         skip(self, happ, agent_key),
-        fields(?happ.app_id)
+        fields(?happ.installed_app_id)
     )]
     async fn instance_dna_for_agent(
         &mut self,

@@ -23,17 +23,17 @@ zip = "0.5"
 
 [dependencies.holochain]
 git = "https://github.com/holochain/holochain"
-rev = "ddda96773b3e97f658ed46f2400ff8d0183be3fd"
+rev = "feb6efd6ff25414a0bc5ab9ab8288d4cf188e8bb"
 package = "holochain"
 
 [dependencies.holochain_types]
 git = "https://github.com/holochain/holochain"
-rev = "ddda96773b3e97f658ed46f2400ff8d0183be3fd"
+rev = "feb6efd6ff25414a0bc5ab9ab8288d4cf188e8bb"
 package = "holochain_types"
 
 [dependencies.holochain_websocket]
 git = "https://github.com/holochain/holochain"
-rev = "ddda96773b3e97f658ed46f2400ff8d0183be3fd"
+rev = "feb6efd6ff25414a0bc5ab9ab8288d4cf188e8bb"
 package = "holochain_websocket"
 
 # Holochain requires a patch to crates.io registry

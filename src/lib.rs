@@ -80,15 +80,15 @@ pub async fn install_happs(happ_list: &[Happ], config: &Config) -> Result<()> {
 #[instrument(
     err,
     skip(happ, config),
-    fields(?happ.app_id)
+    fields(?happ.installed_app_id)
 )]
 async fn install_ui(happ: &Happ, config: &Config) -> Result<()> {
     let mut ui_archive = download_file(&happ.ui_url)
         .await
         .context("failed to download UI archive")?;
-    let unpack_path = config.ui_store_folder.join(&happ.app_id);
+    let unpack_path = config.ui_store_folder.join(&happ.installed_app_id);
     extract_zip(ui_archive.as_file_mut(), unpack_path).context("failed to extract UI archive")?;
-    info!(?happ.app_id, "installed UI");
+    info!(?happ.installed_app_id, "installed UI");
     Ok(())
 }
 

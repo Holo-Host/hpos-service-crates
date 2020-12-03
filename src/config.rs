@@ -1,6 +1,6 @@
 use std::path::PathBuf;
 
-use holochain_types::app::AppId;
+use holochain_types::app::InstalledAppId;
 use serde::Deserialize;
 use structopt::StructOpt;
 use tracing::debug;
