@@ -10,11 +10,12 @@ pub use websocket::AdminWebsocket;
 use std::fs;
 use std::io;
 use std::path::Path;
+use std::sync::Arc;
 
 use anyhow::{anyhow, Context, Result};
-use futures::{future::try_join_all, prelude::*};
+use futures::future::try_join_all;
 use tempfile::NamedTempFile;
-use tracing::{debug, info, instrument, trace};
+use tracing::{debug, info, instrument, trace, warn};
 use url::Url;
 use zip::ZipArchive;
 
@@ -30,22 +31,41 @@ pub fn load_happs_yaml(path: impl AsRef<Path>) -> Result<Vec<Happ>> {
 }
 
 pub async fn install_happs(happ_list: &[Happ], config: &Config) -> Result<()> {
-    let admin_websocket = AdminWebsocket::connect(config.admin_port)
+    let mut admin_websocket = AdminWebsocket::connect(config.admin_port)
         .await
         .context("failed to connect to holochain")?;
+
+    if let Err(e) = admin_websocket.attach_app_interface(config.happ_port).await {
+        warn!(port = ?config.happ_port, "failed to start interface, maybe it's already up?");
+    }
+
+    let agent_key = admin_websocket
+        .generate_agent_pubkey()
+        .await
+        .context("failed to generate agent key")?;
+
+    let installed_happs = Arc::new(
+        admin_websocket
+            .list_installed_happs()
+            .await
+            .context("failed to get installed hApps")?,
+    );
+
     let futures: Vec<_> = happ_list
         .iter()
         .map(|happ| {
             let mut admin_websocket = admin_websocket.clone();
+            let agent_key = agent_key.clone();
+            let installed_happs = Arc::clone(&installed_happs);
             async move {
-                let mut agent_websocket = admin_websocket.clone();
-                let install_happ = agent_websocket
-                    .generate_agent_pubkey()
-                    .and_then(|agent_key| {
-                        admin_websocket.install_happ(happ, agent_key, config.happ_port)
-                    });
                 let install_ui = install_ui(happ, config);
-                futures::try_join!(install_happ, install_ui)
+                if installed_happs.contains(&happ.id_with_version()) {
+                    info!(?happ.installed_app_id, "already installed, just downloading UI");
+                    install_ui.await
+                } else {
+                    let install_happ = admin_websocket.install_happ(happ, agent_key);
+                    futures::try_join!(install_happ, install_ui).map(|_| ())
+                }
             }
         })
         .collect();

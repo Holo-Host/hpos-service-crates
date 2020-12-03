@@ -3,7 +3,7 @@ use std::sync::Arc;
 use anyhow::{anyhow, Context, Result};
 use holochain::conductor::api::{AdminRequest, AdminResponse};
 use holochain_types::{
-    app::{InstallAppDnaPayload, InstallAppPayload},
+    app::{InstallAppDnaPayload, InstallAppPayload, InstalledAppId},
     dna::AgentPubKey,
 };
 use holochain_websocket::{websocket_connect, WebsocketConfig, WebsocketSender};
@@ -36,27 +36,34 @@ impl AdminWebsocket {
         }
     }
 
-    // TODO: write and use get_installed_happs
     #[instrument(skip(self), err)]
-    pub async fn get_installed_happs(&mut self) -> Result<AdminResponse> {
-        todo!()
+    pub async fn attach_app_interface(&mut self, happ_port: u16) -> Result<AdminResponse> {
+        info!(port = ?happ_port, "starting app interface");
+        let msg = AdminRequest::AttachAppInterface {
+            port: Some(happ_port),
+        };
+        self.send(msg).await
+    }
+
+    // TODO: use list_installed_happs
+    #[instrument(skip(self), err)]
+    pub async fn list_installed_happs(&mut self) -> Result<Vec<InstalledAppId>> {
+        let response = self.send(AdminRequest::ListActiveApps).await?;
+        match response {
+            AdminResponse::ActiveAppsListed(app_ids) => Ok(app_ids),
+            _ => Err(anyhow!("unexpected response: {:?}", response)),
+        }
     }
 
     #[instrument(
-        skip(self, happ, agent_key, happ_port),
-        fields(?happ.app_id),
+        skip(self, happ, agent_key),
+        fields(?happ.installed_app_id),
     )]
-    pub async fn install_happ(
-        &mut self,
-        happ: &Happ,
-        agent_key: AgentPubKey,
-        happ_port: u16,
-    ) -> Result<()> {
+    pub async fn install_happ(&mut self, happ: &Happ, agent_key: AgentPubKey) -> Result<()> {
         debug!(?agent_key);
         self.instance_dna_for_agent(happ, agent_key).await?;
-        self.activate_app(&happ.app_id).await?;
-        self.attach_app_interface(happ_port).await?;
-        info!(?happ.app_id, "installed hApp");
+        self.activate_app(happ).await?;
+        info!(?happ.installed_app_id, "installed hApp");
         Ok(())
     }
 
@@ -74,13 +81,13 @@ impl AdminWebsocket {
             .await
             .context("failed to download DNA archive")?;
         let dna = InstallAppDnaPayload {
-            nick: happ.app_id.clone(),
+            nick: happ.id_with_version(),
             path: file.path().to_path_buf(),
             properties: None,
             membrane_proof: None,
         };
         let payload = InstallAppPayload {
-            app_id: happ.app_id.clone(),
+            installed_app_id: happ.id_with_version(),
             agent_key,
             dnas: vec![dna],
         };
@@ -90,21 +97,14 @@ impl AdminWebsocket {
     }
 
     #[instrument(skip(self), err)]
-    async fn activate_app(&mut self, app_id: &str) -> Result<AdminResponse> {
+    async fn activate_app(&mut self, happ: &Happ) -> Result<AdminResponse> {
         let msg = AdminRequest::ActivateApp {
-            app_id: app_id.to_string(),
+            installed_app_id: happ.id_with_version(),
         };
         self.send(msg).await
     }
 
-    #[instrument(skip(self, happ_port), err)]
-    async fn attach_app_interface(&mut self, happ_port: u16) -> Result<AdminResponse> {
-        let msg = AdminRequest::AttachAppInterface {
-            port: Some(happ_port),
-        };
-        self.send(msg).await
-    }
-
+    #[instrument(skip(self), err)]
     async fn send(&mut self, msg: AdminRequest) -> Result<AdminResponse> {
         let response = self
             .tx

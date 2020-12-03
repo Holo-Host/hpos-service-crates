@@ -15,7 +15,7 @@ pub struct Config {
     #[structopt(long, env, default_value = "42233")]
     pub happ_port: u16,
     /// Path to the folder where hApp UIs will be extracted
-    #[structopt(long, env, default_value = "./self-hosted-happs/uis")]
+    #[structopt(long, env)]
     pub ui_store_folder: PathBuf,
     /// Path to a YAML file containing the list of hApps to install
     pub happ_list_path: PathBuf,
@@ -33,7 +33,14 @@ impl Config {
 /// Configuration of a single hApp from config.yaml
 #[derive(Debug, Deserialize)]
 pub struct Happ {
-    pub app_id: AppId,
+    pub installed_app_id: InstalledAppId,
+    pub version: String,
     pub ui_url: Url,
     pub dna_url: Url,
+}
+
+impl Happ {
+    pub fn id_with_version(&self) -> String {
+        format!("{}:{}", self.installed_app_id, self.version)
+    }
 }
