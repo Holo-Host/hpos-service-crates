@@ -13,7 +13,7 @@ use std::path::Path;
 use std::sync::Arc;
 
 use anyhow::{anyhow, Context, Result};
-use futures::future::try_join_all;
+use futures::future;
 use tempfile::NamedTempFile;
 use tracing::{debug, info, instrument, trace, warn};
 use url::Url;
@@ -69,11 +69,9 @@ pub async fn install_happs(happ_list: &[Happ], config: &Config) -> Result<()> {
             }
         })
         .collect();
-    let _: Vec<_> = try_join_all(futures)
-        .await
-        .context("failed to install some hApps")?;
+    let _: Vec<_> = future::join_all(futures).await;
 
-    info!("all hApps installed");
+    info!("finished installing hApps");
     Ok(())
 }
 
