@@ -35,8 +35,8 @@ pub async fn install_happs(happ_list: &[Happ], config: &Config) -> Result<()> {
         .await
         .context("failed to connect to holochain")?;
 
-    if let Err(e) = admin_websocket.attach_app_interface(config.happ_port).await {
-        warn!(port = ?config.happ_port, "failed to start interface, maybe it's already up?");
+    if let Err(error) = admin_websocket.attach_app_interface(config.happ_port).await {
+        warn!(port = ?config.happ_port, ?error, "failed to start interface, maybe it's already up?");
     }
 
     let agent_key = admin_websocket
