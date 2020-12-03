@@ -13,7 +13,7 @@ use std::path::Path;
 use std::sync::Arc;
 
 use anyhow::{anyhow, Context, Result};
-use futures::future::try_join_all;
+use futures::future;
 use tempfile::NamedTempFile;
 use tracing::{debug, info, instrument, trace, warn};
 use url::Url;
@@ -35,8 +35,8 @@ pub async fn install_happs(happ_list: &[Happ], config: &Config) -> Result<()> {
         .await
         .context("failed to connect to holochain")?;
 
-    if let Err(e) = admin_websocket.attach_app_interface(config.happ_port).await {
-        warn!(port = ?config.happ_port, "failed to start interface, maybe it's already up?");
+    if let Err(error) = admin_websocket.attach_app_interface(config.happ_port).await {
+        warn!(port = ?config.happ_port, ?error, "failed to start interface, maybe it's already up?");
     }
 
     let agent_key = admin_websocket
@@ -69,11 +69,9 @@ pub async fn install_happs(happ_list: &[Happ], config: &Config) -> Result<()> {
             }
         })
         .collect();
-    let _: Vec<_> = try_join_all(futures)
-        .await
-        .context("failed to install some hApps")?;
+    let _: Vec<_> = future::join_all(futures).await;
 
-    info!("all hApps installed");
+    info!("finished installing hApps");
     Ok(())
 }
 
