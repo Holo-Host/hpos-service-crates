@@ -8,16 +8,15 @@ mod websocket;
 pub use websocket::AdminWebsocket;
 
 use std::fs;
-use std::io;
-use std::path::Path;
+use std::path::{Path, PathBuf};
+use std::process;
 use std::sync::Arc;
 
 use anyhow::{anyhow, Context, Result};
 use futures::future;
-use tempfile::NamedTempFile;
-use tracing::{debug, info, instrument, trace, warn};
+use tempfile::TempDir;
+use tracing::{debug, info, instrument, warn};
 use url::Url;
-use zip::ZipArchive;
 
 #[instrument(err, fields(path = %path.as_ref().display()))]
 pub fn load_happs_yaml(path: impl AsRef<Path>) -> Result<Vec<Happ>> {
@@ -86,17 +85,17 @@ async fn install_ui(happ: &Happ, config: &Config) -> Result<()> {
         return Ok(());
     }
 
-    let mut ui_archive = download_file(happ.ui_url.as_ref().unwrap())
+    let source_path = download_file(happ.ui_url.as_ref().unwrap())
         .await
         .context("failed to download UI archive")?;
     let unpack_path = config.ui_store_folder.join(&happ.installed_app_id);
-    extract_zip(ui_archive.as_file_mut(), unpack_path).context("failed to extract UI archive")?;
+    extract_zip(&source_path, &unpack_path).context("failed to extract UI archive")?;
     info!(?happ.installed_app_id, "installed UI");
     Ok(())
 }
 
 #[instrument]
-pub(crate) async fn download_file(url: &Url) -> Result<NamedTempFile> {
+pub(crate) async fn download_file(url: &Url) -> Result<PathBuf> {
     use isahc::prelude::*;
 
     debug!("downloading");
@@ -106,42 +105,36 @@ pub(crate) async fn download_file(url: &Url) -> Result<NamedTempFile> {
     let mut response = isahc::get_async(url.as_str())
         .await
         .context("failed to send GET request")?;
-    let mut file = NamedTempFile::new().context("failed to create tempfile")?;
+    let dir = TempDir::new().context("failed to create tempdir")?;
+    let url_path = PathBuf::from(url.path());
+    let basename = url_path
+        .file_name()
+        .context("failed to get basename from url")?;
+    let path = dir.into_path().join(basename);
+    let mut file = fs::File::create(&path).context("failed to create target file")?;
     response
         .copy_to(&mut file)
         .context("failed to write response to file")?;
     debug!("download successful");
-    Ok(file)
+    Ok(path)
 }
 
 #[instrument(
     err,
-    skip(archive),
-    fields(unpack_path = %unpack_path.as_ref().display()),
+    fields(
+        source_path = %source_path.as_ref().display(),
+        unpack_path = %unpack_path.as_ref().display(),
+    ),
 )]
-// HACK: This has no place in this crate. Well, at least we are cross-platform...
-pub(crate) fn extract_zip(archive: &mut fs::File, unpack_path: impl AsRef<Path>) -> Result<()> {
+pub(crate) fn extract_zip<P: AsRef<Path>>(source_path: P, unpack_path: P) -> Result<()> {
     let _ = fs::remove_dir_all(unpack_path.as_ref());
     fs::create_dir(unpack_path.as_ref()).context("failed to create empty unpack_path")?;
 
-    let mut archive = ZipArchive::new(archive).context("failed to interpret file as archive")?;
-    for i in 0..archive.len() {
-        let mut file = archive.by_index(i)?;
-        trace!(name = %file.name());
-        if !file.is_file() {
-            trace!("not a regular file");
-            continue;
-        }
-        let outpath = unpack_path.as_ref().join(file.name());
-        if let Some(parent) = outpath.parent() {
-            if !parent.exists() {
-                trace!(path = %parent.display(), "ensuring parent directory exists");
-                fs::create_dir_all(parent).context("failed to create parent directory")?;
-            }
-        }
-        let mut outfile =
-            fs::File::create(outpath.as_path()).context("failed to create destination file")?;
-        io::copy(&mut file, &mut outfile).context("failed to copy file to destination")?;
-    }
+    process::Command::new("unzip")
+        .arg(source_path.as_ref().as_os_str())
+        .arg("-d")
+        .arg(unpack_path.as_ref().as_os_str())
+        .spawn()
+        .context("failed to spawn unzip command")?;
     Ok(())
 }
