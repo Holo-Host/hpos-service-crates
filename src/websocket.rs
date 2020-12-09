@@ -65,7 +65,11 @@ impl AdminWebsocket {
     )]
     pub async fn install_happ(&mut self, happ: &Happ, agent_key: AgentPubKey) -> Result<()> {
         debug!(?agent_key);
-        self.instance_dna_for_agent(happ, agent_key).await?;
+        if happ.dna_url.is_some() {
+            self.instance_dna_for_agent(happ, agent_key).await?;
+        } else {
+            debug!(?happ.installed_app_id, "dna_url == None, skipping DNA installation")
+        }
         self.activate_app(happ).await?;
         info!(?happ.installed_app_id, "installed hApp");
         Ok(())
@@ -81,7 +85,7 @@ impl AdminWebsocket {
         happ: &Happ,
         agent_key: AgentPubKey,
     ) -> Result<AdminResponse> {
-        let file = crate::download_file(&happ.dna_url)
+        let file = crate::download_file(happ.dna_url.as_ref().context("dna_url is None")?)
             .await
             .context("failed to download DNA archive")?;
         let dna = InstallAppDnaPayload {

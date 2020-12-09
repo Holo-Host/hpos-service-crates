@@ -35,8 +35,8 @@ impl Config {
 pub struct Happ {
     pub installed_app_id: InstalledAppId,
     pub version: String,
-    pub ui_url: Url,
-    pub dna_url: Url,
+    pub ui_url: Option<Url>,
+    pub dna_url: Option<Url>,
 }
 
 impl Happ {
