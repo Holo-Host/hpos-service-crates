@@ -131,6 +131,7 @@ pub(crate) fn extract_zip<P: AsRef<Path>>(source_path: P, unpack_path: P) -> Res
     fs::create_dir(unpack_path.as_ref()).context("failed to create empty unpack_path")?;
 
     process::Command::new("unzip")
+        .arg("-qq")
         .arg(source_path.as_ref().as_os_str())
         .arg("-d")
         .arg(unpack_path.as_ref().as_os_str())
