@@ -5,10 +5,12 @@ use anyhow::{Context, Result};
 
 use self_hosted_happs::{install_happs, load_happs_yaml, Config};
 use tracing::instrument;
+use tracing_subscriber::EnvFilter;
 
 #[tokio::main]
 async fn main() -> Result<()> {
-    tracing_subscriber::fmt::init();
+    let filter = EnvFilter::from_default_env().add_directive("again=trace".parse().unwrap());
+    tracing_subscriber::fmt().with_env_filter(filter).init();
     run().await
 }
 
