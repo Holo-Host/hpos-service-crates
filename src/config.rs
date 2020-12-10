@@ -33,6 +33,7 @@ impl Config {
 /// Configuration of a single hApp from config.yaml
 #[derive(Debug, Deserialize)]
 pub struct Happ {
+    #[serde(alias = "app_id")]
     pub installed_app_id: InstalledAppId,
     pub version: String,
     pub ui_url: Option<Url>,
