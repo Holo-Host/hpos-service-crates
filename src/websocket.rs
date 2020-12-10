@@ -40,7 +40,7 @@ impl AdminWebsocket {
         }
     }
 
-    #[instrument(skip(self), err)]
+    #[instrument(skip(self))]
     pub async fn attach_app_interface(&mut self, happ_port: u16) -> Result<AdminResponse> {
         info!(port = ?happ_port, "starting app interface");
         let msg = AdminRequest::AttachAppInterface {
@@ -112,7 +112,7 @@ impl AdminWebsocket {
         self.send(msg).await
     }
 
-    #[instrument(skip(self), err)]
+    #[instrument(skip(self))]
     async fn send(&mut self, msg: AdminRequest) -> Result<AdminResponse> {
         let response = self
             .tx
