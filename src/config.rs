@@ -34,7 +34,7 @@ impl Config {
 #[derive(Debug, Deserialize)]
 pub struct Happ {
     #[serde(alias = "app_id")]
-    pub installed_app_id: InstalledAppId,
+    pub app_id: InstalledAppId,
     pub version: String,
     pub ui_url: Option<Url>,
     pub dna_url: Option<Url>,
@@ -42,6 +42,6 @@ pub struct Happ {
 
 impl Happ {
     pub fn id_with_version(&self) -> String {
-        format!("{}:{}", self.installed_app_id, self.version)
+        format!("{}:{}", self.app_id, self.version)
     }
 }

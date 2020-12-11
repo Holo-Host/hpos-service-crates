@@ -59,7 +59,7 @@ pub async fn install_happs(happ_list: &[Happ], config: &Config) -> Result<()> {
             async move {
                 let install_ui = install_ui(happ, config);
                 if installed_happs.contains(&happ.id_with_version()) {
-                    info!(?happ.installed_app_id, "already installed, just downloading UI");
+                    info!(?happ.app_id, "already installed, just downloading UI");
                     install_ui.await
                 } else {
                     let install_happ = admin_websocket.install_happ(happ, agent_key);
@@ -77,20 +77,20 @@ pub async fn install_happs(happ_list: &[Happ], config: &Config) -> Result<()> {
 #[instrument(
     err,
     skip(happ, config),
-    fields(?happ.installed_app_id)
+    fields(?happ.app_id)
 )]
 async fn install_ui(happ: &Happ, config: &Config) -> Result<()> {
     if happ.ui_url.is_none() {
-        debug!(?happ.installed_app_id, "ui_url == None, skipping UI installation");
+        debug!(?happ.app_id, "ui_url == None, skipping UI installation");
         return Ok(());
     }
 
     let source_path = download_file(happ.ui_url.as_ref().unwrap())
         .await
         .context("failed to download UI archive")?;
-    let unpack_path = config.ui_store_folder.join(&happ.installed_app_id);
+    let unpack_path = config.ui_store_folder.join(&happ.app_id);
     extract_zip(&source_path, &unpack_path).context("failed to extract UI archive")?;
-    info!(?happ.installed_app_id, "installed UI");
+    info!(?happ.app_id, "installed UI");
     Ok(())
 }
 

@@ -61,24 +61,24 @@ impl AdminWebsocket {
 
     #[instrument(
         skip(self, happ, agent_key),
-        fields(?happ.installed_app_id),
+        fields(?happ.app_id),
     )]
     pub async fn install_happ(&mut self, happ: &Happ, agent_key: AgentPubKey) -> Result<()> {
         debug!(?agent_key);
         if happ.dna_url.is_some() {
             self.instance_dna_for_agent(happ, agent_key).await?;
         } else {
-            debug!(?happ.installed_app_id, "dna_url == None, skipping DNA installation")
+            debug!(?happ.app_id, "dna_url == None, skipping DNA installation")
         }
         self.activate_app(happ).await?;
-        info!(?happ.installed_app_id, "installed hApp");
+        info!(?happ.app_id, "installed hApp");
         Ok(())
     }
 
     #[instrument(
         err,
         skip(self, happ, agent_key),
-        fields(?happ.installed_app_id)
+        fields(?happ.app_id)
     )]
     async fn instance_dna_for_agent(
         &mut self,
