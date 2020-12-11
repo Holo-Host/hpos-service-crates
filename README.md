@@ -1,12 +1,12 @@
 # hpos-configure-holochain
-Install self-hosted hApps from a YAML file into holochain
+Installs apps in holochain and downloads UI in the `UI_STORE_FOLDER` directory from a YAML configuration file.
 
 ## Usage
 
 ```
 $ hpos-configure-holochain --help
 USAGE:
-    self-hosted-happs [OPTIONS] <happ-list-path> --ui-store-folder <ui-store-folder>
+    hpos-configure-holochain [OPTIONS] <happ-list-path> --ui-store-folder <ui-store-folder>
 
 FLAGS:
     -h, --help       Prints help information
@@ -23,11 +23,11 @@ ARGS:
 
 ```
 
-where `happ-list-path` is of a format:
+where file at `happ-list-path` is of a format:
 
 ```yaml
 ---
-- installed_app_id: elemental-chat
+- app_id: elemental-chat
   version: 1
   ui_url: https://github.com/holochain/elemental-chat-ui/releases/download/v0.0.1-alpha7/elemental-chat.zip
   dna_url: https://github.com/holochain/elemental-chat/releases/download/v0.0.1-alpha3/elemental-chat.dna.gz
