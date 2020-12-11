@@ -96,8 +96,8 @@ async fn install_ui(happ: &Happ, config: &Config) -> Result<()> {
 
 #[instrument]
 pub(crate) async fn download_file(url: &Url) -> Result<PathBuf> {
-    use isahc::prelude::*;
     use isahc::config::RedirectPolicy;
+    use isahc::prelude::*;
 
     debug!("downloading");
     let mut url = Url::clone(&url);
@@ -107,7 +107,8 @@ pub(crate) async fn download_file(url: &Url) -> Result<PathBuf> {
         .redirect_policy(RedirectPolicy::Follow)
         .build()
         .context("failed to initiate download request")?;
-    let mut response = client.get(url.as_str())
+    let mut response = client
+        .get(url.as_str())
         .context("failed to send GET request")?;
     let dir = TempDir::new().context("failed to create tempdir")?;
     let url_path = PathBuf::from(url.path());
