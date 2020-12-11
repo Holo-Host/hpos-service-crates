@@ -97,13 +97,17 @@ async fn install_ui(happ: &Happ, config: &Config) -> Result<()> {
 #[instrument]
 pub(crate) async fn download_file(url: &Url) -> Result<PathBuf> {
     use isahc::prelude::*;
+    use isahc::config::RedirectPolicy;
 
     debug!("downloading");
     let mut url = Url::clone(&url);
     url.set_scheme("https")
         .map_err(|_| anyhow!("failed to set scheme to https"))?;
-    let mut response = isahc::get_async(url.as_str())
-        .await
+    let client = HttpClient::builder()
+        .redirect_policy(RedirectPolicy::Follow)
+        .build()
+        .context("failed to initiate download request")?;
+    let mut response = client.get(url.as_str())
         .context("failed to send GET request")?;
     let dir = TempDir::new().context("failed to create tempdir")?;
     let url_path = PathBuf::from(url.path());
