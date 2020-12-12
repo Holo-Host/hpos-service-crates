@@ -15,6 +15,7 @@ use crate::Happ;
 #[derive(Clone)]
 pub struct AdminWebsocket {
     tx: WebsocketSender,
+    agent_key: Option<AgentPubKey>,
 }
 
 impl AdminWebsocket {
@@ -28,14 +29,23 @@ impl AdminWebsocket {
             websocket_connect(url.clone().into(), websocket_config)
         })
         .await?;
-        Ok(Self { tx })
+        Ok(Self {
+            tx,
+            agent_key: None,
+        })
     }
 
     #[instrument(skip(self), err)]
-    pub async fn generate_agent_pubkey(&mut self) -> Result<AgentPubKey> {
+    pub async fn get_agent_key(&mut self) -> Result<AgentPubKey> {
+        if let Some(key) = self.agent_key.clone() {
+            return Ok(key);
+        }
         let response = self.send(AdminRequest::GenerateAgentPubKey).await?;
         match response {
-            AdminResponse::AgentPubKeyGenerated(agent_pubkey) => Ok(agent_pubkey),
+            AdminResponse::AgentPubKeyGenerated(key) => {
+                self.agent_key = Some(key.clone());
+                Ok(key)
+            }
             _ => Err(anyhow!("unexpected response: {:?}", response)),
         }
     }
@@ -49,7 +59,6 @@ impl AdminWebsocket {
         self.send(msg).await
     }
 
-    // TODO: use list_installed_happs
     #[instrument(skip(self), err)]
     pub async fn list_installed_happs(&mut self) -> Result<Vec<InstalledAppId>> {
         let response = self.send(AdminRequest::ListActiveApps).await?;
@@ -60,13 +69,12 @@ impl AdminWebsocket {
     }
 
     #[instrument(
-        skip(self, happ, agent_key),
+        skip(self, happ),
         fields(?happ.app_id),
     )]
-    pub async fn install_happ(&mut self, happ: &Happ, agent_key: AgentPubKey) -> Result<()> {
-        debug!(?agent_key);
+    pub async fn install_happ(&mut self, happ: &Happ) -> Result<()> {
         if happ.dna_url.is_some() {
-            self.instance_dna_for_agent(happ, agent_key).await?;
+            self.instance_dna_for_agent(happ).await?;
         } else {
             debug!(?happ.app_id, "dna_url == None, skipping DNA installation")
         }
@@ -77,14 +85,14 @@ impl AdminWebsocket {
 
     #[instrument(
         err,
-        skip(self, happ, agent_key),
+        skip(self, happ),
         fields(?happ.app_id)
     )]
-    async fn instance_dna_for_agent(
-        &mut self,
-        happ: &Happ,
-        agent_key: AgentPubKey,
-    ) -> Result<AdminResponse> {
+    async fn instance_dna_for_agent(&mut self, happ: &Happ) -> Result<AdminResponse> {
+        let agent_key = self
+            .get_agent_key()
+            .await
+            .context("failed to generate agent key")?;
         let path = crate::download_file(happ.dna_url.as_ref().context("dna_url is None")?)
             .await
             .context("failed to download DNA archive")?;
