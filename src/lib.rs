@@ -90,7 +90,7 @@ async fn install_ui(happ: &Happ, config: &Config) -> Result<()> {
     Ok(())
 }
 
-#[instrument]
+#[instrument(err, skip(url))]
 pub(crate) async fn download_file(url: &Url) -> Result<PathBuf> {
     use isahc::config::RedirectPolicy;
     use isahc::prelude::*;
@@ -131,12 +131,17 @@ pub(crate) fn extract_zip<P: AsRef<Path>>(source_path: P, unpack_path: P) -> Res
     let _ = fs::remove_dir_all(unpack_path.as_ref());
     fs::create_dir(unpack_path.as_ref()).context("failed to create empty unpack_path")?;
 
-    process::Command::new("unzip")
-        .arg("-qq")
+    debug!("unziping file");
+
+    let output = process::Command::new("unzip")
         .arg(source_path.as_ref().as_os_str())
         .arg("-d")
         .arg(unpack_path.as_ref().as_os_str())
-        .spawn()
+        .stdout(process::Stdio::piped())
+        .output()
         .context("failed to spawn unzip command")?;
+
+    debug!("{}", String::from_utf8_lossy(&output.stdout));
+
     Ok(())
 }
