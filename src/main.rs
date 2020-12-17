@@ -3,7 +3,7 @@
 
 use anyhow::{Context, Result};
 
-use configure_holochain::{install_happs, load_happs_yaml, Config};
+use configure_holochain::{install_happs, load_happ_file, Config};
 use tracing::instrument;
 use tracing_subscriber::EnvFilter;
 
@@ -17,8 +17,8 @@ async fn main() -> Result<()> {
 #[instrument(err)]
 async fn run() -> Result<()> {
     let config = Config::load();
-    let happ_list =
-        load_happs_yaml(&config.happ_list_path).context("failed to load hApps YAML config")?;
-    install_happs(&happ_list, &config).await?;
+    let happ_file =
+        load_happ_file(&config.happ_file_path).context("failed to load hApps YAML config")?;
+    install_happs(&happ_file, &config).await?;
     Ok(())
 }

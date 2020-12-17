@@ -2,7 +2,7 @@
 #![allow(clippy::unit_arg)]
 
 mod config;
-pub use config::{Config, Happ};
+pub use config::{Config, Happ, HappFile};
 
 mod websocket;
 pub use websocket::AdminWebsocket;
@@ -19,17 +19,17 @@ use tracing::{debug, info, instrument, warn};
 use url::Url;
 
 #[instrument(err, fields(path = %path.as_ref().display()))]
-pub fn load_happs_yaml(path: impl AsRef<Path>) -> Result<Vec<Happ>> {
+pub fn load_happ_file(path: impl AsRef<Path>) -> Result<HappFile> {
     use std::fs::File;
 
     let file = File::open(path).context("failed to open file")?;
-    let happ_list =
+    let happ_file =
         serde_yaml::from_reader(&file).context("failed to deserialize YAML as Vec<Happ>")?;
-    debug!(?happ_list);
-    Ok(happ_list)
+    debug!(?happ_file);
+    Ok(happ_file)
 }
 
-pub async fn install_happs(happ_list: &[Happ], config: &Config) -> Result<()> {
+pub async fn install_happs(happ_file: &HappFile, config: &Config) -> Result<()> {
     let mut admin_websocket = AdminWebsocket::connect(config.admin_port)
         .await
         .context("failed to connect to holochain")?;
@@ -45,8 +45,12 @@ pub async fn install_happs(happ_list: &[Happ], config: &Config) -> Result<()> {
             .context("failed to get installed hApps")?,
     );
 
-    let futures: Vec<_> = happ_list
+    let happs_to_install = happ_file
+        .core_happs
         .iter()
+        .chain(happ_file.self_hosted_happs.iter());
+
+    let futures: Vec<_> = happs_to_install
         .map(|happ| {
             let mut admin_websocket = admin_websocket.clone();
             let installed_happs = Arc::clone(&installed_happs);

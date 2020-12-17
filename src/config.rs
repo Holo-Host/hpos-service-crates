@@ -18,7 +18,7 @@ pub struct Config {
     #[structopt(long, env)]
     pub ui_store_folder: PathBuf,
     /// Path to a YAML file containing the list of hApps to install
-    pub happ_list_path: PathBuf,
+    pub happ_file_path: PathBuf,
 }
 
 impl Config {
@@ -28,6 +28,12 @@ impl Config {
         debug!(?config, "loaded");
         config
     }
+}
+
+#[derive(Debug, Deserialize)]
+pub struct HappFile {
+    pub self_hosted_happs: Vec<Happ>,
+    pub core_happs: Vec<Happ>,
 }
 
 /// Configuration of a single hApp from config.yaml
