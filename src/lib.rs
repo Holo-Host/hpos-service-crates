@@ -24,7 +24,7 @@ pub fn load_happ_file(path: impl AsRef<Path>) -> Result<HappFile> {
 
     let file = File::open(path).context("failed to open file")?;
     let happ_file =
-        serde_yaml::from_reader(&file).context("failed to deserialize YAML as Vec<Happ>")?;
+        serde_yaml::from_reader(&file).context("failed to deserialize YAML as HappFile")?;
     debug!(?happ_file);
     Ok(happ_file)
 }

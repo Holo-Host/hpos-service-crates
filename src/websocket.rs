@@ -88,7 +88,7 @@ impl AdminWebsocket {
         skip(self, happ),
         fields(?happ.app_id)
     )]
-    async fn instance_dna_for_agent(&mut self, happ: &Happ) -> Result<AdminResponse> {
+    async fn install_dna(&mut self, happ: &Happ) -> Result<AdminResponse> {
         let agent_key = self
             .get_agent_key()
             .await
