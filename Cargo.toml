@@ -14,7 +14,7 @@ structopt = "0.3"
 tempfile = "3.1"
 # holochain_websocket uses tokio 0.2
 # TODO: bump to 0.3 after https://github.com/holochain/holochain/pull/461 is merged
-tokio = { version = "0.2", features = ["full"] }
+tokio = { version = "1.0", features = ["full"] }
 tracing = { version = "0.1", features = ["attributes"] }
 tracing-futures = "0.2"
 tracing-subscriber = "0.2"
