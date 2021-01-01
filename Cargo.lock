@@ -822,12 +822,13 @@ dependencies = [
 
 [[package]]
 name = "flume"
-version = "0.9.1"
+version = "0.10.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d9e818efa7776f4dd7df0e542f877f7a5a87bddd6a1a10f59a7732b71ffb9d55"
+checksum = "0362ef9c4c1fa854ff95b4cb78045a86e810d804dc04937961988b45427104a9"
 dependencies = [
  "futures-core",
  "futures-sink",
+ "pin-project 1.0.2",
  "spinning_top",
 ]
 
@@ -1618,11 +1619,10 @@ checksum = "47be2f14c678be2fdcab04ab1171db51b2762ce6f0a8ee87c8dd4a04ed216135"
 
 [[package]]
 name = "isahc"
-version = "0.9.14"
+version = "1.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e2948a0ce43e2c2ef11d7edf6816508998d99e13badd1150be0914205df9388a"
+checksum = "6eca04e9c7a64d0c907e32b22d5b2c89711f347ce3ab56e6708de2891017a452"
 dependencies = [
- "bytes",
  "crossbeam-utils 0.8.0",
  "curl",
  "curl-sys",
