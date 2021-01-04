@@ -110,6 +110,12 @@ pub(crate) async fn download_file(url: &Url) -> Result<PathBuf> {
     let mut response = client
         .get(url.as_str())
         .context("failed to send GET request")?;
+    if !response.status().is_success() {
+        return Err(anyhow!(
+            "response status code {} indicated failure",
+            response.status().as_str()
+        ));
+    }
     let dir = TempDir::new().context("failed to create tempdir")?;
     let url_path = PathBuf::from(url.path());
     let basename = url_path
