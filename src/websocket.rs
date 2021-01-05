@@ -74,7 +74,7 @@ impl AdminWebsocket {
     )]
     pub async fn install_happ(&mut self, happ: &Happ) -> Result<()> {
         if happ.dna_url.is_some() {
-            self.instance_dna_for_agent(happ).await?;
+            self.install_dna(happ).await?;
         } else {
             debug!(?happ.app_id, "dna_url == None, skipping DNA installation")
         }
