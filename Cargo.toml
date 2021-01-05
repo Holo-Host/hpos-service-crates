@@ -1,10 +1,11 @@
 [package]
-name = "self-hosted-happs"
+name = "configure-holochain"
 version = "0.1.0"
 authors = ["Oleksii Filonenko <oleksii.filonenko@holo.host>"]
 edition = "2018"
 
 [dependencies]
+again = "0.1"
 anyhow = "1.0"
 futures = "0.3"
 isahc = "0.9"
@@ -19,21 +20,20 @@ tracing = { version = "0.1", features = ["attributes"] }
 tracing-futures = "0.2"
 tracing-subscriber = "0.2"
 url = "2.2"
-zip = "0.5"
 
 [dependencies.holochain]
 git = "https://github.com/holochain/holochain"
-rev = "ddda96773b3e97f658ed46f2400ff8d0183be3fd"
+rev = "43210e7360970369025e7a6e528779d8f9636564"
 package = "holochain"
 
 [dependencies.holochain_types]
 git = "https://github.com/holochain/holochain"
-rev = "ddda96773b3e97f658ed46f2400ff8d0183be3fd"
+rev = "43210e7360970369025e7a6e528779d8f9636564"
 package = "holochain_types"
 
 [dependencies.holochain_websocket]
 git = "https://github.com/holochain/holochain"
-rev = "ddda96773b3e97f658ed46f2400ff8d0183be3fd"
+rev = "43210e7360970369025e7a6e528779d8f9636564"
 package = "holochain_websocket"
 
 # Holochain requires a patch to crates.io registry

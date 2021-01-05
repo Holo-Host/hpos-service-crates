@@ -1,20 +1,55 @@
-# self-hosted-happs
-Install self-hosted hApps from a YAML file into holochain
+# hpos-configure-holochain
+Installs apps in holochain and downloads UI in the `UI_STORE_FOLDER` directory from a YAML configuration file.
 
 ## Usage
 
 ```
-self-hosted-happs config.yaml
+$ hpos-configure-holochain --help
+USAGE:
+    hpos-configure-holochain [OPTIONS] <happ-list-path> --ui-store-folder <ui-store-folder>
+
+FLAGS:
+    -h, --help       Prints help information
+    -V, --version    Prints version information
+
+OPTIONS:
+        --admin-port <admin-port>              Holochain conductor port [env: ADMIN_PORT=]  [default: 4444]
+        --happ-port <happ-port>                hApp listening port [env: HAPP_PORT=]  [default: 42233]
+        --ui-store-folder <ui-store-folder>    Path to the folder where hApp UIs will be extracted [env:
+                                               UI_STORE_FOLDER=]
+
+ARGS:
+    <happ-list-path>    Path to a YAML file containing the list of hApps to install
+
 ```
 
-where `config.yaml` is of a format `[{app_id, ui_url, dna_url}]`:
+where file at `happ-list-path` is of a format:
+
+```yaml
+core_happs: [Happ]
+self_hosted_happs: [Happ]
+```
+
+where `Happ` is
+
+```yaml
+app_id: string
+version: string
+dna_url: string (optional)
+ui_url: string (optional)
+```
+
+Example YAML:
 
 ```yaml
 ---
-- app_id: elemental-chat
-  ui_url: https://s3.eu-central-1.wasabisys.com/elemetal-chat-tests/elemental-chat.zip
-  dna_url: https://s3.eu-central-1.wasabisys.com/elemetal-chat-tests/elemental-chat.dna.gz
+core_happs:
+  - app_id: hha
+    version: 1
+    dna_url: https://s3.eu-central-1.wasabisys.com/elemetal-chat-tests/hha.dna.gz
+self_hosted_happs:
+  - app_id: elemental-chat
+    version: 1
+    dna_url: https://github.com/holochain/elemental-chat/releases/download/v0.0.1-alpha3/elemental-chat.dna.gz
+    ui_url: https://github.com/holochain/elemental-chat-ui/releases/download/v0.0.1-alpha7/elemental-chat.zip
 ```
-
-All options can be set as a CLI flag or an environment variable.
-See `self-hosted-happs --help` for information on what options are available.

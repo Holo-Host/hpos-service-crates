@@ -1,6 +1,6 @@
 use std::path::PathBuf;
 
-use holochain_types::app::AppId;
+use holochain_types::app::InstalledAppId;
 use serde::Deserialize;
 use structopt::StructOpt;
 use tracing::debug;
@@ -15,10 +15,10 @@ pub struct Config {
     #[structopt(long, env, default_value = "42233")]
     pub happ_port: u16,
     /// Path to the folder where hApp UIs will be extracted
-    #[structopt(long, env, default_value = "./self-hosted-happs/uis")]
+    #[structopt(long, env)]
     pub ui_store_folder: PathBuf,
     /// Path to a YAML file containing the list of hApps to install
-    pub happ_list_path: PathBuf,
+    pub happ_file_path: PathBuf,
 }
 
 impl Config {
@@ -30,10 +30,24 @@ impl Config {
     }
 }
 
+#[derive(Debug, Deserialize)]
+pub struct HappFile {
+    pub self_hosted_happs: Vec<Happ>,
+    pub core_happs: Vec<Happ>,
+}
+
 /// Configuration of a single hApp from config.yaml
 #[derive(Debug, Deserialize)]
 pub struct Happ {
-    pub app_id: AppId,
-    pub ui_url: Url,
-    pub dna_url: Url,
+    #[serde(alias = "app_id")]
+    pub app_id: InstalledAppId,
+    pub version: String,
+    pub ui_url: Option<Url>,
+    pub dna_url: Option<Url>,
+}
+
+impl Happ {
+    pub fn id_with_version(&self) -> String {
+        format!("{}:{}", self.app_id, self.version)
+    }
 }
