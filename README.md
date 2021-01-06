@@ -1,6 +1,8 @@
 # hpos-configure-holochain
 Installs apps in holochain and downloads UI in the `UI_STORE_FOLDER` directory from a YAML configuration file.
 
+Optionally if environmental variable `PUBKEY_PATH` is set Holochain's public key created during first run will be saved in a file at given path and retrieved during subsequent runs.
+
 ## Usage
 
 ```

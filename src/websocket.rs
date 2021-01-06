@@ -1,4 +1,7 @@
+use std::fs::File;
+use std::io::prelude::*;
 use std::sync::Arc;
+use std::{env, fs};
 
 use anyhow::{anyhow, Context, Result};
 use holochain::conductor::api::{AdminRequest, AdminResponse};
@@ -37,12 +40,32 @@ impl AdminWebsocket {
 
     #[instrument(skip(self), err)]
     pub async fn get_agent_key(&mut self) -> Result<AgentPubKey> {
+        // Try agent key from memory
         if let Some(key) = self.agent_key.clone() {
+            info!("returning agent key from memory");
             return Ok(key);
         }
+        // Try agent key from disc
+        if let Ok(pubkey_path) = env::var("PUBKEY_PATH") {
+            if let Ok(key_vec) = fs::read(&pubkey_path) {
+                if let Ok(key) = AgentPubKey::from_raw_39(key_vec) {
+                    info!("returning agent key from file");
+                    self.agent_key = Some(key.clone());
+                    return Ok(key);
+                }
+            }
+        }
+
+        // Create agent key in Lair and save it in file
         let response = self.send(AdminRequest::GenerateAgentPubKey).await?;
         match response {
             AdminResponse::AgentPubKeyGenerated(key) => {
+                let key_vec = key.get_raw_39();
+                if let Ok(pubkey_path) = env::var("PUBKEY_PATH") {
+                    let mut file = File::create(pubkey_path)?;
+                    file.write_all(&key_vec)?;
+                }
+                info!("returning newly created agent key");
                 self.agent_key = Some(key.clone());
                 Ok(key)
             }
