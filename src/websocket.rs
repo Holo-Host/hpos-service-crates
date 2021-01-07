@@ -4,9 +4,9 @@ use std::sync::Arc;
 use std::{env, fs};
 
 use anyhow::{anyhow, Context, Result};
-use holochain::conductor::api::{AdminRequest, AdminResponse};
+use holochain::conductor::api::{AdminRequest, AdminResponse, AppRequest, AppResponse};
 use holochain_types::{
-    app::{InstallAppDnaPayload, InstallAppPayload, InstalledAppId},
+    app::{InstallAppDnaPayload, InstallAppPayload, InstalledApp, InstalledAppId},
     dna::AgentPubKey,
 };
 use holochain_websocket::{websocket_connect, WebsocketConfig, WebsocketSender};
@@ -143,6 +143,14 @@ impl AdminWebsocket {
         self.send(msg).await
     }
 
+    #[instrument(skip(self), err)]
+    pub async fn deactivate_app(&mut self, installed_app_id: &str) -> Result<AdminResponse> {
+        let msg = AdminRequest::DeactivateApp {
+            installed_app_id: installed_app_id.to_string(),
+        };
+        self.send(msg).await
+    }
+
     #[instrument(skip(self))]
     async fn send(&mut self, msg: AdminRequest) -> Result<AdminResponse> {
         let response = self
@@ -152,6 +160,54 @@ impl AdminWebsocket {
             .context("failed to send message")?;
         match response {
             AdminResponse::Error(error) => Err(anyhow!("error: {:?}", error)),
+            _ => {
+                trace!("send successful");
+                Ok(response)
+            }
+        }
+    }
+}
+
+#[derive(Clone)]
+pub struct AppWebsocket {
+    tx: WebsocketSender,
+}
+
+impl AppWebsocket {
+    #[instrument(err)]
+    pub async fn connect(app_port: u16) -> Result<Self> {
+        let url = format!("ws://localhost:{}/", app_port);
+        let url = Url::parse(&url).context("invalid ws:// URL")?;
+        let websocket_config = Arc::new(WebsocketConfig::default());
+        let (tx, _rx) = again::retry(|| {
+            let websocket_config = Arc::clone(&websocket_config);
+            websocket_connect(url.clone().into(), websocket_config)
+        })
+        .await?;
+        Ok(Self { tx })
+    }
+
+    #[instrument(skip(self))]
+    pub async fn get_app_info(&mut self, app_id: InstalledAppId) -> Option<InstalledApp> {
+        let msg = AppRequest::AppInfo {
+            installed_app_id: app_id,
+        };
+        let response = self.send(msg).await.ok()?;
+        match response {
+            AppResponse::AppInfo(app_info) => app_info,
+            _ => None,
+        }
+    }
+
+    #[instrument(skip(self))]
+    async fn send(&mut self, msg: AppRequest) -> Result<AppResponse> {
+        let response = self
+            .tx
+            .request(msg)
+            .await
+            .context("failed to send message")?;
+        match response {
+            AppResponse::Error(error) => Err(anyhow!("error: {:?}", error)),
             _ => {
                 trace!("send successful");
                 Ok(response)

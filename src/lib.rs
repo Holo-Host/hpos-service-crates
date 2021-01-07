@@ -5,7 +5,9 @@ mod config;
 pub use config::{Config, Happ, HappFile};
 
 mod websocket;
-pub use websocket::AdminWebsocket;
+use holochain_types::app::InstalledCell;
+use holochain_types::dna::AgentPubKey;
+pub use websocket::{AdminWebsocket, AppWebsocket};
 
 use std::fs;
 use std::path::{Path, PathBuf};
@@ -32,7 +34,7 @@ pub fn load_happ_file(path: impl AsRef<Path>) -> Result<HappFile> {
 pub async fn install_happs(happ_file: &HappFile, config: &Config) -> Result<()> {
     let mut admin_websocket = AdminWebsocket::connect(config.admin_port)
         .await
-        .context("failed to connect to holochain")?;
+        .context("failed to connect to holochain's admin interface")?;
 
     if let Err(error) = admin_websocket.attach_app_interface(config.happ_port).await {
         warn!(port = ?config.happ_port, ?error, "failed to start app interface, maybe it's already up?");
@@ -49,6 +51,10 @@ pub async fn install_happs(happ_file: &HappFile, config: &Config) -> Result<()> 
         .core_happs
         .iter()
         .chain(happ_file.self_hosted_happs.iter());
+
+    // This line makes sure agent key gets created and stored in memory before all the async stuff starts
+    let mut agent_websocket = admin_websocket.clone();
+    let agent_key = agent_websocket.get_agent_key().await?;
 
     let futures: Vec<_> = happs_to_install
         .map(|happ| {
@@ -68,7 +74,25 @@ pub async fn install_happs(happ_file: &HappFile, config: &Config) -> Result<()> 
         .collect();
     let _: Vec<_> = future::join_all(futures).await;
 
-    // Here websocket connection should be closed but ATM holochain_websocket does not provide this functionality
+    // Clean-up part of the script
+    let mut app_websocket = AppWebsocket::connect(config.happ_port)
+        .await
+        .context("failed to connect to holochain's app interface")?;
+
+    for app in &*installed_happs {
+        if let Some(app_info) = app_websocket.get_app_info(app.to_string()).await {
+            println!("{:?}", app_info.clone());
+            if is_agent_owner(app_info.cell_data, agent_key.clone())
+                && !is_listed_in_config(&app_info.installed_app_id, config)
+            {
+                admin_websocket
+                    .deactivate_app(&app_info.installed_app_id)
+                    .await?;
+            }
+        }
+    }
+
+    // Here all websocket connections should be closed but ATM holochain_websocket does not provide this functionality
 
     info!("finished installing hApps");
     Ok(())
@@ -154,4 +178,16 @@ pub(crate) fn extract_zip<P: AsRef<Path>>(source_path: P, unpack_path: P) -> Res
     debug!("{}", String::from_utf8_lossy(&output.stdout));
 
     Ok(())
+}
+
+// Returns true if cell was installed by agent
+fn is_agent_owner(cell_data: Vec<InstalledCell>, key: AgentPubKey) -> bool {
+    println!("{:?}", cell_data);
+    println!("{:?}", key);
+    true
+}
+
+// Returns true if app is listed in config
+fn is_listed_in_config(installed_app_id: &str, config: &Config) -> bool {
+    false
 }
