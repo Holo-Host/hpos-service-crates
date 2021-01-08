@@ -56,7 +56,8 @@ pub async fn install_happs(happ_file: &HappFile, config: &Config) -> Result<()> 
     let mut agent_websocket = admin_websocket.clone();
     let agent_key = agent_websocket.get_agent_key().await?;
 
-    let futures: Vec<_> = happs_to_install.clone()
+    let futures: Vec<_> = happs_to_install
+        .clone()
         .map(|happ| {
             let mut admin_websocket = admin_websocket.clone();
             let active_happs = Arc::clone(&active_happs);
@@ -79,9 +80,9 @@ pub async fn install_happs(happ_file: &HappFile, config: &Config) -> Result<()> 
         .await
         .context("failed to connect to holochain's app interface")?;
 
-    let happs_to_keep = happs_to_install.map(|happ| {
-        happ.id_with_version()
-    }).collect();
+    let happs_to_keep = happs_to_install
+        .map(|happ| happ.id_with_version())
+        .collect();
 
     for app in &*active_happs {
         if let Some(app_info) = app_websocket.get_app_info(app.to_string()).await {
