@@ -1267,33 +1267,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d7afe4a420e3fe79967a00898cc1f4db7c8a49a9333a29f8a4bd76a253d5cd04"
 
 [[package]]
-name = "hdk3"
-version = "0.0.1"
-source = "git+https://github.com/holochain/holochain?rev=43210e7360970369025e7a6e528779d8f9636564#43210e7360970369025e7a6e528779d8f9636564"
-dependencies = [
- "hdk3_derive",
- "holo_hash",
- "holochain_wasmer_guest",
- "holochain_zome_types",
- "paste 1.0.3",
- "serde",
- "serde_bytes",
- "thiserror",
-]
-
-[[package]]
-name = "hdk3_derive"
-version = "0.0.1"
-source = "git+https://github.com/holochain/holochain?rev=43210e7360970369025e7a6e528779d8f9636564#43210e7360970369025e7a6e528779d8f9636564"
-dependencies = [
- "holochain_zome_types",
- "paste 1.0.3",
- "proc-macro2 1.0.24",
- "quote 1.0.7",
- "syn 1.0.54",
-]
-
-[[package]]
 name = "heck"
 version = "0.3.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1353,7 +1326,6 @@ dependencies = [
  "fixt",
  "futures",
  "ghost_actor",
- "hdk3",
  "holo_hash",
  "holochain_keystore",
  "holochain_p2p",
@@ -1365,10 +1337,8 @@ dependencies = [
  "holochain_websocket",
  "holochain_zome_types",
  "human-panic",
- "itertools 0.9.0",
  "kitsune_p2p",
  "lazy_static",
- "matches",
  "mockall",
  "must_future",
  "nanoid",
@@ -1385,7 +1355,6 @@ dependencies = [
  "structopt",
  "strum",
  "tempdir",
- "test_wasm_common",
  "thiserror",
  "tokio",
  "tokio_safe_block_on",
@@ -1592,17 +1561,6 @@ dependencies = [
  "holochain_serialized_bytes 0.0.46",
  "serde",
  "thiserror",
-]
-
-[[package]]
-name = "holochain_wasmer_guest"
-version = "0.0.52"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6c86bf521e02f8f86ea96177ef316560e66e51a192b83a302e8e4b32a6f47f02"
-dependencies = [
- "holochain_serialized_bytes 0.0.46",
- "holochain_wasmer_common",
- "serde",
 ]
 
 [[package]]
@@ -1885,15 +1843,6 @@ name = "itertools"
 version = "0.8.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f56a2d0bc861f9165be4eb3442afd3c236d8a98afd426f65d92324ae1091a484"
-dependencies = [
- "either",
-]
-
-[[package]]
-name = "itertools"
-version = "0.9.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "284f18f85651fe11e8a991b2adb42cb078325c996ed026d994719efcfca1d54b"
 dependencies = [
  "either",
 ]
@@ -3544,7 +3493,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e63e6744142336dfb606fe2b068afa2e1cca1ee6a5d8377277a92945d81fa331"
 dependencies = [
  "bitflags",
- "itertools 0.8.2",
+ "itertools",
  "proc-macro2 1.0.24",
  "quote 1.0.7",
  "syn 1.0.54",
@@ -3766,17 +3715,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2dfed899f0eb03f32ee8c6a0aabdb8a7949659e3466561fc0adf54e26d88c5f4"
 dependencies = [
  "winapi-util",
-]
-
-[[package]]
-name = "test_wasm_common"
-version = "0.0.1"
-source = "git+https://github.com/holochain/holochain?rev=43210e7360970369025e7a6e528779d8f9636564#43210e7360970369025e7a6e528779d8f9636564"
-dependencies = [
- "hdk3",
- "holochain_serialized_bytes 0.0.46",
- "serde",
- "serde_bytes",
 ]
 
 [[package]]

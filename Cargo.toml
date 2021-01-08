@@ -25,6 +25,7 @@ url = "2.2"
 git = "https://github.com/holochain/holochain"
 rev = "43210e7360970369025e7a6e528779d8f9636564"
 package = "holochain"
+default-features = false
 
 [dependencies.holochain_types]
 git = "https://github.com/holochain/holochain"
