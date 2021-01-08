@@ -83,7 +83,7 @@ impl AdminWebsocket {
     }
 
     #[instrument(skip(self), err)]
-    pub async fn list_installed_happs(&mut self) -> Result<Vec<InstalledAppId>> {
+    pub async fn list_active_happs(&mut self) -> Result<Vec<InstalledAppId>> {
         let response = self.send(AdminRequest::ListActiveApps).await?;
         match response {
             AdminResponse::ActiveAppsListed(app_ids) => Ok(app_ids),

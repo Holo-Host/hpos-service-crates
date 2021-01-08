@@ -40,9 +40,9 @@ pub async fn install_happs(happ_file: &HappFile, config: &Config) -> Result<()> 
         warn!(port = ?config.happ_port, ?error, "failed to start app interface, maybe it's already up?");
     }
 
-    let installed_happs = Arc::new(
+    let active_happs = Arc::new(
         admin_websocket
-            .list_installed_happs()
+            .list_active_happs()
             .await
             .context("failed to get installed hApps")?,
     );
@@ -52,17 +52,17 @@ pub async fn install_happs(happ_file: &HappFile, config: &Config) -> Result<()> 
         .iter()
         .chain(happ_file.self_hosted_happs.iter());
 
-    // This line makes sure agent key gets created and stored in memory before all the async stuff starts
+    // This line makes sure agent key gets created and stored before all the async stuff starts
     let mut agent_websocket = admin_websocket.clone();
     let agent_key = agent_websocket.get_agent_key().await?;
 
-    let futures: Vec<_> = happs_to_install
+    let futures: Vec<_> = happs_to_install.clone()
         .map(|happ| {
             let mut admin_websocket = admin_websocket.clone();
-            let installed_happs = Arc::clone(&installed_happs);
+            let active_happs = Arc::clone(&active_happs);
             async move {
                 let install_ui = install_ui(happ, config);
-                if installed_happs.contains(&happ.id_with_version()) {
+                if active_happs.contains(&happ.id_with_version()) {
                     info!(?happ.app_id, "already installed, just downloading UI");
                     install_ui.await
                 } else {
@@ -79,12 +79,16 @@ pub async fn install_happs(happ_file: &HappFile, config: &Config) -> Result<()> 
         .await
         .context("failed to connect to holochain's app interface")?;
 
-    for app in &*installed_happs {
+    let happs_to_keep = happs_to_install.map(|happ| {
+        happ.id_with_version()
+    }).collect();
+
+    for app in &*active_happs {
         if let Some(app_info) = app_websocket.get_app_info(app.to_string()).await {
-            println!("{:?}", app_info.clone());
             if is_agent_owner(app_info.cell_data, agent_key.clone())
-                && !is_listed_in_config(&app_info.installed_app_id, config)
+                && !is_listed_in_config(&app_info.installed_app_id, &happs_to_keep)
             {
+                info!("deactivating app {}", app_info.installed_app_id);
                 admin_websocket
                     .deactivate_app(&app_info.installed_app_id)
                     .await?;
@@ -182,12 +186,14 @@ pub(crate) fn extract_zip<P: AsRef<Path>>(source_path: P, unpack_path: P) -> Res
 
 // Returns true if cell was installed by agent
 fn is_agent_owner(cell_data: Vec<InstalledCell>, key: AgentPubKey) -> bool {
-    println!("{:?}", cell_data);
-    println!("{:?}", key);
-    true
+    let mut result = false;
+    for cell in cell_data {
+        result = result || cell.into_id().agent_pubkey() == &key;
+    }
+    result
 }
 
-// Returns true if app is listed in config
-fn is_listed_in_config(installed_app_id: &str, config: &Config) -> bool {
-    false
+// Returns true if app is listed in happs_to_keep
+fn is_listed_in_config(installed_app_id: &str, happs_to_keep: &Vec<String>) -> bool {
+    happs_to_keep.contains(&installed_app_id.to_string())
 }
