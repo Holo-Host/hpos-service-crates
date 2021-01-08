@@ -15,7 +15,6 @@ use std::process;
 use std::sync::Arc;
 
 use anyhow::{anyhow, Context, Result};
-use futures::future;
 use tempfile::TempDir;
 use tracing::{debug, info, instrument, warn};
 use url::Url;
@@ -47,33 +46,25 @@ pub async fn install_happs(happ_file: &HappFile, config: &Config) -> Result<()> 
             .context("failed to get installed hApps")?,
     );
 
-    let happs_to_install = happ_file
+    let happs_to_install: Vec<&Happ> = happ_file
         .core_happs
         .iter()
-        .chain(happ_file.self_hosted_happs.iter());
+        .chain(happ_file.self_hosted_happs.iter())
+        .collect();
 
     // This line makes sure agent key gets created and stored before all the async stuff starts
     let mut agent_websocket = admin_websocket.clone();
     let agent_key = agent_websocket.get_agent_key().await?;
 
-    let futures: Vec<_> = happs_to_install
-        .clone()
-        .map(|happ| {
-            let mut admin_websocket = admin_websocket.clone();
-            let active_happs = Arc::clone(&active_happs);
-            async move {
-                let install_ui = install_ui(happ, config);
-                if active_happs.contains(&happ.id_with_version()) {
-                    info!(?happ.app_id, "already installed, just downloading UI");
-                    install_ui.await
-                } else {
-                    let install_happ = admin_websocket.install_happ(happ);
-                    futures::try_join!(install_happ, install_ui).map(|_| ())
-                }
-            }
-        })
-        .collect();
-    let _: Vec<_> = future::join_all(futures).await;
+    for happ in &happs_to_install {
+        info!("Installing app {}", happ.app_id);
+        if active_happs.contains(&happ.id_with_version()) {
+            info!("App already installed, just downloading UI");
+            install_ui(happ, config).await?;
+        } else {
+            admin_websocket.install_happ(happ).await?;
+        }
+    }
 
     // Clean-up part of the script
     let mut app_websocket = AppWebsocket::connect(config.happ_port)
@@ -81,6 +72,7 @@ pub async fn install_happs(happ_file: &HappFile, config: &Config) -> Result<()> 
         .context("failed to connect to holochain's app interface")?;
 
     let happs_to_keep = happs_to_install
+        .iter()
         .map(|happ| happ.id_with_version())
         .collect();
 
