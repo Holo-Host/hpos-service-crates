@@ -116,9 +116,12 @@ impl AdminWebsocket {
             .get_agent_key()
             .await
             .context("failed to generate agent key")?;
-        let path = crate::download_file(happ.dna_url.as_ref().context("dna_url is None")?)
-            .await
-            .context("failed to download DNA archive")?;
+        let path = match happ.dna_path.clone() {
+            Some(path) => path,
+            None => crate::download_file(happ.dna_url.as_ref().context("dna_url is None")?)
+                .await
+                .context("failed to download DNA archive")?,
+        };
         let dna = InstallAppDnaPayload {
             nick: happ.id_with_version(),
             path,

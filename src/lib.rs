@@ -101,14 +101,19 @@ pub async fn install_happs(happ_file: &HappFile, config: &Config) -> Result<()> 
     fields(?happ.app_id)
 )]
 async fn install_ui(happ: &Happ, config: &Config) -> Result<()> {
-    if happ.ui_url.is_none() {
-        debug!(?happ.app_id, "ui_url == None, skipping UI installation");
-        return Ok(());
-    }
+    let source_path = match happ.ui_path.clone() {
+        Some(path) => path,
+        None => {
+            if happ.ui_url.is_none() {
+                debug!(?happ.app_id, "ui_url == None, skipping UI installation");
+                return Ok(());
+            }
+            download_file(happ.ui_url.as_ref().unwrap())
+                .await
+                .context("failed to download UI archive")?
+        }
+    };
 
-    let source_path = download_file(happ.ui_url.as_ref().unwrap())
-        .await
-        .context("failed to download UI archive")?;
     let unpack_path = config.ui_store_folder.join(&happ.app_id);
     extract_zip(&source_path, &unpack_path).context("failed to extract UI archive")?;
     info!(?happ.app_id, "installed UI");
