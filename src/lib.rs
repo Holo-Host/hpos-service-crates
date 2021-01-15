@@ -71,14 +71,14 @@ pub async fn install_happs(happ_file: &HappFile, config: &Config) -> Result<()> 
         .await
         .context("failed to connect to holochain's app interface")?;
 
-    let happs_to_test: HappIds = happs_to_install
+    let happs_to_keep: HappIds = happs_to_install
         .iter()
         .map(|happ| happ.id_with_version())
         .collect();
 
     for app in &*active_happs {
         if let Some(app_info) = app_websocket.get_app_info(app.to_string()).await {
-            if !keep_app_active(&app_info.installed_app_id, happs_to_test.clone()) {
+            if !keep_app_active(&app_info.installed_app_id, happs_to_keep.clone()) {
                 info!("deactivating app {}", app_info.installed_app_id);
                 admin_websocket
                     .deactivate_app(&app_info.installed_app_id)
@@ -181,7 +181,29 @@ pub(crate) fn extract_zip<P: AsRef<Path>>(source_path: P, unpack_path: P) -> Res
 }
 
 // Returns true if app should be kept active in holochain
-fn keep_app_active(installed_app_id: &str, happs_to_test: HappIds) -> bool {
-    happs_to_test.contains(&installed_app_id.to_string())
+fn keep_app_active(installed_app_id: &str, happs_to_keep: HappIds) -> bool {
+    happs_to_keep.contains(&installed_app_id.to_string())
         && (installed_app_id.starts_with("core") || installed_app_id.starts_with("self"))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn verify_keep_app_active() {
+        let happs_to_keep = vec![
+            "self-elemental-chat:1".to_string(),
+            "core-hha:1".to_string(),
+        ];
+        let app_1 = "elemental-chat:1";
+        let app_2 = "self-elemental-chat:1";
+        let app_3 = "core-hha";
+        let app_4 = "core-hha:1";
+
+        assert_eq!(keep_app_active(app_1, happs_to_keep.clone()), false);
+        assert_eq!(keep_app_active(app_2, happs_to_keep.clone()), true);
+        assert_eq!(keep_app_active(app_3, happs_to_keep.clone()), false);
+        assert_eq!(keep_app_active(app_4, happs_to_keep.clone()), true);
+    }
 }
