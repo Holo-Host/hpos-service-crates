@@ -46,11 +46,11 @@ Example YAML:
 ```yaml
 ---
 core_happs:
-  - app_id: hha
+  - app_id: core-hha
     version: 1
     dna_url: https://s3.eu-central-1.wasabisys.com/elemetal-chat-tests/hha.dna.gz
 self_hosted_happs:
-  - app_id: elemental-chat
+  - app_id: self-elemental-chat
     version: 1
     dna_url: https://github.com/holochain/elemental-chat/releases/download/v0.0.1-alpha3/elemental-chat.dna.gz
     ui_url: https://github.com/holochain/elemental-chat-ui/releases/download/v0.0.1-alpha7/elemental-chat.zip
