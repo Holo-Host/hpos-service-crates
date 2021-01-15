@@ -37,6 +37,8 @@ pub struct HappFile {
 }
 
 /// Configuration of a single hApp from config.yaml
+/// ui_path and dna_path takes precedence over ui_url and dna_url respectively
+/// and is meant for running tests
 #[derive(Debug, Deserialize)]
 pub struct Happ {
     #[serde(alias = "app_id")]
