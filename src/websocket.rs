@@ -96,10 +96,10 @@ impl AdminWebsocket {
         fields(?happ.app_id),
     )]
     pub async fn install_happ(&mut self, happ: &Happ) -> Result<()> {
-        if happ.dna_url.is_some() {
+        if happ.dna_url.is_some() || happ.dna_path.is_some() {
             self.install_dna(happ).await?;
         } else {
-            debug!(?happ.app_id, "dna_url == None, skipping DNA installation")
+            debug!(?happ.app_id, "dna_url == None || dna_path == None, skipping DNA installation")
         }
         self.activate_app(happ).await?;
         info!(?happ.app_id, "installed hApp");
