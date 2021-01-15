@@ -5,8 +5,6 @@ mod config;
 pub use config::{Config, Happ, HappFile};
 
 mod websocket;
-use holochain_types::app::InstalledCell;
-use holochain_types::dna::AgentPubKey;
 pub use websocket::{AdminWebsocket, AppWebsocket};
 
 use std::fs;
@@ -18,6 +16,8 @@ use anyhow::{anyhow, Context, Result};
 use tempfile::TempDir;
 use tracing::{debug, info, instrument, warn};
 use url::Url;
+
+type HappIds = Vec<String>;
 
 #[instrument(err, fields(path = %path.as_ref().display()))]
 pub fn load_happ_file(path: impl AsRef<Path>) -> Result<HappFile> {
@@ -54,7 +54,7 @@ pub async fn install_happs(happ_file: &HappFile, config: &Config) -> Result<()> 
 
     // This line makes sure agent key gets created and stored before all the async stuff starts
     let mut agent_websocket = admin_websocket.clone();
-    let agent_key = agent_websocket.get_agent_key().await?;
+    let _ = agent_websocket.get_agent_key().await?;
 
     for happ in &happs_to_install {
         info!("Installing app {}", happ.app_id);
@@ -71,16 +71,14 @@ pub async fn install_happs(happ_file: &HappFile, config: &Config) -> Result<()> 
         .await
         .context("failed to connect to holochain's app interface")?;
 
-    let happs_to_keep = happs_to_install
+    let happs_to_test: HappIds = happs_to_install
         .iter()
         .map(|happ| happ.id_with_version())
         .collect();
 
     for app in &*active_happs {
         if let Some(app_info) = app_websocket.get_app_info(app.to_string()).await {
-            if is_agent_owner(app_info.cell_data, agent_key.clone())
-                && !is_listed_in_config(&app_info.installed_app_id, &happs_to_keep)
-            {
+            if !keep_app_active(&app_info.installed_app_id, happs_to_test.clone()) {
                 info!("deactivating app {}", app_info.installed_app_id);
                 admin_websocket
                     .deactivate_app(&app_info.installed_app_id)
@@ -182,16 +180,8 @@ pub(crate) fn extract_zip<P: AsRef<Path>>(source_path: P, unpack_path: P) -> Res
     Ok(())
 }
 
-// Returns true if cell was installed by agent
-fn is_agent_owner(cell_data: Vec<InstalledCell>, key: AgentPubKey) -> bool {
-    let mut result = false;
-    for cell in cell_data {
-        result = result || cell.into_id().agent_pubkey() == &key;
-    }
-    result
-}
-
-// Returns true if app is listed in happs_to_keep
-fn is_listed_in_config(installed_app_id: &str, happs_to_keep: &Vec<String>) -> bool {
-    happs_to_keep.contains(&installed_app_id.to_string())
+// Returns true if app should be kept active in holochain
+fn keep_app_active(installed_app_id: &str, happs_to_test: HappIds) -> bool {
+    happs_to_test.contains(&installed_app_id.to_string())
+        && (installed_app_id.starts_with("core") || installed_app_id.starts_with("self"))
 }
