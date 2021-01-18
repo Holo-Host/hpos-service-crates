@@ -5,7 +5,7 @@ mod config;
 pub use config::{Config, Happ, HappFile};
 
 mod websocket;
-pub use websocket::AdminWebsocket;
+pub use websocket::{AdminWebsocket, AppWebsocket};
 
 use std::fs;
 use std::path::{Path, PathBuf};
@@ -13,10 +13,11 @@ use std::process;
 use std::sync::Arc;
 
 use anyhow::{anyhow, Context, Result};
-use futures::future;
 use tempfile::TempDir;
 use tracing::{debug, info, instrument, warn};
 use url::Url;
+
+type HappIds = Vec<String>;
 
 #[instrument(err, fields(path = %path.as_ref().display()))]
 pub fn load_happ_file(path: impl AsRef<Path>) -> Result<HappFile> {
@@ -32,43 +33,61 @@ pub fn load_happ_file(path: impl AsRef<Path>) -> Result<HappFile> {
 pub async fn install_happs(happ_file: &HappFile, config: &Config) -> Result<()> {
     let mut admin_websocket = AdminWebsocket::connect(config.admin_port)
         .await
-        .context("failed to connect to holochain")?;
+        .context("failed to connect to holochain's admin interface")?;
 
     if let Err(error) = admin_websocket.attach_app_interface(config.happ_port).await {
         warn!(port = ?config.happ_port, ?error, "failed to start app interface, maybe it's already up?");
     }
 
-    let installed_happs = Arc::new(
+    let active_happs = Arc::new(
         admin_websocket
-            .list_installed_happs()
+            .list_active_happs()
             .await
             .context("failed to get installed hApps")?,
     );
 
-    let happs_to_install = happ_file
+    let happs_to_install: Vec<&Happ> = happ_file
         .core_happs
         .iter()
-        .chain(happ_file.self_hosted_happs.iter());
-
-    let futures: Vec<_> = happs_to_install
-        .map(|happ| {
-            let mut admin_websocket = admin_websocket.clone();
-            let installed_happs = Arc::clone(&installed_happs);
-            async move {
-                let install_ui = install_ui(happ, config);
-                if installed_happs.contains(&happ.id_with_version()) {
-                    info!(?happ.app_id, "already installed, just downloading UI");
-                    install_ui.await
-                } else {
-                    let install_happ = admin_websocket.install_happ(happ);
-                    futures::try_join!(install_happ, install_ui).map(|_| ())
-                }
-            }
-        })
+        .chain(happ_file.self_hosted_happs.iter())
         .collect();
-    let _: Vec<_> = future::join_all(futures).await;
 
-    // Here websocket connection should be closed but ATM holochain_websocket does not provide this functionality
+    // This line makes sure agent key gets created and stored before all the async stuff starts
+    let mut agent_websocket = admin_websocket.clone();
+    let _ = agent_websocket.get_agent_key().await?;
+
+    for happ in &happs_to_install {
+        info!("Installing app {}", happ.app_id);
+        if active_happs.contains(&happ.id_with_version()) {
+            info!("App already installed, just downloading UI");
+            install_ui(happ, config).await?;
+        } else {
+            admin_websocket.install_happ(happ).await?;
+        }
+    }
+
+    // Clean-up part of the script
+    let mut app_websocket = AppWebsocket::connect(config.happ_port)
+        .await
+        .context("failed to connect to holochain's app interface")?;
+
+    let happs_to_keep: HappIds = happs_to_install
+        .iter()
+        .map(|happ| happ.id_with_version())
+        .collect();
+
+    for app in &*active_happs {
+        if let Some(app_info) = app_websocket.get_app_info(app.to_string()).await {
+            if !keep_app_active(&app_info.installed_app_id, happs_to_keep.clone()) {
+                info!("deactivating app {}", app_info.installed_app_id);
+                admin_websocket
+                    .deactivate_app(&app_info.installed_app_id)
+                    .await?;
+            }
+        }
+    }
+
+    // Here all websocket connections should be closed but ATM holochain_websocket does not provide this functionality
 
     info!("finished installing hApps");
     Ok(())
@@ -80,14 +99,19 @@ pub async fn install_happs(happ_file: &HappFile, config: &Config) -> Result<()> 
     fields(?happ.app_id)
 )]
 async fn install_ui(happ: &Happ, config: &Config) -> Result<()> {
-    if happ.ui_url.is_none() {
-        debug!(?happ.app_id, "ui_url == None, skipping UI installation");
-        return Ok(());
-    }
+    let source_path = match happ.ui_path.clone() {
+        Some(path) => path,
+        None => {
+            if happ.ui_url.is_none() {
+                debug!(?happ.app_id, "ui_url == None, skipping UI installation");
+                return Ok(());
+            }
+            download_file(happ.ui_url.as_ref().unwrap())
+                .await
+                .context("failed to download UI archive")?
+        }
+    };
 
-    let source_path = download_file(happ.ui_url.as_ref().unwrap())
-        .await
-        .context("failed to download UI archive")?;
     let unpack_path = config.ui_store_folder.join(&happ.app_id);
     extract_zip(&source_path, &unpack_path).context("failed to extract UI archive")?;
     info!(?happ.app_id, "installed UI");
@@ -154,4 +178,28 @@ pub(crate) fn extract_zip<P: AsRef<Path>>(source_path: P, unpack_path: P) -> Res
     debug!("{}", String::from_utf8_lossy(&output.stdout));
 
     Ok(())
+}
+
+// Returns true if app should be kept active in holochain
+fn keep_app_active(installed_app_id: &str, happs_to_keep: HappIds) -> bool {
+    happs_to_keep.contains(&installed_app_id.to_string()) || installed_app_id.contains(":hCAk")
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn verify_keep_app_active() {
+        let happs_to_keep = vec!["elemental-chat:2".to_string(), "hha:1".to_string()];
+        let app_1 = "elemental-chat:1";
+        let app_2 = "elemental-chat:2";
+        let app_3 = "elemental-chat:hCAkabbaabbaabba";
+        let app_4 = "other-app";
+
+        assert_eq!(keep_app_active(app_1, happs_to_keep.clone()), false);
+        assert_eq!(keep_app_active(app_2, happs_to_keep.clone()), true); // because it is in config
+        assert_eq!(keep_app_active(app_3, happs_to_keep.clone()), true); // because it is hosted
+        assert_eq!(keep_app_active(app_4, happs_to_keep.clone()), false);
+    }
 }
