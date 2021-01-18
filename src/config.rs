@@ -48,6 +48,7 @@ pub struct Happ {
     pub dna_url: Option<Url>,
     pub ui_path: Option<PathBuf>,
     pub dna_path: Option<PathBuf>,
+    pub uuid: Option<String>
 }
 
 impl Happ {
