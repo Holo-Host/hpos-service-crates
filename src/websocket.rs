@@ -6,7 +6,10 @@ use std::{env, fs};
 use anyhow::{anyhow, Context, Result};
 use holochain::conductor::api::{AdminRequest, AdminResponse, AppRequest, AppResponse};
 use holochain_types::{
-    app::{InstallAppDnaPayload, InstallAppPayload, InstalledApp, InstalledAppId, RegisterDnaPayload, DnaSource},
+    app::{
+        DnaSource, InstallAppDnaPayload, InstallAppPayload, InstalledApp, InstalledAppId,
+        RegisterDnaPayload,
+    },
     dna::AgentPubKey,
 };
 use holochain_websocket::{websocket_connect, WebsocketConfig, WebsocketSender};
@@ -133,7 +136,6 @@ impl AdminWebsocket {
         let msg = AdminRequest::RegisterDna(Box::new(dna));
         let response = self.send(msg).await?;
         if let AdminResponse::DnaRegistered(hash) = response {
-
             // install the happ using the registered DNA
             let dna = InstallAppDnaPayload {
                 nick: happ.id_with_version(),
