@@ -46,11 +46,11 @@ Example YAML:
 ```yaml
 ---
 core_happs:
-  - app_id: core-hha
+  - app_id: hha
     version: 1
     dna_url: https://s3.eu-central-1.wasabisys.com/elemetal-chat-tests/hha.dna.gz
 self_hosted_happs:
-  - app_id: self-elemental-chat
+  - app_id: elemental-chat
     version: 1
     dna_url: https://github.com/holochain/elemental-chat/releases/download/v0.0.1-alpha3/elemental-chat.dna.gz
     ui_url: https://github.com/holochain/elemental-chat-ui/releases/download/v0.0.1-alpha7/elemental-chat.zip
@@ -59,4 +59,6 @@ self_hosted_happs:
 
 At the runtime script deactivates all the apps in holochain that **DO NOT** meet the criteria:
 
-(`app_id` starts with `core` OR `app_id` starts with `self`) AND (`app_id` is listed in YAML configuration file)
+`app_id` contains string `:hCAk` OR `app_id` is listed in YAML configuration file
+
+With such a condition the only apps that remain active are self-hosted and core happs installed from [HPOS configuration](https://github.com/Holo-Host/holo-nixpkgs/blob/develop/profiles/logical/hpos/default.nix#L203) and hosted happs installed by [envoy](https://github.com/Holo-Host/holo-envoy).
