@@ -6,7 +6,10 @@ use std::{env, fs};
 use anyhow::{anyhow, Context, Result};
 use holochain::conductor::api::{AdminRequest, AdminResponse, AppRequest, AppResponse};
 use holochain_types::{
-    app::{InstallAppDnaPayload, InstallAppPayload, InstalledApp, InstalledAppId},
+    app::{
+        DnaSource, InstallAppDnaPayload, InstallAppPayload, InstalledApp, InstalledAppId,
+        RegisterDnaPayload,
+    },
     dna::AgentPubKey,
 };
 use holochain_websocket::{websocket_connect, WebsocketConfig, WebsocketSender};
@@ -122,20 +125,36 @@ impl AdminWebsocket {
                 .await
                 .context("failed to download DNA archive")?,
         };
-        let dna = InstallAppDnaPayload {
-            nick: happ.id_with_version(),
-            path,
+
+        // register the DNA so we can pass in a uuid
+        let dna = RegisterDnaPayload {
+            uuid: happ.uuid.clone(),
+            source: DnaSource::Path(path.into()),
             properties: None,
-            membrane_proof: None,
         };
-        let payload = InstallAppPayload {
-            installed_app_id: happ.id_with_version(),
-            agent_key,
-            dnas: vec![dna],
-        };
-        let msg = AdminRequest::InstallApp(Box::new(payload));
+
+        let msg = AdminRequest::RegisterDna(Box::new(dna));
         let response = self.send(msg).await?;
-        Ok(response)
+        if let AdminResponse::DnaRegistered(hash) = response {
+            // install the happ using the registered DNA
+            let dna = InstallAppDnaPayload {
+                nick: happ.id_with_version(),
+                path: None,
+                hash: Some(hash),
+                properties: None,
+                membrane_proof: None,
+            };
+            let payload = InstallAppPayload {
+                installed_app_id: happ.id_with_version(),
+                agent_key,
+                dnas: vec![dna],
+            };
+            let msg = AdminRequest::InstallApp(Box::new(payload));
+            let response = self.send(msg).await?;
+            Ok(response)
+        } else {
+            unreachable!()
+        }
     }
 
     #[instrument(skip(self), err)]
