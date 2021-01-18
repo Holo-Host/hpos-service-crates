@@ -129,7 +129,7 @@ impl AdminWebsocket {
         // register the DNA so we can pass in a uuid
         let dna = RegisterDnaPayload {
             uuid: happ.uuid.clone(),
-            source: DnaSource::Path(path.into()),
+            source: DnaSource::Path(path),
             properties: None,
         };
 
