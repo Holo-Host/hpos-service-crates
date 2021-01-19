@@ -59,7 +59,10 @@ pub async fn install_happs(happ_file: &HappFile, config: &Config) -> Result<()> 
     for happ in &happs_to_install {
         let full_happ_id = &happ.id_from_config();
         if active_happs.contains(full_happ_id) {
-            info!("App {} already installed, just downloading UI", full_happ_id);
+            info!(
+                "App {} already installed, just downloading UI",
+                full_happ_id
+            );
             install_ui(happ, config).await?;
         } else {
             info!("Installing app {}", full_happ_id);
