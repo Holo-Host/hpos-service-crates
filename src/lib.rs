@@ -57,12 +57,14 @@ pub async fn install_happs(happ_file: &HappFile, config: &Config) -> Result<()> 
     let _ = agent_websocket.get_agent_key().await?;
 
     for happ in &happs_to_install {
-        info!("Installing app {}", happ.app_id);
-        if active_happs.contains(&happ.id_from_config()) {
-            info!("App already installed, just downloading UI");
+        let full_happ_id = &happ.id_from_config();
+        if active_happs.contains(full_happ_id) {
+            info!("App {} already installed, just downloading UI", full_happ_id);
             install_ui(happ, config).await?;
         } else {
+            info!("Installing app {}", full_happ_id);
             admin_websocket.install_happ(happ).await?;
+            install_ui(happ, config).await?;
         }
     }
 
