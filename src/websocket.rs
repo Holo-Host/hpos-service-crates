@@ -138,14 +138,14 @@ impl AdminWebsocket {
         if let AdminResponse::DnaRegistered(hash) = response {
             // install the happ using the registered DNA
             let dna = InstallAppDnaPayload {
-                nick: happ.id_with_version(),
+                nick: happ.id_from_config(),
                 path: None,
                 hash: Some(hash),
                 properties: None,
                 membrane_proof: None,
             };
             let payload = InstallAppPayload {
-                installed_app_id: happ.id_with_version(),
+                installed_app_id: happ.id_from_config(),
                 agent_key,
                 dnas: vec![dna],
             };
@@ -160,7 +160,7 @@ impl AdminWebsocket {
     #[instrument(skip(self), err)]
     async fn activate_app(&mut self, happ: &Happ) -> Result<AdminResponse> {
         let msg = AdminRequest::ActivateApp {
-            installed_app_id: happ.id_with_version(),
+            installed_app_id: happ.id_from_config(),
         };
         self.send(msg).await
     }

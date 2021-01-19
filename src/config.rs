@@ -52,7 +52,34 @@ pub struct Happ {
 }
 
 impl Happ {
-    pub fn id_with_version(&self) -> String {
-        format!("{}:{}", self.app_id, self.version)
+    /// generates the installed app id that should be used
+    /// based on the version and the uuid provided in the config fiel
+    pub fn id_from_config(&self) -> String {
+        if let Some(ref uuid) = self.uuid {
+            format!("{}:{}:{}", self.app_id, self.version, uuid)
+        } else {
+            format!("{}:{}", self.app_id, self.version)
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn verify_install_app_id_format() {
+        let mut cfg = Happ {
+            app_id: "x".into(),
+            version: String::from("1"),
+            ui_url: None,
+            dna_url: None,
+            dna_path: None,
+            ui_path: None,
+            uuid: None,
+        };
+        assert_eq!(cfg.id_from_config(), String::from("x:1"));
+        cfg.uuid = Some(String::from("001"));
+        assert_eq!(cfg.id_from_config(), String::from("x:1:001"));
     }
 }

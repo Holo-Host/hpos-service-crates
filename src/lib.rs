@@ -58,7 +58,7 @@ pub async fn install_happs(happ_file: &HappFile, config: &Config) -> Result<()> 
 
     for happ in &happs_to_install {
         info!("Installing app {}", happ.app_id);
-        if active_happs.contains(&happ.id_with_version()) {
+        if active_happs.contains(&happ.id_from_config()) {
             info!("App already installed, just downloading UI");
             install_ui(happ, config).await?;
         } else {
@@ -73,7 +73,7 @@ pub async fn install_happs(happ_file: &HappFile, config: &Config) -> Result<()> 
 
     let happs_to_keep: HappIds = happs_to_install
         .iter()
-        .map(|happ| happ.id_with_version())
+        .map(|happ| happ.id_from_config())
         .collect();
 
     for app in &*active_happs {
