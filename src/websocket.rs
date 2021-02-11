@@ -105,7 +105,17 @@ impl AdminWebsocket {
             debug!(?happ.app_id, "dna_url == None || dna_path == None, skipping DNA installation")
         }
         self.activate_app(happ).await?;
-        info!(?happ.app_id, "installed hApp");
+        info!(?happ.app_id, "installed & activated hApp");
+        Ok(())
+    }
+
+    #[instrument(
+        skip(self, happ),
+        fields(?happ.app_id),
+    )]
+    pub async fn activate_happ(&mut self, happ: &Happ) -> Result<()> {
+        self.activate_app(happ).await?;
+        info!(?happ.app_id, "activated hApp");
         Ok(())
     }
 
