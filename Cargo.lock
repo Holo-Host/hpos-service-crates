@@ -404,7 +404,7 @@ dependencies = [
  "tracing",
  "tracing-futures",
  "tracing-subscriber",
- "url 2.2.0",
+ "url 2.2.1",
 ]
 
 [[package]]
@@ -1920,7 +1920,7 @@ dependencies = [
  "sluice",
  "tracing",
  "tracing-futures",
- "url 2.2.0",
+ "url 2.2.1",
  "waker-fn",
 ]
 
@@ -3224,7 +3224,7 @@ dependencies = [
  "serde_urlencoded",
  "tokio",
  "tokio-tls",
- "url 2.2.0",
+ "url 2.2.1",
  "wasm-bindgen",
  "wasm-bindgen-futures",
  "web-sys",
@@ -3270,7 +3270,7 @@ dependencies = [
  "ordered-float",
  "serde",
  "serde_derive",
- "url 2.2.0",
+ "url 2.2.1",
  "uuid 0.8.2",
 ]
 
@@ -4102,7 +4102,7 @@ dependencies = [
  "native-tls",
  "rand 0.7.3",
  "sha-1",
- "url 2.2.0",
+ "url 2.2.1",
  "utf-8",
 ]
 
@@ -4186,9 +4186,9 @@ dependencies = [
 
 [[package]]
 name = "url"
-version = "2.2.0"
+version = "2.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5909f2b0817350449ed73e8bcd81c8c3c8d9a7a5d8acba4b27db277f1868976e"
+checksum = "9ccd964113622c8e9322cfac19eb1004a07e636c545f325da085d5cdde6f1f8b"
 dependencies = [
  "form_urlencoded",
  "idna 0.2.0",
@@ -4204,7 +4204,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c89cd13f1de9862d363308f5ffdadcd2b64b2a4a812fb296a80b7d3e80011b1e"
 dependencies = [
  "serde",
- "url 2.2.0",
+ "url 2.2.1",
 ]
 
 [[package]]
