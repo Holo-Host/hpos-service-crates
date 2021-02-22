@@ -197,7 +197,7 @@ pub(crate) fn extract_zip<P: AsRef<Path>>(source_path: P, unpack_path: P) -> Res
 
 // Returns true if app should be kept active in holochain
 fn keep_app_active(installed_app_id: &str, happs_to_keep: HappIds) -> bool {
-    happs_to_keep.contains(&installed_app_id.to_string()) || installed_app_id.contains(":hCAk")
+    happs_to_keep.contains(&installed_app_id.to_string()) || installed_app_id.contains("uhCk")
 }
 
 #[cfg(test)]
@@ -209,7 +209,7 @@ mod tests {
         let happs_to_keep = vec!["elemental-chat:2".to_string(), "hha:1".to_string()];
         let app_1 = "elemental-chat:1";
         let app_2 = "elemental-chat:2";
-        let app_3 = "elemental-chat:hCAkabbaabbaabba";
+        let app_3 = "uhCkkcF0X1dpwHFeIPI6-7rzM6ma9IgyiqD-othxgENSkL1So1Slt::servicelogger";
         let app_4 = "other-app";
 
         assert_eq!(keep_app_active(app_1, happs_to_keep.clone()), false);
