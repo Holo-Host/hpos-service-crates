@@ -197,7 +197,7 @@ pub(crate) fn extract_zip<P: AsRef<Path>>(source_path: P, unpack_path: P) -> Res
 
 // Returns true if app should be kept active in holochain
 fn keep_app_active(installed_app_id: &str, happs_to_keep: HappIds) -> bool {
-    happs_to_keep.contains(&installed_app_id.to_string()) || installed_app_id.contains("uhCk")
+    happs_to_keep.contains(&installed_app_id.to_string()) || installed_app_id.contains("uhCkk")
 }
 
 #[cfg(test)]
