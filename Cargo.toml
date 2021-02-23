@@ -20,6 +20,7 @@ tracing = { version = "0.1", features = ["attributes"] }
 tracing-futures = "0.2"
 tracing-subscriber = "0.2"
 url = "2.2"
+hc_utils = {git = "https://github.com/holochain/hc-utils", branch = "develop", package = "hc_utils"}
 
 [dependencies.holochain]
 git = "https://github.com/holochain/holochain"
@@ -31,6 +32,11 @@ default-features = false
 git = "https://github.com/holochain/holochain"
 rev = "ea026def01d1573d5e0edfb7f4e3e9453f88c43e"
 package = "holochain_types"
+
+[dependencies.holochain_types]
+git = "https://github.com/holochain/holochain"
+rev = "ea026def01d1573d5e0edfb7f4e3e9453f88c43e"
+package = "holochain_zome_types"
 
 [dependencies.holochain_websocket]
 git = "https://github.com/holochain/holochain"

@@ -17,7 +17,54 @@ use tempfile::TempDir;
 use tracing::{debug, info, instrument, warn};
 use url::Url;
 
+use hc_utils::WrappedHeaderHash;
+use holochain::conductor::api::ZomeCall;
+use holochain_types::app::InstalledAppId;
+use holochain_zome_types::zome::{FunctionName, ZomeName};
+
 type HappIds = Vec<String>;
+
+pub async fn activate_holo_hosted_happs(core_happ_id: InstalledAppId) -> Result<()> {
+    let list_of_happs: Vec<WrappedHeaderHash> = get_enabled_hosted_happs(core_happ_id);
+    install_holo_hosted_happs(list_of_happs);
+    Ok(())
+}
+
+pub fn install_holo_hosted_happs(happs: Vec<WrappedHeaderHash>) {
+    // iterate through the vec and
+    // Call http://localhost/hpos-holochain-api/
+    // for each WrappedHeaderHash to install the hosted_happ
+}
+
+pub async fn get_enabled_hosted_happs(
+    core_happ_id: InstalledAppId,
+) -> Result<Vec<WrappedHeaderHash>> {
+    let mut app_websocket = AppWebsocket::connect(42233)
+        .await
+        .context("failed to connect to holochain's app interface")?;
+    match app_websocket.get_app_info(app.to_string()).await {
+        Some(app_info) => {
+            let zome_call = ZomeCall {
+                cell_id: app_info.cell_data[0].into_id(),
+                zome_name: ZomeName::from("hha"),
+                fn_name: FunctionName::from("get_happs"),
+                payload: ExternIO::encode(()),
+                cap: None,
+                provenance: app_info.cell_data[0].into_id().agent_pubkey(),
+            };
+            let app_request = AppRequest::ZomeCall(Box::new(zome_call));
+            let happ_list = app_websocket.send(app_request.to_string()).await;
+            info!("Hosted happs List {}", happ_list);
+            // This is the happs list that is returned from the hha DNA
+            // https://github.com/Holo-Host/holo-hosting-app-rsm/blob/develop/zomes/hha/src/lib.rs#L54
+            // return Vec of happ_list.happ_id
+            return Ok(());
+        }
+        None => {
+            // error
+        }
+    }
+}
 
 #[instrument(err, fields(path = %path.as_ref().display()))]
 pub fn load_happ_file(path: impl AsRef<Path>) -> Result<HappFile> {
