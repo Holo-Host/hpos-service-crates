@@ -33,7 +33,7 @@ git = "https://github.com/holochain/holochain"
 rev = "ea026def01d1573d5e0edfb7f4e3e9453f88c43e"
 package = "holochain_types"
 
-[dependencies.holochain_types]
+[dependencies.holochain_zome_types]
 git = "https://github.com/holochain/holochain"
 rev = "ea026def01d1573d5e0edfb7f4e3e9453f88c43e"
 package = "holochain_zome_types"
