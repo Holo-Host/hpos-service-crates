@@ -25,8 +25,8 @@ use holochain_zome_types::zome::{FunctionName, ZomeName};
 type HappIds = Vec<String>;
 
 pub async fn activate_holo_hosted_happs(core_happ_id: InstalledAppId) -> Result<()> {
-    let list_of_happs: Vec<WrappedHeaderHash> = get_enabled_hosted_happs(core_happ_id);
-    install_holo_hosted_happs(list_of_happs);
+    let list_of_happs: Vec<WrappedHeaderHash> = get_enabled_hosted_happs(core_happ_id)?;
+    install_holo_hosted_happs(list_of_happs)?;
     Ok(())
 }
 
@@ -53,15 +53,20 @@ pub async fn get_enabled_hosted_happs(
                 provenance: app_info.cell_data[0].into_id().agent_pubkey(),
             };
             let app_request = AppRequest::ZomeCall(Box::new(zome_call));
-            let happ_list = app_websocket.send(app_request.to_string()).await;
-            info!("Hosted happs List {}", happ_list);
-            // This is the happs list that is returned from the hha DNA
-            // https://github.com/Holo-Host/holo-hosting-app-rsm/blob/develop/zomes/hha/src/lib.rs#L54
-            // return Vec of happ_list.happ_id
-            return Ok(());
+            let response = app_websocket.send(app_request.to_string()).await;
+            match response {
+                // This is the happs list that is returned from the hha DNA
+                // https://github.com/Holo-Host/holo-hosting-app-rsm/blob/develop/zomes/hha/src/lib.rs#L54
+                // return Vec of happ_list.happ_id
+                AppResponse::ZomeCall(r) => {
+                    info!("Hosted happs List {:?}", r);
+                    return rmp_serde::from_read_ref(r)
+                },
+                _ => return Err(anyhow!("unexpected response: {:?}", response)),
+            }
         }
         None => {
-            // error
+            return Err(anyhow!("HHA is not installed"));
         }
     }
 }
