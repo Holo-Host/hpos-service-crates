@@ -18,50 +18,123 @@ use tracing::{debug, info, instrument, warn};
 use url::Url;
 
 use hc_utils::WrappedHeaderHash;
+use holochain::conductor::api::AppResponse;
 use holochain::conductor::api::ZomeCall;
-use holochain_types::app::InstalledAppId;
-use holochain_zome_types::zome::{FunctionName, ZomeName};
+use holochain_zome_types::{
+    zome::{FunctionName, ZomeName},
+    zome_io::ExternInput,
+    SerializedBytes,
+};
+use std::fmt;
 
 type HappIds = Vec<String>;
 
-pub async fn activate_holo_hosted_happs(core_happ_id: InstalledAppId) -> Result<()> {
-    let list_of_happs: Vec<WrappedHeaderHash> = get_enabled_hosted_happs(core_happ_id)?;
-    install_holo_hosted_happs(list_of_happs)?;
+pub async fn activate_holo_hosted_happs(core_happ: Happ) -> Result<()> {
+    let list_of_happs: Vec<WrappedHeaderHash> = get_enabled_hosted_happs(core_happ).await?;
+    install_holo_hosted_happs(list_of_happs).await?;
     Ok(())
 }
-
-pub fn install_holo_hosted_happs(happs: Vec<WrappedHeaderHash>) {
+#[derive(Clone)]
+struct Body {
+    happ_id: WrappedHeaderHash,
+    preferences: Preferences,
+}
+impl fmt::Display for Body {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(
+            f,
+            "{{ happ_id: {:?},
+            preferences: {}
+        }}",
+            self.happ_id,
+            self.preferences.to_string()
+        )
+    }
+}
+#[derive(Clone)]
+struct Preferences {
+    max_fuel_before_invoice: u64,
+    max_time_before_invoice: u64,
+    price_compute: u64,
+    price_storage: u64,
+    price_bandwidth: u64,
+}
+impl fmt::Display for Preferences {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(
+            f,
+            "{{ max_fuel_before_invoice: {:?},
+            max_time_before_invoice: {},
+            price_compute: {},
+            price_storage: {},
+            price_bandwidth: {}
+        }}",
+            self.max_fuel_before_invoice,
+            self.max_time_before_invoice,
+            self.price_compute,
+            self.price_storage,
+            self.price_bandwidth
+        )
+    }
+}
+pub async fn install_holo_hosted_happs(happs: Vec<WrappedHeaderHash>) -> Result<()> {
     // iterate through the vec and
     // Call http://localhost/hpos-holochain-api/
     // for each WrappedHeaderHash to install the hosted_happ
+    let client = reqwest::Client::new();
+    // Note: Tmp preferences
+    let preferences = Preferences {
+        max_fuel_before_invoice: 1,
+        max_time_before_invoice: 20,
+        price_compute: 1,
+        price_storage: 1,
+        price_bandwidth: 1,
+    };
+    for happ_id in happs {
+        let body = Body {
+            happ_id,
+            preferences: preferences.clone(),
+        };
+        client
+            .post("http://localhost/install_hosted_happ")
+            .body(body.to_string())
+            .send()
+            .await?;
+    }
+    Ok(())
 }
 
-pub async fn get_enabled_hosted_happs(
-    core_happ_id: InstalledAppId,
-) -> Result<Vec<WrappedHeaderHash>> {
+pub async fn get_enabled_hosted_happs(core_happ: Happ) -> Result<Vec<WrappedHeaderHash>> {
     let mut app_websocket = AppWebsocket::connect(42233)
         .await
         .context("failed to connect to holochain's app interface")?;
-    match app_websocket.get_app_info(app.to_string()).await {
+    match app_websocket.get_app_info(core_happ.id_from_config()).await {
         Some(app_info) => {
-            let zome_call = ZomeCall {
-                cell_id: app_info.cell_data[0].into_id(),
+            let zome_call_payload = ZomeCall {
+                cell_id: app_info.cell_data[0].clone().into_id(), // This works on the assumption that the core happs has HHA in the first position of the vec
                 zome_name: ZomeName::from("hha"),
                 fn_name: FunctionName::from("get_happs"),
-                payload: ExternIO::encode(()),
+                payload: ExternInput::new(SerializedBytes::default()),
                 cap: None,
-                provenance: app_info.cell_data[0].into_id().agent_pubkey(),
+                provenance: app_info.cell_data[0]
+                    .clone()
+                    .into_id()
+                    .agent_pubkey()
+                    .to_owned(),
             };
-            let app_request = AppRequest::ZomeCall(Box::new(zome_call));
-            let response = app_websocket.send(app_request.to_string()).await;
+            let response = app_websocket.zome_call(zome_call_payload).await?;
             match response {
                 // This is the happs list that is returned from the hha DNA
                 // https://github.com/Holo-Host/holo-hosting-app-rsm/blob/develop/zomes/hha/src/lib.rs#L54
                 // return Vec of happ_list.happ_id
                 AppResponse::ZomeCall(r) => {
                     info!("Hosted happs List {:?}", r);
-                    return rmp_serde::from_read_ref(r)
-                },
+
+                    return match rmp_serde::from_read_ref(r.into_inner().bytes())? {
+                        Some(a) => Ok(a),
+                        None => Err(anyhow!("No response")),
+                    };
+                }
                 _ => return Err(anyhow!("unexpected response: {:?}", response)),
             }
         }
