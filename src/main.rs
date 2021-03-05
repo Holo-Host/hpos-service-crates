@@ -1,9 +1,11 @@
 // TODO: https://github.com/tokio-rs/tracing/issues/843
 #![allow(clippy::unit_arg)]
 
+mod hosting;
 use anyhow::{Context, Result};
 
-use configure_holochain::{activate_holo_hosted_happs, install_happs, load_happ_file, Config};
+use configure_holochain::{install_happs, load_happ_file, Config};
+use hosting::activate_holo_hosted_happs;
 use tracing::instrument;
 use tracing_subscriber::EnvFilter;
 
