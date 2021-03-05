@@ -4,11 +4,12 @@
 mod config;
 pub use config::{Config, Happ, HappFile};
 
+mod entries;
+pub use entries::{Body, DnaResource, HappBundle, HappBundleDetails, Preferences};
+
 mod websocket;
 pub use websocket::{AdminWebsocket, AppWebsocket};
 
-use serde::Deserialize;
-use serde::Serialize;
 use std::fs;
 use std::path::{Path, PathBuf};
 use std::process;
@@ -19,7 +20,7 @@ use tempfile::TempDir;
 use tracing::{debug, info, instrument, warn};
 use url::Url;
 
-use hc_utils::{WrappedAgentPubKey, WrappedHeaderHash};
+use hc_utils::WrappedHeaderHash;
 use holochain::conductor::api::AppResponse;
 use holochain::conductor::api::ZomeCall;
 use holochain_zome_types::{
@@ -36,19 +37,6 @@ pub async fn activate_holo_hosted_happs(core_happ: Happ) -> Result<()> {
     Ok(())
 }
 
-#[derive(Serialize, Debug, Clone)]
-struct Body {
-    happ_id: String,
-    preferences: Preferences,
-}
-#[derive(Serialize, Debug, Clone)]
-struct Preferences {
-    max_fuel_before_invoice: f64,
-    max_time_before_invoice: Vec<u64>,
-    price_compute: f64,
-    price_storage: f64,
-    price_bandwidth: f64,
-}
 pub async fn install_holo_hosted_happs(happs: Vec<WrappedHeaderHash>) -> Result<()> {
     info!("Starting to install....");
     // iterate through the vec and
@@ -78,26 +66,6 @@ pub async fn install_holo_hosted_happs(happs: Vec<WrappedHeaderHash>) -> Result<
         info!("Response {:?}", response);
     }
     Ok(())
-}
-#[derive(Deserialize, Debug, Clone)]
-pub struct DnaResource {
-    pub hash: String, // hash of the dna, not a stored dht address
-    pub src_url: String,
-    pub nick: String,
-}
-#[derive(Deserialize, Debug, Clone)]
-pub struct HappBundle {
-    pub hosted_url: String,
-    pub happ_alias: String,
-    pub ui_src_url: String,
-    pub name: String,
-    pub dnas: Vec<DnaResource>,
-}
-#[derive(Deserialize, Debug)]
-pub struct HappBundleDetails {
-    pub happ_id: WrappedHeaderHash,
-    pub happ_bundle: HappBundle,
-    pub provider_pubkey: WrappedAgentPubKey,
 }
 
 pub async fn get_enabled_hosted_happs(core_happ: Happ) -> Result<Vec<WrappedHeaderHash>> {
