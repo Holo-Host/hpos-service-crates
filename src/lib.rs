@@ -51,9 +51,8 @@ struct Preferences {
 }
 pub async fn install_holo_hosted_happs(happs: Vec<WrappedHeaderHash>) -> Result<()> {
     info!("Starting to install....");
-
     // iterate through the vec and
-    // Call http://localhost/hpos-holochain-api/
+    // Call http://localhost/hpos-holochain-api/install_hosted_happ
     // for each WrappedHeaderHash to install the hosted_happ
     let client = reqwest::Client::new();
     // Note: Tmp preferences
@@ -89,7 +88,6 @@ pub struct DnaResource {
 #[derive(Deserialize, Debug, Clone)]
 pub struct HappBundle {
     pub hosted_url: String,
-    // TODO: Verify necessary details...
     pub happ_alias: String,
     pub ui_src_url: String,
     pub name: String,
@@ -131,7 +129,7 @@ pub async fn get_enabled_hosted_happs(core_happ: Happ) -> Result<Vec<WrappedHead
                         rmp_serde::from_read_ref(r.into_inner().bytes())?;
                     let happ_bundle_ids: Vec<WrappedHeaderHash> =
                         happ_bundles.into_iter().map(|happ| happ.happ_id).collect();
-                    info!("List of happ_ids {:?}", happ_bundle_ids.clone());
+                    info!("List of happ_ids {:?}", happ_bundle_ids);
                     return Ok(happ_bundle_ids);
                 }
                 _ => return Err(anyhow!("unexpected response: {:?}", response)),
