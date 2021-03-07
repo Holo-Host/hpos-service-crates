@@ -98,14 +98,12 @@ pub async fn get_enabled_hosted_happs(core_happ: Happ) -> Result<Vec<WrappedHead
                     let happ_bundle_ids: Vec<WrappedHeaderHash> =
                         happ_bundles.into_iter().map(|happ| happ.happ_id).collect();
                     info!("List of happ_ids {:?}", happ_bundle_ids);
-                    return Ok(happ_bundle_ids);
+                    Ok(happ_bundle_ids)
                 }
-                _ => return Err(anyhow!("unexpected response: {:?}", response)),
+                _ => Err(anyhow!("unexpected response: {:?}", response)),
             }
         }
-        None => {
-            return Err(anyhow!("HHA is not installed"));
-        }
+        None => Err(anyhow!("HHA is not installed")),
     }
 }
 
