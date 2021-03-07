@@ -36,7 +36,9 @@ pub async fn activate_holo_hosted_happs(core_happ: Happ) -> Result<()> {
     Ok(())
 }
 
-pub async fn install_holo_hosted_happs(happs: impl Iterator<Item=WrappedHeaderHash>) -> Result<()> {
+pub async fn install_holo_hosted_happs(
+    happs: impl Iterator<Item = WrappedHeaderHash>,
+) -> Result<()> {
     info!("Starting to install....");
     // iterate through the vec and
     // Call http://localhost/hpos-holochain-api/install_hosted_happ
@@ -67,7 +69,9 @@ pub async fn install_holo_hosted_happs(happs: impl Iterator<Item=WrappedHeaderHa
     Ok(())
 }
 
-pub async fn get_enabled_hosted_happs(core_happ: Happ) -> Result<impl Iterator<Item=WrappedHeaderHash>> {
+pub async fn get_enabled_hosted_happs(
+    core_happ: Happ,
+) -> Result<impl Iterator<Item = WrappedHeaderHash>> {
     let mut app_websocket = AppWebsocket::connect(42233)
         .await
         .context("failed to connect to holochain's app interface")?;
@@ -83,10 +87,7 @@ pub async fn get_enabled_hosted_happs(core_happ: Happ) -> Result<impl Iterator<I
                 fn_name: FunctionName::from("get_happs"),
                 payload: ExternInput::new(SerializedBytes::default()),
                 cap: None,
-                provenance: cell_data[0].clone()
-                    .into_id()
-                    .into_dna_and_agent()
-                    .1
+                provenance: cell_data[0].clone().into_id().into_dna_and_agent().1,
             };
             let response = app_websocket.zome_call(zome_call_payload).await?;
             match response {
