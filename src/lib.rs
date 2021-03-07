@@ -73,18 +73,21 @@ pub async fn get_enabled_hosted_happs(core_happ: Happ) -> Result<Vec<WrappedHead
         .await
         .context("failed to connect to holochain's app interface")?;
     match app_websocket.get_app_info(core_happ.id_from_config()).await {
-        Some(app_info) => {
+        Some(holochain_types::InstalledApp {
+            // This works on the assumption that the core happs has HHA in the first position of the vec
+            cell_data: [hha_cell, ..],
+            ..
+        }) => {
             let zome_call_payload = ZomeCall {
-                cell_id: app_info.cell_data[0].clone().into_id(), // This works on the assumption that the core happs has HHA in the first position of the vec
+                cell_id: hha_cell.as_id().clone(),
                 zome_name: ZomeName::from("hha"),
                 fn_name: FunctionName::from("get_happs"),
                 payload: ExternInput::new(SerializedBytes::default()),
                 cap: None,
-                provenance: app_info.cell_data[0]
-                    .clone()
+                provenance: hha_cell
                     .into_id()
-                    .agent_pubkey()
-                    .to_owned(),
+                    .into_dna_and_agent()
+                    .1
             };
             let response = app_websocket.zome_call(zome_call_payload).await?;
             match response {
