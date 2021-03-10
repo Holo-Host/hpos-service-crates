@@ -41,7 +41,7 @@ pub async fn install_holo_hosted_happs(
 ) -> Result<()> {
     info!("Starting to install....");
     // iterate through the vec and
-    // Call http://localhost/hpos-holochain-api/install_hosted_happ
+    // Call http://localhost/holochain-api/install_hosted_happ
     // for each WrappedHeaderHash to install the hosted_happ
     let client = reqwest::Client::new();
     // Note: Tmp preferences
@@ -59,7 +59,7 @@ pub async fn install_holo_hosted_happs(
             preferences: preferences.clone(),
         };
         let response = client
-            .post("http://localhost/hpos-holochain-api/install_hosted_happ")
+            .post("http://localhost/holochain-api/install_hosted_happ")
             .json(&body)
             .send()
             .await?;
