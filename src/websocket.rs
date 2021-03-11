@@ -4,6 +4,7 @@ use std::sync::Arc;
 use std::{env, fs};
 
 use anyhow::{anyhow, Context, Result};
+use holochain::conductor::api::ZomeCall;
 use holochain::conductor::api::{AdminRequest, AdminResponse, AppRequest, AppResponse};
 use holochain_types::{
     app::{
@@ -229,6 +230,13 @@ impl AppWebsocket {
             AppResponse::AppInfo(app_info) => app_info,
             _ => None,
         }
+    }
+
+    #[instrument(skip(self))]
+    pub async fn zome_call(&mut self, msg: ZomeCall) -> Result<AppResponse> {
+        let app_request = AppRequest::ZomeCall(Box::new(msg));
+        let response = self.send(app_request).await;
+        response
     }
 
     #[instrument(skip(self))]

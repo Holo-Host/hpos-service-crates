@@ -13,6 +13,7 @@ serde = { version = "1.0", features = ["derive"] }
 serde_yaml = "0.8"
 structopt = "0.3"
 tempfile = "3.1"
+rmp-serde = "0.14.3"
 # holochain_websocket uses tokio 0.2
 # TODO: bump to 0.3 after https://github.com/holochain/holochain/pull/461 is merged
 tokio = { version = "0.2", features = ["full"] }
@@ -20,6 +21,8 @@ tracing = { version = "0.1", features = ["attributes"] }
 tracing-futures = "0.2"
 tracing-subscriber = "0.2"
 url = "2.2"
+hc_utils = {git = "https://github.com/holochain/hc-utils", branch = "main", package = "hc_utils"}
+reqwest = { version = "0.10", features = ["json"]}
 
 [dependencies.holochain]
 git = "https://github.com/holochain/holochain"
@@ -32,6 +35,11 @@ git = "https://github.com/holochain/holochain"
 rev = "ea026def01d1573d5e0edfb7f4e3e9453f88c43e"
 package = "holochain_types"
 
+[dependencies.holochain_zome_types]
+git = "https://github.com/holochain/holochain"
+rev = "ea026def01d1573d5e0edfb7f4e3e9453f88c43e"
+package = "holochain_zome_types"
+
 [dependencies.holochain_websocket]
 git = "https://github.com/holochain/holochain"
 rev = "ea026def01d1573d5e0edfb7f4e3e9453f88c43e"
@@ -42,3 +50,5 @@ package = "holochain_websocket"
 [patch.crates-io]
 rkv = { git = "https://github.com/holochain/rkv.git", branch = "master" }
 lmdb-rkv = { git = "https://github.com/holochain/lmdb-rs.git" }
+hdk3 = {git = "https://github.com/holochain/holochain", rev = "ea026def01d1573d5e0edfb7f4e3e9453f88c43e", package = "hdk3"}
+holo_hash = {git = "https://github.com/holochain/holochain", rev = "ea026def01d1573d5e0edfb7f4e3e9453f88c43e", package = "holo_hash"}
