@@ -236,7 +236,8 @@ pub(crate) async fn download_file(url: &Url) -> Result<PathBuf> {
         .build()
         .context("failed to initiate download request")?;
     let mut response = client
-        .get(url.as_str())
+        .get_async(url.as_str())
+        .await
         .context("failed to send GET request")?;
     if !response.status().is_success() {
         return Err(anyhow!(
@@ -292,6 +293,24 @@ fn keep_app_active(installed_app_id: &str, happs_to_keep: HappIds) -> bool {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    use httpmock::{Method::GET, MockServer};
+
+    #[tokio::test]
+    async fn test_download_file() {
+        let server = MockServer::start();
+        let mock = server
+            .mock_async(|when, then| {
+                when.method(GET).path("/elemental-chat.dna.gz");
+                then.status(200)
+                    .body_from_file("tests/resources/elemental-chat.dna.gz");
+            })
+            .await;
+        let url = Url::parse(&server.url("/elemental-chat.dna.gz")).unwrap();
+        let path = download_file(&url).await.expect("download failed");
+        mock.assert_async().await;
+        assert!(path.is_file());
+    }
 
     #[test]
     fn verify_keep_app_active() {

@@ -45,6 +45,9 @@ git = "https://github.com/holochain/holochain"
 rev = "ea026def01d1573d5e0edfb7f4e3e9453f88c43e"
 package = "holochain_websocket"
 
+[dev-dependencies]
+httpmock = "0.5"
+
 # Holochain requires a patch to crates.io registry
 
 [patch.crates-io]
