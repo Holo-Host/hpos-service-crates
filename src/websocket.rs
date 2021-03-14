@@ -152,7 +152,7 @@ impl AdminWebsocket {
                 path: None,
                 hash: Some(hash),
                 properties: None,
-                membrane_proof: happ.membrane_proof,
+                membrane_proof: happ.membrane_proof.clone(),
             };
             let payload = InstallAppPayload {
                 installed_app_id: happ.id_from_config(),

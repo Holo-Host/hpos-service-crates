@@ -1,6 +1,6 @@
 use std::path::PathBuf;
 
-use holochain_types::app::InstalledAppId;
+use holochain_types::app::{InstalledAppId, MembraneProof};
 use serde::Deserialize;
 use structopt::StructOpt;
 use tracing::debug;
