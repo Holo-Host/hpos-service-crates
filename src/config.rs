@@ -49,7 +49,7 @@ pub struct Happ {
     pub ui_path: Option<PathBuf>,
     pub dna_path: Option<PathBuf>,
     pub uuid: Option<String>,
-    pub membrane_proof: Option<MembraneProof>
+    pub membrane_proof: Option<MembraneProof>,
 }
 
 impl Happ {
@@ -78,6 +78,7 @@ mod tests {
             dna_path: None,
             ui_path: None,
             uuid: None,
+            membrane_proof: None,
         };
         assert_eq!(cfg.id_from_config(), String::from("x:1"));
         cfg.uuid = Some(String::from("001"));
