@@ -49,6 +49,7 @@ pub struct Happ {
     pub ui_path: Option<PathBuf>,
     pub dna_path: Option<PathBuf>,
     pub uuid: Option<String>,
+    pub membrane_proof: Option<MembraneProof>
 }
 
 impl Happ {
