@@ -8,7 +8,7 @@ edition = "2018"
 again = "0.1"
 anyhow = "1.0"
 futures = "0.3"
-isahc = "0.9"
+isahc = "1.1"
 serde = { version = "1.0", features = ["derive"] }
 serde_yaml = "0.8"
 serde_json = "1.0.60"
