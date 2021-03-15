@@ -11,6 +11,7 @@ futures = "0.3"
 isahc = "0.9"
 serde = { version = "1.0", features = ["derive"] }
 serde_yaml = "0.8"
+serde_json = "1.0.60"
 structopt = "0.3"
 tempfile = "3.1"
 rmp-serde = "0.14.3"
@@ -23,6 +24,8 @@ tracing-subscriber = "0.2"
 url = "2.2"
 hc_utils = {git = "https://github.com/holochain/hc-utils", branch = "main", package = "hc_utils"}
 reqwest = { version = "0.10", features = ["json"]}
+hpos-config-core = { git = "https://github.com/Holo-Host/hpos-config", branch = "develop" }
+ed25519-dalek = { version = "1.0.1", features = ["nightly", "serde"] }
 
 [dependencies.holochain]
 git = "https://github.com/holochain/holochain"

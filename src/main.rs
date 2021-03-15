@@ -3,7 +3,10 @@
 
 use anyhow::{Context, Result};
 
-use configure_holochain::{activate_holo_hosted_happs, install_happs, load_happ_file, Config};
+use configure_holochain::{
+    activate_holo_hosted_happs, handle_test_network_registration, install_happs, load_happ_file,
+    Config,
+};
 use tracing::instrument;
 use tracing_subscriber::EnvFilter;
 
@@ -24,8 +27,12 @@ async fn run() -> Result<()> {
         .core_happs
         .into_iter()
         .find(|x| x.app_id.contains("core-happ"));
-    match core_happ_list {
+    match &core_happ_list {
         Some(core) => activate_holo_hosted_happs(core).await,
+        None => Ok(()),
+    }?;
+    match &core_happ_list {
+        Some(core) => handle_test_network_registration(core).await,
         None => Ok(()),
     }
 }
