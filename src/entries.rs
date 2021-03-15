@@ -24,15 +24,27 @@ pub struct HappBundleDetails {
 }
 
 #[derive(Serialize, Debug, Clone)]
-pub struct Body {
-    pub happ_id: String,
-    pub preferences: Preferences,
-}
-#[derive(Serialize, Debug, Clone)]
 pub struct Preferences {
     pub max_fuel_before_invoice: f64,
     pub max_time_before_invoice: Vec<u64>,
     pub price_compute: f64,
     pub price_storage: f64,
     pub price_bandwidth: f64,
+}
+
+#[derive(Serialize, Debug, Clone)]
+pub struct InstallHappBody {
+    pub happ_id: String,
+    pub preferences: Preferences,
+}
+
+#[derive(Serialize, Debug, Clone)]
+pub struct AddHostBody {
+    pub happ_ids: Vec<WrappedHeaderHash>,
+    pub host_id: String,
+}
+
+#[derive(Serialize, Debug, Clone)]
+pub struct RemoveHostBody {
+    pub host_id: String,
 }
