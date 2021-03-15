@@ -5,15 +5,18 @@ mod config;
 pub use config::{Config, Happ, HappFile};
 
 mod entries;
-pub use entries::{InstallHappBody, AddHostBody, RemoveHostBody, DnaResource, HappBundle, HappBundleDetails, Preferences};
+pub use entries::{
+    AddHostBody, DnaResource, HappBundle, HappBundleDetails, InstallHappBody, Preferences,
+    RemoveHostBody,
+};
 
 mod websocket;
 pub use websocket::{AdminWebsocket, AppWebsocket};
 
-use std::{fs, env};
 use std::path::{Path, PathBuf};
 use std::process;
 use std::sync::Arc;
+use std::{env, fs};
 
 use anyhow::{anyhow, Context, Result};
 use tempfile::TempDir;
@@ -35,7 +38,7 @@ use hpos_config_core::*;
 
 pub async fn handle_test_network_registration(core_happ: &Happ) -> Result<()> {
     let hpos_config_path = env::var("HPOS_CONFIG_PATH")?;
-    let is_test_network = env::var("IS_TEST_NETWORK").is_err();
+    let is_test_network = env::var("IS_TEST_NETWORK").is_ok();
     let host_id = get_host_id(hpos_config_path)?;
     let list_of_happs = get_enabled_hosted_happs(&core_happ).await?;
     update_test_network(list_of_happs, host_id, is_test_network).await?;
@@ -43,7 +46,6 @@ pub async fn handle_test_network_registration(core_happ: &Happ) -> Result<()> {
 }
 
 pub fn get_host_id(config_path: String) -> Result<String> {
-
     let contents = fs::read(&config_path)?;
     let hpos_config_core::Config::V1 { seed, .. } = serde_json::from_slice(&contents)?;
 
@@ -56,21 +58,19 @@ pub fn get_host_id(config_path: String) -> Result<String> {
 pub async fn update_test_network(
     happs: impl Iterator<Item = WrappedHeaderHash>,
     host_id: String,
-    register_host: bool
+    register_host: bool,
 ) -> Result<()> {
     info!("Starting to register....");
     let client = reqwest::Client::new();
-    
+
     let body = if register_host {
         info!("registering {:?} with resolver-scaletest", host_id);
         serde_json::to_value(AddHostBody {
             happ_ids: happs.collect(),
-            host_id: host_id,
+            host_id,
         })
     } else {
-        serde_json::to_value(RemoveHostBody {
-            host_id: host_id
-        })
+        serde_json::to_value(RemoveHostBody { host_id })
     };
 
     let response = client
@@ -79,7 +79,7 @@ pub async fn update_test_network(
         .send()
         .await?;
     info!("Response {:?}", response);
-    
+
     Ok(())
 }
 
@@ -104,7 +104,7 @@ pub async fn install_holo_hosted_happs(
         price_compute: 1.0,
         price_storage: 1.0,
         price_bandwidth: 1.0,
-    }; 
+    };
     for happ_id in happs {
         info!("Installing happ-id {:?}", happ_id);
         let body = InstallHappBody {
@@ -118,7 +118,7 @@ pub async fn install_holo_hosted_happs(
             .await?;
         info!("Installed happ-id {:?}", happ_id);
         info!("Response {:?}", response);
-    }   
+    }
     Ok(())
 }
 

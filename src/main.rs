@@ -3,7 +3,10 @@
 
 use anyhow::{Context, Result};
 
-use configure_holochain::{activate_holo_hosted_happs, install_happs, load_happ_file, handle_test_network_registration, Config};
+use configure_holochain::{
+    activate_holo_hosted_happs, handle_test_network_registration, install_happs, load_happ_file,
+    Config,
+};
 use tracing::instrument;
 use tracing_subscriber::EnvFilter;
 
@@ -33,4 +36,3 @@ async fn run() -> Result<()> {
         None => Ok(()),
     }
 }
-
