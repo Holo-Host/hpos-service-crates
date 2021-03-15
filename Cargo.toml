@@ -48,6 +48,10 @@ git = "https://github.com/holochain/holochain"
 rev = "ea026def01d1573d5e0edfb7f4e3e9453f88c43e"
 package = "holochain_websocket"
 
+[dev-dependencies.cargo-husky]
+version = "1"
+features = ["run-cargo-fmt", "run-cargo-clippy"]
+
 # Holochain requires a patch to crates.io registry
 
 [patch.crates-io]

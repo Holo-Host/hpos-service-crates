@@ -1,4 +1,5 @@
 # hpos-configure-holochain
+
 Installs apps in holochain and downloads UI in the `UI_STORE_FOLDER` directory listed in YAML configuration file. Also basic holochain clean-up is performed (see below).
 
 Optionally if environmental variable `PUBKEY_PATH` is set the holoport's host public key created during first run will be saved in a file at given path and retrieved during subsequent runs.
@@ -55,6 +56,7 @@ self_hosted_happs:
     dna_url: https://github.com/holochain/elemental-chat/releases/download/v0.0.1-alpha3/elemental-chat.dna.gz
     ui_url: https://github.com/holochain/elemental-chat-ui/releases/download/v0.0.1-alpha7/elemental-chat.zip
 ```
+
 ## Basic clean-up
 
 At the runtime script deactivates all the apps in holochain that **DO NOT** meet the criteria:
@@ -62,3 +64,7 @@ At the runtime script deactivates all the apps in holochain that **DO NOT** meet
 `app_id` contains string `:hCAk` OR `app_id` is listed in YAML configuration file
 
 With such a condition the only apps that remain active are self-hosted and core happs installed from [HPOS configuration](https://github.com/Holo-Host/holo-nixpkgs/blob/develop/profiles/logical/hpos/default.nix#L203) and hosted happs installed by [envoy](https://github.com/Holo-Host/holo-envoy).
+
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md).
