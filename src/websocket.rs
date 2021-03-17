@@ -1,21 +1,18 @@
-use std::fs::File;
-use std::io::prelude::*;
-use std::sync::Arc;
-use std::{env, fs};
+use std::{collections::HashMap, env, fs, fs::File, io::prelude::*, sync::Arc};
 
 use anyhow::{anyhow, Context, Result};
 use holochain::conductor::api::{
     AdminRequest, AdminResponse, AppRequest, AppResponse, InstalledAppInfo, ZomeCall
 };
 use holochain_types::{
-    app::{DnaSource, InstallAppDnaPayload, InstallAppPayload, InstalledAppId, RegisterDnaPayload},
+    app::{AppBundleSource, InstallAppBundlePayload, InstalledAppId, MembraneProof},
     dna::AgentPubKey,
 };
 use holochain_websocket::{connect, WebsocketConfig, WebsocketSender};
-use tracing::{debug, info, instrument, trace};
+use tracing::{info, instrument, trace};
 use url::Url;
 
-use crate::Happ;
+use crate::config::Happ;
 
 #[derive(Clone)]
 pub struct AdminWebsocket {
@@ -93,81 +90,58 @@ impl AdminWebsocket {
         }
     }
 
-    #[instrument(
-        skip(self, happ),
-        fields(?happ.app_id),
-    )]
-    pub async fn install_happ(&mut self, happ: &Happ) -> Result<()> {
-        if happ.dna_url.is_some() || happ.dna_path.is_some() {
-            self.install_dna(happ).await?;
-        } else {
-            debug!(?happ.app_id, "dna_url == None || dna_path == None, skipping DNA installation")
-        }
+    #[instrument(skip(self, happ))]
+    pub async fn install_and_activate_happ(
+        &mut self,
+        happ: &Happ,
+        membrane_proofs: HashMap<String, MembraneProof>,
+    ) -> Result<()> {
+        self.install_happ(happ, membrane_proofs).await?;
         self.activate_app(happ).await?;
-        info!(?happ.app_id, "installed & activated hApp");
+        info!("installed & activated hApp: {}", happ.id());
         Ok(())
     }
 
-    #[instrument(
-        skip(self, happ),
-        fields(?happ.app_id),
-    )]
+    #[instrument(skip(self, happ))]
     pub async fn activate_happ(&mut self, happ: &Happ) -> Result<()> {
         self.activate_app(happ).await?;
-        info!(?happ.app_id, "activated hApp");
+        info!("activated hApp: {}", happ.id());
         Ok(())
     }
 
-    #[instrument(
-        err,
-        skip(self, happ),
-        fields(?happ.app_id)
-    )]
-    async fn install_dna(&mut self, happ: &Happ) -> Result<AdminResponse> {
+    #[instrument(err, skip(self, happ))]
+    async fn install_happ(
+        &mut self,
+        happ: &Happ,
+        membrane_proofs: HashMap<String, MembraneProof>,
+    ) -> Result<AdminResponse> {
         let agent_key = self
             .get_agent_key()
             .await
             .context("failed to generate agent key")?;
-        let path = match happ.dna_path.clone() {
+        /*        let path = match happ.dna_path.clone() {
             Some(path) => path,
             None => crate::download_file(happ.dna_url.as_ref().context("dna_url is None")?)
                 .await
                 .context("failed to download DNA archive")?,
+        };*/
+
+        let payload = InstallAppBundlePayload {
+            agent_key,
+            installed_app_id: Some(happ.id()),
+            source: AppBundleSource::Path(happ.bundle.clone()),
+            membrane_proofs,
         };
 
-        // register the DNA so we can pass in a uuid
-        let dna = RegisterDnaPayload {
-            uuid: happ.uuid.clone(),
-            source: DnaSource::Path(path),
-            properties: None,
-        };
-
-        let msg = AdminRequest::RegisterDna(Box::new(dna));
+        let msg = AdminRequest::InstallAppBundle(Box::new(payload));
         let response = self.send(msg).await?;
-        if let AdminResponse::DnaRegistered(hash) = response {
-            // install the happ using the registered DNA
-            let dna = InstallAppDnaPayload {
-                nick: happ.id_from_config(),
-                hash,
-                membrane_proof: happ.membrane_proof.clone(),
-            };
-            let payload = InstallAppPayload {
-                installed_app_id: happ.id_from_config(),
-                agent_key,
-                dnas: vec![dna],
-            };
-            let msg = AdminRequest::InstallApp(Box::new(payload));
-            let response = self.send(msg).await?;
-            Ok(response)
-        } else {
-            unreachable!()
-        }
+        Ok(response)
     }
 
     #[instrument(skip(self), err)]
     async fn activate_app(&mut self, happ: &Happ) -> Result<AdminResponse> {
         let msg = AdminRequest::ActivateApp {
-            installed_app_id: happ.id_from_config(),
+            installed_app_id: happ.id(),
         };
         self.send(msg).await
     }

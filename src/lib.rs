@@ -2,7 +2,7 @@
 #![allow(clippy::unit_arg)]
 
 mod config;
-pub use config::{Config, Happ, HappFile};
+pub use config::{Config, Happ, HappsFile};
 
 mod entries;
 pub use entries::{Body, DnaResource, HappBundle, HappBundleDetails, Preferences};
@@ -10,6 +10,7 @@ pub use entries::{Body, DnaResource, HappBundle, HappBundleDetails, Preferences}
 mod websocket;
 pub use websocket::{AdminWebsocket, AppWebsocket};
 
+use std::collections::HashMap;
 use std::fs;
 use std::path::{Path, PathBuf};
 use std::process;
@@ -109,17 +110,17 @@ pub async fn get_enabled_hosted_happs(
 }
 
 #[instrument(err, fields(path = %path.as_ref().display()))]
-pub fn load_happ_file(path: impl AsRef<Path>) -> Result<HappFile> {
+pub fn load_happ_file(path: impl AsRef<Path>) -> Result<HappsFile> {
     use std::fs::File;
 
     let file = File::open(path).context("failed to open file")?;
     let happ_file =
-        serde_yaml::from_reader(&file).context("failed to deserialize YAML as HappFile")?;
+        serde_yaml::from_reader(&file).context("failed to deserialize YAML as HappsFile")?;
     debug!(?happ_file);
     Ok(happ_file)
 }
 
-pub async fn install_happs(happ_file: &HappFile, config: &Config) -> Result<()> {
+pub async fn install_happs(happ_file: &HappsFile, config: &Config) -> Result<()> {
     let mut admin_websocket = AdminWebsocket::connect(config.admin_port)
         .await
         .context("failed to connect to holochain's admin interface")?;
@@ -146,8 +147,8 @@ pub async fn install_happs(happ_file: &HappFile, config: &Config) -> Result<()> 
     let _ = agent_websocket.get_agent_key().await?;
 
     for happ in &happs_to_install {
-        let full_happ_id = &happ.id_from_config();
-        if active_happs.contains(full_happ_id) {
+        let full_happ_id = happ.id();
+        if active_happs.contains(&full_happ_id) {
             info!(
                 "App {} already installed, just downloading UI",
                 full_happ_id
@@ -155,7 +156,10 @@ pub async fn install_happs(happ_file: &HappFile, config: &Config) -> Result<()> 
             install_ui(happ, config).await?
         } else {
             info!("Installing app {}", full_happ_id);
-            if let Err(err) = admin_websocket.install_happ(happ).await {
+            if let Err(err) = admin_websocket
+                .install_and_activate_happ(happ, HashMap::new())
+                .await
+            {
                 if err.to_string().contains("AppAlreadyInstalled") {
                     info!(
                         "app {} was previously installed, re-activating",
@@ -175,10 +179,7 @@ pub async fn install_happs(happ_file: &HappFile, config: &Config) -> Result<()> 
         .await
         .context("failed to connect to holochain's app interface")?;
 
-    let happs_to_keep: HappIds = happs_to_install
-        .iter()
-        .map(|happ| happ.id_from_config())
-        .collect();
+    let happs_to_keep: HappIds = happs_to_install.iter().map(|happ| happ.id()).collect();
 
     for app in &*active_happs {
         if let Some(app_info) = app_websocket.get_app_info(app.to_string()).await {
@@ -197,17 +198,13 @@ pub async fn install_happs(happ_file: &HappFile, config: &Config) -> Result<()> 
     Ok(())
 }
 
-#[instrument(
-    err,
-    skip(happ, config),
-    fields(?happ.app_id)
-)]
+#[instrument(err, skip(happ, config))]
 async fn install_ui(happ: &Happ, config: &Config) -> Result<()> {
     let source_path = match happ.ui_path.clone() {
         Some(path) => path,
         None => {
             if happ.ui_url.is_none() {
-                debug!(?happ.app_id, "ui_url == None, skipping UI installation");
+                debug!("ui_url == None, skipping UI installation for {}", happ.id());
                 return Ok(());
             }
             download_file(happ.ui_url.as_ref().unwrap())
@@ -216,9 +213,9 @@ async fn install_ui(happ: &Happ, config: &Config) -> Result<()> {
         }
     };
 
-    let unpack_path = config.ui_store_folder.join(&happ.app_id);
+    let unpack_path = config.ui_store_folder.join(&happ.id());
     extract_zip(&source_path, &unpack_path).context("failed to extract UI archive")?;
-    info!(?happ.app_id, "installed UI");
+    info!("installed UI: {}", happ.id());
     Ok(())
 }
 
