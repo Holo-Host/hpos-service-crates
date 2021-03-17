@@ -17,8 +17,8 @@ pub struct Config {
     pub ui_store_folder: PathBuf,
     /// Path to a YAML file containing the lists of hApps to install
     pub happs_file_path: PathBuf,
-    /// Path to a YAML file containing hApp membrane proofs
-    pub membrane_proofs_file_path: PathBuf,
+ //   /// Path to a YAML file containing hApp membrane proofs
+//    pub membrane_proofs_file_path: PathBuf,
 }
 
 impl Config {
@@ -37,19 +37,31 @@ impl Config {
 pub struct Happ {
     pub ui_url: Option<Url>,
     pub ui_path: Option<PathBuf>,
-    pub bundle: PathBuf,
+    pub bundle_url: Option<Url>,
+    pub bundle_path: Option<PathBuf>,
 }
 
 impl Happ {
     /// generates the installed app id that should be used
-    /// based on the path of the bundle.
+    /// based on the path or url of the bundle.
     /// Assumes file name ends in .happ, and converts periods -> colons
     pub fn id(&self) -> String {
-        self.bundle
-            .clone()
-            .into_os_string()
-            .into_string()
-            .unwrap()
+        let name = if let Some(ref bundle) = self.bundle_path {
+             bundle
+                .file_name()
+                .unwrap()
+                .to_os_string()
+                .to_string_lossy().to_string()
+        } else {
+            if let Some(ref bundle) = self.bundle_url {
+                bundle.path_segments().unwrap().last().unwrap().to_string()
+            }
+            else {
+                //TODO fix
+                "unreabable".to_string()
+            }
+        };
+        name
             .replace(".happ", "")
             .replace(".", ":")
     }
@@ -69,7 +81,15 @@ mod tests {
     #[test]
     fn verify_install_app_id_format() {
         let cfg = Happ {
-            bundle: "elemental_chat.1.0001.happ".into(),
+            bundle_path: Some("my/path/to/elemental_chat.1.0001.happ".into()),
+            bundle_url: None,
+            ui_url: None,
+            ui_path: None,
+        };
+        assert_eq!(cfg.id(), String::from("elemental_chat:1:0001"));
+        let cfg = Happ {
+            bundle_path: None,
+            bundle_url: Some(Url::parse("https://github.com/holochain/elemental-chat/releases/download/v0.1.0-alpha1/elemental_chat.1.0001.happ").unwrap()),
             ui_url: None,
             ui_path: None,
         };
