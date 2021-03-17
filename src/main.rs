@@ -18,7 +18,7 @@ async fn main() -> Result<()> {
 async fn run() -> Result<()> {
     let config = Config::load();
     let happ_file =
-        load_happ_file(&config.happ_file_path).context("failed to load hApps YAML config")?;
+        load_happ_file(&config.happs_file_path).context("failed to load hApps YAML config")?;
     install_happs(&happ_file, &config).await?;
     Ok(())
 }
