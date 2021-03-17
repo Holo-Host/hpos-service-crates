@@ -119,17 +119,17 @@ impl AdminWebsocket {
             .get_agent_key()
             .await
             .context("failed to generate agent key")?;
-        /*        let path = match happ.dna_path.clone() {
+        let path = match happ.bundle_path.clone() {
             Some(path) => path,
-            None => crate::download_file(happ.dna_url.as_ref().context("dna_url is None")?)
+            None => crate::download_file(happ.bundle_url.as_ref().context("dna_url is None")?)
                 .await
                 .context("failed to download DNA archive")?,
-        };*/
+        };
 
         let payload = InstallAppBundlePayload {
             agent_key,
             installed_app_id: Some(happ.id()),
-            source: AppBundleSource::Path(happ.bundle.clone()),
+            source: AppBundleSource::Path(path),
             membrane_proofs,
         };
 
