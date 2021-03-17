@@ -4,15 +4,14 @@ use std::sync::Arc;
 use std::{env, fs};
 
 use anyhow::{anyhow, Context, Result};
-use holochain::conductor::api::{AdminRequest, AdminResponse, AppRequest, AppResponse};
+use holochain::conductor::api::{
+    AdminRequest, AdminResponse, AppRequest, AppResponse, InstalledAppInfo,
+};
 use holochain_types::{
-    app::{
-        DnaSource, InstallAppDnaPayload, InstallAppPayload, InstalledApp, InstalledAppId,
-        RegisterDnaPayload,
-    },
+    app::{DnaSource, InstallAppDnaPayload, InstallAppPayload, InstalledAppId, RegisterDnaPayload},
     dna::AgentPubKey,
 };
-use holochain_websocket::{websocket_connect, WebsocketConfig, WebsocketSender};
+use holochain_websocket::{connect, WebsocketConfig, WebsocketSender};
 use tracing::{debug, info, instrument, trace};
 use url::Url;
 
@@ -32,7 +31,7 @@ impl AdminWebsocket {
         let websocket_config = Arc::new(WebsocketConfig::default());
         let (tx, _rx) = again::retry(|| {
             let websocket_config = Arc::clone(&websocket_config);
-            websocket_connect(url.clone().into(), websocket_config)
+            connect(url.clone().into(), websocket_config)
         })
         .await?;
         Ok(Self {
@@ -149,9 +148,7 @@ impl AdminWebsocket {
             // install the happ using the registered DNA
             let dna = InstallAppDnaPayload {
                 nick: happ.id_from_config(),
-                path: None,
-                hash: Some(hash),
-                properties: None,
+                hash,
                 membrane_proof: happ.membrane_proof.clone(),
             };
             let payload = InstallAppPayload {
@@ -213,14 +210,14 @@ impl AppWebsocket {
         let websocket_config = Arc::new(WebsocketConfig::default());
         let (tx, _rx) = again::retry(|| {
             let websocket_config = Arc::clone(&websocket_config);
-            websocket_connect(url.clone().into(), websocket_config)
+            connect(url.clone().into(), websocket_config)
         })
         .await?;
         Ok(Self { tx })
     }
 
     #[instrument(skip(self))]
-    pub async fn get_app_info(&mut self, app_id: InstalledAppId) -> Option<InstalledApp> {
+    pub async fn get_app_info(&mut self, app_id: InstalledAppId) -> Option<InstalledAppInfo> {
         let msg = AppRequest::AppInfo {
             installed_app_id: app_id,
         };
