@@ -42,6 +42,12 @@ pub struct Happ {
 }
 
 impl Happ {
+    /// returns the name that will be used to access the ui
+    pub fn ui_name(&self) -> String {
+        let mut name = self.id();
+        name.truncate(name.find(":").unwrap());
+        name
+    }
     /// generates the installed app id that should be used
     /// based on the path or url of the bundle.
     /// Assumes file name ends in .happ, and converts periods -> colons
@@ -94,5 +100,16 @@ mod tests {
             ui_path: None,
         };
         assert_eq!(cfg.id(), String::from("elemental_chat:1:0001"));
+    }
+
+    #[test]
+    fn verify_ui_name() {
+        let cfg = Happ {
+            bundle_path: Some("my/path/to/elemental_chat.1.0001.happ".into()),
+            bundle_url: None,
+            ui_url: None,
+            ui_path: None,
+        };
+        assert_eq!(cfg.ui_name(), String::from("elemental_chat"));
     }
 }
