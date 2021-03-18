@@ -14,8 +14,6 @@ serde_yaml = "0.8"
 structopt = "0.3"
 tempfile = "3.1"
 rmp-serde = "0.14.3"
-# holochain_websocket uses tokio 0.2
-# TODO: bump to 0.3 after https://github.com/holochain/holochain/pull/461 is merged
 tokio = { version = "1", features = ["full"] }
 tracing = { version = "0.1", features = ["attributes"] }
 tracing-futures = "0.2"
@@ -27,13 +25,13 @@ observability = "0.1.3"
 
 [dependencies.holochain]
 git = "https://github.com/holochain/holochain"
-rev = "07c2ad9132edf5f37c32453faa4608fbb40a3082"
+rev = "9a7219edf355a2028d38f1c1303dd5c9a76bd886"
 package = "holochain"
 default-features = false
 
 [dependencies.holochain_types]
 git = "https://github.com/holochain/holochain"
-rev = "07c2ad9132edf5f37c32453faa4608fbb40a3082"
+rev = "9a7219edf355a2028d38f1c1303dd5c9a76bd886"
 package = "holochain_types"
 
 [dependencies.holochain_zome_types]
@@ -43,7 +41,7 @@ package = "holochain_zome_types"
 
 [dependencies.holochain_websocket]
 git = "https://github.com/holochain/holochain"
-rev = "07c2ad9132edf5f37c32453faa4608fbb40a3082"
+rev = "9a7219edf355a2028d38f1c1303dd5c9a76bd886"
 package = "holochain_websocket"
 
 # Holochain requires a patch to crates.io registry
