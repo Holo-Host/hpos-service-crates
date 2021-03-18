@@ -213,7 +213,7 @@ async fn install_ui(happ: &Happ, config: &Config) -> Result<()> {
         }
     };
 
-    let unpack_path = config.ui_store_folder.join(&happ.id());
+    let unpack_path = config.ui_store_folder.join(&happ.ui_name());
     extract_zip(&source_path, &unpack_path).context("failed to extract UI archive")?;
     info!("installed UI: {}", happ.id());
     Ok(())
