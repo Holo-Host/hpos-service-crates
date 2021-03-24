@@ -17,8 +17,8 @@ pub struct Config {
     pub ui_store_folder: PathBuf,
     /// Path to a YAML file containing the lists of hApps to install
     pub happs_file_path: PathBuf,
- //   /// Path to a YAML file containing hApp membrane proofs
-//    pub membrane_proofs_file_path: PathBuf,
+    //   /// Path to a YAML file containing hApp membrane proofs
+    //    pub membrane_proofs_file_path: PathBuf,
 }
 
 impl Config {
@@ -53,23 +53,21 @@ impl Happ {
     /// Assumes file name ends in .happ, and converts periods -> colons
     pub fn id(&self) -> String {
         let name = if let Some(ref bundle) = self.bundle_path {
-             bundle
+            bundle
                 .file_name()
                 .unwrap()
                 .to_os_string()
-                .to_string_lossy().to_string()
+                .to_string_lossy()
+                .to_string()
         } else {
             if let Some(ref bundle) = self.bundle_url {
                 bundle.path_segments().unwrap().last().unwrap().to_string()
-            }
-            else {
+            } else {
                 //TODO fix
                 "unreabable".to_string()
             }
         };
-        name
-            .replace(".happ", "")
-            .replace(".", ":")
+        name.replace(".happ", "").replace(".", ":")
     }
 }
 
