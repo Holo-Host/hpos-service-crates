@@ -45,7 +45,7 @@ impl Happ {
     /// returns the name that will be used to access the ui
     pub fn ui_name(&self) -> String {
         let mut name = self.id();
-        name.truncate(name.find(":").unwrap());
+        name.truncate(name.find(':').unwrap());
         name
     }
     /// generates the installed app id that should be used
@@ -59,13 +59,12 @@ impl Happ {
                 .to_os_string()
                 .to_string_lossy()
                 .to_string()
+        }
+        else if let Some(ref bundle) = self.bundle_url {
+            bundle.path_segments().unwrap().last().unwrap().to_string()
         } else {
-            if let Some(ref bundle) = self.bundle_url {
-                bundle.path_segments().unwrap().last().unwrap().to_string()
-            } else {
-                //TODO fix
-                "unreabable".to_string()
-            }
+            //TODO fix
+            "unreabable".to_string()
         };
         name.replace(".happ", "").replace(".", ":")
     }
