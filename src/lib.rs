@@ -14,11 +14,11 @@ mod websocket;
 pub use websocket::{AdminWebsocket, AppWebsocket};
 
 use std::collections::HashMap;
+use std::env;
 use std::fs;
 use std::path::{Path, PathBuf};
 use std::process;
 use std::sync::Arc;
-use std::env;
 
 use anyhow::{anyhow, Context, Result};
 use tempfile::TempDir;
@@ -26,9 +26,9 @@ use tracing::{debug, info, instrument, warn};
 use url::Url;
 
 use hc_utils::WrappedHeaderHash;
-use holochain::conductor::api::{AppResponse, InstalledAppInfo};
 use holochain::conductor::api::ZomeCall;
-use holochain_types::prelude::{FunctionName, ZomeName, zome_io::ExternIO};
+use holochain::conductor::api::{AppResponse, InstalledAppInfo};
+use holochain_types::prelude::{zome_io::ExternIO, FunctionName, ZomeName};
 type HappIds = Vec<String>;
 
 use ed25519_dalek::{PublicKey, SecretKey};

@@ -2,7 +2,7 @@ use std::{collections::HashMap, env, fs, fs::File, io::prelude::*, sync::Arc};
 
 use anyhow::{anyhow, Context, Result};
 use holochain::conductor::api::{
-    AdminRequest, AdminResponse, AppRequest, AppResponse, InstalledAppInfo, ZomeCall
+    AdminRequest, AdminResponse, AppRequest, AppResponse, InstalledAppInfo, ZomeCall,
 };
 use holochain_types::{
     app::{AppBundleSource, InstallAppBundlePayload, InstalledAppId, MembraneProof},
