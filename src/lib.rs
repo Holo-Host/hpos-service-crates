@@ -4,6 +4,12 @@
 mod config;
 pub use config::{Config, Happ, HappsFile};
 
+mod entries;
+pub use entries::{
+    AddHostBody, DnaResource, HappBundle, HappBundleDetails, InstallHappBody, Preferences,
+    RemoveHostBody,
+};
+
 mod websocket;
 pub use websocket::{AdminWebsocket, AppWebsocket};
 
@@ -12,13 +18,146 @@ use std::fs;
 use std::path::{Path, PathBuf};
 use std::process;
 use std::sync::Arc;
+use std::env;
 
 use anyhow::{anyhow, Context, Result};
 use tempfile::TempDir;
 use tracing::{debug, info, instrument, warn};
 use url::Url;
 
+use hc_utils::WrappedHeaderHash;
+use holochain::conductor::api::{AppResponse, InstalledAppInfo};
+use holochain::conductor::api::ZomeCall;
+use holochain_types::prelude::{FunctionName, ZomeName, zome_io::ExternIO};
 type HappIds = Vec<String>;
+
+use ed25519_dalek::{PublicKey, SecretKey};
+use hpos_config_core::*;
+
+pub async fn handle_test_network_registration(core_happ: &Happ) -> Result<()> {
+    let hpos_config_path = env::var("HPOS_CONFIG_PATH")?;
+    let is_test_network = env::var("IS_TEST_NETWORK").is_ok();
+    let host_id = get_host_id(hpos_config_path)?;
+    let list_of_happs = get_enabled_hosted_happs(&core_happ).await?;
+    update_test_network(list_of_happs, host_id, is_test_network).await?;
+    Ok(())
+}
+
+pub fn get_host_id(config_path: String) -> Result<String> {
+    let contents = fs::read(&config_path)?;
+    let hpos_config_core::Config::V1 { seed, .. } = serde_json::from_slice(&contents)?;
+
+    let secret_key = SecretKey::from_bytes(&seed)?;
+    let public_key = PublicKey::from(&secret_key);
+
+    Ok(public_key::to_base36_id(&public_key))
+}
+
+pub async fn update_test_network(
+    happs: impl Iterator<Item = WrappedHeaderHash>,
+    host_id: String,
+    register_host: bool,
+) -> Result<()> {
+    info!("Starting to register....");
+    let client = reqwest::Client::new();
+
+    let body = if register_host {
+        info!("registering {:?} with resolver-scaletest", host_id);
+        serde_json::to_value(AddHostBody {
+            happ_ids: happs.collect(),
+            host_id,
+        })
+    } else {
+        serde_json::to_value(RemoveHostBody { host_id })
+    };
+
+    let response = client
+        .post("https://resolver-scaletest.holohost.dev/addHost")
+        .json(&body?)
+        .send()
+        .await?;
+    info!("Response {:?}", response);
+
+    Ok(())
+}
+
+pub async fn activate_holo_hosted_happs(core_happ: &Happ) -> Result<()> {
+    let list_of_happs = get_enabled_hosted_happs(&core_happ).await?;
+    install_holo_hosted_happs(list_of_happs).await?;
+    Ok(())
+}
+
+pub async fn install_holo_hosted_happs(
+    happs: impl Iterator<Item = WrappedHeaderHash>,
+) -> Result<()> {
+    info!("Starting to install....");
+    // iterate through the vec and
+    // Call http://localhost/holochain-api/install_hosted_happ
+    // for each WrappedHeaderHash to install the hosted_happ
+    let client = reqwest::Client::new();
+    // Note: Tmp preferences
+    let preferences = Preferences {
+        max_fuel_before_invoice: 1.0,
+        max_time_before_invoice: vec![86400, 0],
+        price_compute: 1.0,
+        price_storage: 1.0,
+        price_bandwidth: 1.0,
+    };
+    for happ_id in happs {
+        info!("Installing happ-id {:?}", happ_id);
+        let body = InstallHappBody {
+            happ_id: happ_id.0.to_string(),
+            preferences: preferences.clone(),
+        };
+        let response = client
+            .post("http://localhost/holochain-api/install_hosted_happ")
+            .json(&body)
+            .send()
+            .await?;
+        info!("Installed happ-id {:?}", happ_id);
+        info!("Response {:?}", response);
+    }
+    Ok(())
+}
+
+pub async fn get_enabled_hosted_happs(
+    core_happ: &Happ,
+) -> Result<impl Iterator<Item = WrappedHeaderHash>> {
+    let mut app_websocket = AppWebsocket::connect(42233)
+        .await
+        .context("failed to connect to holochain's app interface")?;
+    match app_websocket.get_app_info(core_happ.id()).await {
+        Some(InstalledAppInfo {
+            // This works on the assumption that the core happs has HHA in the first position of the vec
+            cell_data,
+            ..
+        }) => {
+            let zome_call_payload = ZomeCall {
+                cell_id: cell_data[0].as_id().clone(),
+                zome_name: ZomeName::from("hha"),
+                fn_name: FunctionName::from("get_happs"),
+                payload: ExternIO(vec![]),
+                cap: None,
+                provenance: cell_data[0].clone().into_id().into_dna_and_agent().1,
+            };
+            let response = app_websocket.zome_call(zome_call_payload).await?;
+            match response {
+                // This is the happs list that is returned from the hha DNA
+                // https://github.com/Holo-Host/holo-hosting-app-rsm/blob/develop/zomes/hha/src/lib.rs#L54
+                // return Vec of happ_list.happ_id
+                AppResponse::ZomeCall(r) => {
+                    info!("ZomeCall Response - Hosted happs List {:?}", r);
+                    let happ_bundles: Vec<HappBundleDetails> =
+                        rmp_serde::from_read_ref(r.as_bytes())?;
+                    let happ_bundle_ids = happ_bundles.into_iter().map(|happ| happ.happ_id);
+                    Ok(happ_bundle_ids)
+                }
+                _ => Err(anyhow!("unexpected response: {:?}", response)),
+            }
+        }
+        None => Err(anyhow!("HHA is not installed")),
+    }
+}
 
 #[instrument(err, fields(path = %path.as_ref().display()))]
 pub fn load_happ_file(path: impl AsRef<Path>) -> Result<HappsFile> {

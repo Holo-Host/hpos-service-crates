@@ -3,7 +3,10 @@
 
 use anyhow::{Context, Result};
 
-use configure_holochain::{install_happs, load_happ_file, Config};
+use configure_holochain::{
+    activate_holo_hosted_happs, handle_test_network_registration, install_happs, load_happ_file,
+    Config,
+};
 use tracing::instrument;
 use tracing_subscriber::EnvFilter;
 
@@ -20,5 +23,16 @@ async fn run() -> Result<()> {
     let happ_file =
         load_happ_file(&config.happs_file_path).context("failed to load hApps YAML config")?;
     install_happs(&happ_file, &config).await?;
-    Ok(())
+    let core_happ_list = happ_file
+        .core_happs
+        .into_iter()
+        .find(|x| x.id().contains("core-app"));
+    match &core_happ_list {
+        Some(core) => activate_holo_hosted_happs(core).await,
+        None => Ok(()),
+    }?;
+    match &core_happ_list {
+        Some(core) => handle_test_network_registration(core).await,
+        None => Ok(()),
+    }
 }
