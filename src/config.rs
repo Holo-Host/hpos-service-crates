@@ -59,8 +59,7 @@ impl Happ {
                 .to_os_string()
                 .to_string_lossy()
                 .to_string()
-        }
-        else if let Some(ref bundle) = self.bundle_url {
+        } else if let Some(ref bundle) = self.bundle_url {
             bundle.path_segments().unwrap().last().unwrap().to_string()
         } else {
             //TODO fix
