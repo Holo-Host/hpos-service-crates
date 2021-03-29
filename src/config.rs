@@ -1,9 +1,9 @@
+use holochain_types::prelude::MembraneProof;
 use serde::Deserialize;
 use std::path::PathBuf;
 use structopt::StructOpt;
 use tracing::debug;
 use url::Url;
-use holochain_types::prelude::MembraneProof;
 
 #[derive(Debug, StructOpt)]
 pub struct Config {

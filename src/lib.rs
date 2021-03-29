@@ -91,7 +91,7 @@ pub async fn activate_holo_hosted_happs(core_happ: &Happ, mem_proof_path: PathBu
 
 pub async fn install_holo_hosted_happs(
     happs: impl Iterator<Item = WrappedHeaderHash>,
-    mem_proof: HashMap<String, MembraneProof>
+    mem_proof: HashMap<String, MembraneProof>,
 ) -> Result<()> {
     info!("Starting to install....");
     // iterate through the vec and
@@ -111,7 +111,7 @@ pub async fn install_holo_hosted_happs(
         let body = InstallHappBody {
             happ_id: happ_id.0.to_string(),
             preferences: preferences.clone(),
-            membrane_proofs : mem_proof.clone()
+            membrane_proofs: mem_proof.clone(),
         };
         let response = client
             .post("http://localhost/holochain-api/install_hosted_happ")
@@ -171,10 +171,10 @@ pub fn load_mem_proof_file(path: impl AsRef<Path>) -> Result<HashMap<String, Mem
     let proof: MembraneProofPayload =
         serde_yaml::from_reader(&file).context("failed to deserialize YAML as MembraneProof")?;
     debug!(?proof);
-    let mem_proof: HashMap<String, MembraneProof> = proof.0.into_iter()
-        .map(|p| {
-            (p.cell_nick, p.proof)
-        })
+    let mem_proof: HashMap<String, MembraneProof> = proof
+        .0
+        .into_iter()
+        .map(|p| (p.cell_nick, p.proof))
         .collect();
     Ok(mem_proof)
 }
