@@ -11,6 +11,7 @@ pub struct DnaResource {
 #[derive(Deserialize, Debug, Clone)]
 pub struct HappBundle {
     pub hosted_url: String,
+    pub bundle_url: String,
     pub happ_alias: String,
     pub ui_src_url: String,
     pub name: String,

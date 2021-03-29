@@ -1,7 +1,5 @@
-use std::path::PathBuf;
-
-use holochain_types::app::InstalledAppId;
 use serde::Deserialize;
+use std::path::PathBuf;
 use structopt::StructOpt;
 use tracing::debug;
 use url::Url;
@@ -17,8 +15,10 @@ pub struct Config {
     /// Path to the folder where hApp UIs will be extracted
     #[structopt(long, env)]
     pub ui_store_folder: PathBuf,
-    /// Path to a YAML file containing the list of hApps to install
-    pub happ_file_path: PathBuf,
+    /// Path to a YAML file containing the lists of hApps to install
+    pub happs_file_path: PathBuf,
+    //   /// Path to a YAML file containing hApp membrane proofs
+    //    pub membrane_proofs_file_path: PathBuf,
 }
 
 impl Config {
@@ -30,37 +30,50 @@ impl Config {
     }
 }
 
-#[derive(Debug, Deserialize)]
-pub struct HappFile {
-    pub self_hosted_happs: Vec<Happ>,
-    pub core_happs: Vec<Happ>,
-}
-
 /// Configuration of a single hApp from config.yaml
 /// ui_path and dna_path takes precedence over ui_url and dna_url respectively
 /// and is meant for running tests
 #[derive(Debug, Deserialize)]
 pub struct Happ {
-    #[serde(alias = "app_id")]
-    pub app_id: InstalledAppId,
-    pub version: String,
     pub ui_url: Option<Url>,
-    pub dna_url: Option<Url>,
     pub ui_path: Option<PathBuf>,
-    pub dna_path: Option<PathBuf>,
-    pub uuid: Option<String>,
+    pub bundle_url: Option<Url>,
+    pub bundle_path: Option<PathBuf>,
 }
 
 impl Happ {
-    /// generates the installed app id that should be used
-    /// based on the version and the uuid provided in the config fiel
-    pub fn id_from_config(&self) -> String {
-        if let Some(ref uuid) = self.uuid {
-            format!("{}:{}:{}", self.app_id, self.version, uuid)
-        } else {
-            format!("{}:{}", self.app_id, self.version)
-        }
+    /// returns the name that will be used to access the ui
+    pub fn ui_name(&self) -> String {
+        let mut name = self.id();
+        name.truncate(name.find(':').unwrap());
+        name
     }
+    /// generates the installed app id that should be used
+    /// based on the path or url of the bundle.
+    /// Assumes file name ends in .happ, and converts periods -> colons
+    pub fn id(&self) -> String {
+        let name = if let Some(ref bundle) = self.bundle_path {
+            bundle
+                .file_name()
+                .unwrap()
+                .to_os_string()
+                .to_string_lossy()
+                .to_string()
+        } else if let Some(ref bundle) = self.bundle_url {
+            bundle.path_segments().unwrap().last().unwrap().to_string()
+        } else {
+            //TODO fix
+            "unreabable".to_string()
+        };
+        name.replace(".happ", "").replace(".", ":")
+    }
+}
+
+/// hApps
+#[derive(Debug, Deserialize)]
+pub struct HappsFile {
+    pub self_hosted_happs: Vec<Happ>,
+    pub core_happs: Vec<Happ>,
 }
 
 #[cfg(test)]
@@ -69,17 +82,30 @@ mod tests {
 
     #[test]
     fn verify_install_app_id_format() {
-        let mut cfg = Happ {
-            app_id: "x".into(),
-            version: String::from("1"),
+        let cfg = Happ {
+            bundle_path: Some("my/path/to/elemental_chat.1.0001.happ".into()),
+            bundle_url: None,
             ui_url: None,
-            dna_url: None,
-            dna_path: None,
             ui_path: None,
-            uuid: None,
         };
-        assert_eq!(cfg.id_from_config(), String::from("x:1"));
-        cfg.uuid = Some(String::from("001"));
-        assert_eq!(cfg.id_from_config(), String::from("x:1:001"));
+        assert_eq!(cfg.id(), String::from("elemental_chat:1:0001"));
+        let cfg = Happ {
+            bundle_path: None,
+            bundle_url: Some(Url::parse("https://github.com/holochain/elemental-chat/releases/download/v0.1.0-alpha1/elemental_chat.1.0001.happ").unwrap()),
+            ui_url: None,
+            ui_path: None,
+        };
+        assert_eq!(cfg.id(), String::from("elemental_chat:1:0001"));
+    }
+
+    #[test]
+    fn verify_ui_name() {
+        let cfg = Happ {
+            bundle_path: Some("my/path/to/elemental_chat.1.0001.happ".into()),
+            bundle_url: None,
+            ui_url: None,
+            ui_path: None,
+        };
+        assert_eq!(cfg.ui_name(), String::from("elemental_chat"));
     }
 }
