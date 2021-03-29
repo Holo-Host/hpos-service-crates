@@ -3,6 +3,7 @@ use std::path::PathBuf;
 use structopt::StructOpt;
 use tracing::debug;
 use url::Url;
+use holochain_types::prelude::MembraneProof;
 
 #[derive(Debug, StructOpt)]
 pub struct Config {
@@ -17,8 +18,8 @@ pub struct Config {
     pub ui_store_folder: PathBuf,
     /// Path to a YAML file containing the lists of hApps to install
     pub happs_file_path: PathBuf,
-    //   /// Path to a YAML file containing hApp membrane proofs
-    //    pub membrane_proofs_file_path: PathBuf,
+    /// Path to a YAML file containing hApp membrane proofs
+    pub membrane_proofs_file_path: PathBuf,
 }
 
 impl Config {
@@ -29,6 +30,17 @@ impl Config {
         config
     }
 }
+
+/// MembraneProof payload contaiing cell_nick
+#[derive(Debug, Deserialize)]
+pub struct ProofPayload {
+    pub cell_nick: String,
+    pub proof: MembraneProof,
+}
+/// vec of all the mem_proof for one happ
+/// current implementation is implemented to contain mem_proof for elemental_chat
+#[derive(Debug, Deserialize)]
+pub struct MembraneProofPayload(pub Vec<ProofPayload>);
 
 /// Configuration of a single hApp from config.yaml
 /// ui_path and dna_path takes precedence over ui_url and dna_url respectively
