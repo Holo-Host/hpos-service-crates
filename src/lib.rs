@@ -2,7 +2,7 @@
 #![allow(clippy::unit_arg)]
 
 mod config;
-pub use config::{Config, Happ, HappsFile};
+pub use config::{Config, Happ, HappsFile, MembraneProofPayload, ProofPayload};
 
 mod entries;
 pub use entries::{Body, DnaResource, HappBundle, HappBundleDetails, Preferences};
@@ -22,18 +22,22 @@ use tracing::{debug, info, instrument, warn};
 use url::Url;
 
 use hc_utils::WrappedHeaderHash;
-use holochain::conductor::api::{AppResponse, InstalledAppInfo, ZomeCall};
-use holochain_types::prelude::{ExternIO, FunctionName, SerializedBytes, ZomeName};
+use holochain::conductor::api::ZomeCall;
+use holochain::conductor::api::{AppResponse, InstalledAppInfo};
+use holochain_types::prelude::MembraneProof;
+use holochain_types::prelude::{zome_io::ExternIO, FunctionName, SerializedBytes, ZomeName};
 type HappIds = Vec<String>;
 
-pub async fn activate_holo_hosted_happs(core_happ: Happ) -> Result<()> {
+pub async fn activate_holo_hosted_happs(core_happ: Happ, mem_proof_path: PathBuf) -> Result<()> {
     let list_of_happs = get_enabled_hosted_happs(core_happ).await?;
-    install_holo_hosted_happs(list_of_happs).await?;
+    let mem_proof = load_mem_proof_file(mem_proof_path)?;
+    install_holo_hosted_happs(list_of_happs, mem_proof).await?;
     Ok(())
 }
 
 pub async fn install_holo_hosted_happs(
     happs: impl Iterator<Item = WrappedHeaderHash>,
+    mem_proof: HashMap<String, MembraneProof>
 ) -> Result<()> {
     info!("Starting to install....");
     // iterate through the vec and
@@ -53,6 +57,7 @@ pub async fn install_holo_hosted_happs(
         let body = Body {
             happ_id: happ_id.0.to_string(),
             preferences: preferences.clone(),
+            membrane_proofs : mem_proof.clone()
         };
         let response = client
             .post("http://localhost/holochain-api/install_hosted_happ")
@@ -105,6 +110,22 @@ pub async fn get_enabled_hosted_happs(
 }
 
 #[instrument(err, fields(path = %path.as_ref().display()))]
+pub fn load_mem_proof_file(path: impl AsRef<Path>) -> Result<HashMap<String, MembraneProof>> {
+    use std::fs::File;
+
+    let file = File::open(path).context("failed to open file")?;
+    let proof: MembraneProofPayload =
+        serde_yaml::from_reader(&file).context("failed to deserialize YAML as MembraneProof")?;
+    debug!(?proof);
+    let mem_proof: HashMap<String, MembraneProof> = proof.0.into_iter()
+        .map(|p| {
+            (p.cell_nick, p.proof)
+        })
+        .collect();
+    Ok(mem_proof)
+}
+
+#[instrument(err, fields(path = %path.as_ref().display()))]
 pub fn load_happ_file(path: impl AsRef<Path>) -> Result<HappsFile> {
     use std::fs::File;
 
@@ -151,8 +172,12 @@ pub async fn install_happs(happ_file: &HappsFile, config: &Config) -> Result<()>
             install_ui(happ, config).await?
         } else {
             info!("Installing app {}", full_happ_id);
+            let mut mem_proof = HashMap::new();
+            if full_happ_id.contains("elemental-chat") {
+                mem_proof = load_mem_proof_file(config.membrane_proofs_file_path.clone())?;
+            }
             if let Err(err) = admin_websocket
-                .install_and_activate_happ(happ, HashMap::new())
+                .install_and_activate_happ(happ, mem_proof)
                 .await
             {
                 if err.to_string().contains("AppAlreadyInstalled") {
