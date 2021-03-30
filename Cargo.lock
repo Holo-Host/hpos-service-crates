@@ -617,7 +617,6 @@ dependencies = [
  "holochain",
  "holochain_types",
  "holochain_websocket",
- "holochain_zome_types 0.0.2-alpha.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "hpos-config-core",
  "isahc",
  "observability",

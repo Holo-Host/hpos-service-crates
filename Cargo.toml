@@ -25,7 +25,6 @@ hc_utils = {git = "https://github.com/holochain/hc-utils", branch = "develop", p
 reqwest = { version = "0.11", features = ["json"]}
 hpos-config-core = { git = "https://github.com/Holo-Host/hpos-config", branch = "develop" }
 ed25519-dalek = { version = "1.0.1", features = ["nightly", "serde"] }
-holochain_zome_types = "0.0.2-alpha.1"
 
 [dependencies.holochain]
 git = "https://github.com/holochain/holochain"
@@ -37,11 +36,6 @@ default-features = false
 git = "https://github.com/holochain/holochain"
 rev = "86d6b2db3829f198b947a26181cc7cb67bf7178b"
 package = "holochain_types"
-
-# [dependencies.holochain_zome_types]
-# git = "https://github.com/holochain/holochain"
-# rev = "86d6b2db3829f198b947a26181cc7cb67bf7178b"
-# package = "holochain_zome_types"
 
 [dependencies.holochain_websocket]
 git = "https://github.com/holochain/holochain"
