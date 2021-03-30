@@ -58,5 +58,6 @@ features = ["run-cargo-fmt", "run-cargo-clippy"]
 rkv = { git = "https://github.com/holochain/rkv.git", branch = "master" }
 lmdb-rkv = { git = "https://github.com/holochain/lmdb-rs.git" }
 hdk = {git = "https://github.com/holochain/holochain", rev = "86d6b2db3829f198b947a26181cc7cb67bf7178b", package = "hdk"}
+holo_hash = {git = "https://github.com/holochain/holochain", rev = "86d6b2db3829f198b947a26181cc7cb67bf7178b", package = "holo_hash"}
 hdk_derive = {git = "https://github.com/holochain/holochain", rev = "86d6b2db3829f198b947a26181cc7cb67bf7178b", package = "hdk_derive"}
 fixt = {git = "https://github.com/holochain/holochain", rev = "86d6b2db3829f198b947a26181cc7cb67bf7178b", package = "fixt"}
