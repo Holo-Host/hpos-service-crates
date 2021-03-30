@@ -47,7 +47,6 @@ version = "1"
 features = ["run-cargo-fmt", "run-cargo-clippy"]
 
 # Holochain requires a patch to crates.io registry
-
 [patch.crates-io]
 rkv = { git = "https://github.com/holochain/rkv.git", branch = "master" }
 lmdb-rkv = { git = "https://github.com/holochain/lmdb-rs.git" }
