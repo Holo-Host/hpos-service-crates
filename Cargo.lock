@@ -1565,7 +1565,7 @@ version = "0.0.100"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b2c7b2a32928f5116f3073d1579c6b42753aacfd7013beebd657f902a4e5e016"
 dependencies = [
- "hdk_derive 0.0.2-alpha.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "hdk_derive",
  "holo_hash",
  "holochain_wasmer_guest",
  "holochain_zome_types",
@@ -1583,7 +1583,7 @@ name = "hdk"
 version = "0.0.101-alpha.0"
 source = "git+https://github.com/holochain/holochain?rev=86d6b2db3829f198b947a26181cc7cb67bf7178b#86d6b2db3829f198b947a26181cc7cb67bf7178b"
 dependencies = [
- "hdk_derive 0.0.2-alpha.1 (git+https://github.com/holochain/holochain?rev=86d6b2db3829f198b947a26181cc7cb67bf7178b)",
+ "hdk_derive",
  "holo_hash",
  "holochain_wasmer_guest",
  "holochain_zome_types",
@@ -1600,19 +1600,6 @@ dependencies = [
 name = "hdk_derive"
 version = "0.0.2-alpha.1"
 source = "git+https://github.com/holochain/holochain?rev=86d6b2db3829f198b947a26181cc7cb67bf7178b#86d6b2db3829f198b947a26181cc7cb67bf7178b"
-dependencies = [
- "holochain_zome_types",
- "paste 1.0.3",
- "proc-macro2",
- "quote",
- "syn",
-]
-
-[[package]]
-name = "hdk_derive"
-version = "0.0.2-alpha.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f579135dcb24a725c33f3c78ce28e332d6a44b6e52278cb3da76e60c165f21ec"
 dependencies = [
  "holochain_zome_types",
  "paste 1.0.3",
@@ -1741,7 +1728,7 @@ dependencies = [
  "futures",
  "ghost_actor 0.3.0-alpha.1",
  "hdk 0.0.101-alpha.0",
- "hdk_derive 0.0.2-alpha.1 (git+https://github.com/holochain/holochain?rev=86d6b2db3829f198b947a26181cc7cb67bf7178b)",
+ "hdk_derive",
  "holo_hash",
  "holochain_lmdb",
  "holochain_p2p",
