@@ -2059,7 +2059,7 @@ dependencies = [
 [[package]]
 name = "hpos-config-core"
 version = "0.0.0"
-source = "git+https://github.com/Holo-Host/hpos-config?branch=develop#c0697247b12227f3902b8d25e92fd13500197f08"
+source = "git+https://github.com/Holo-Host/hpos-config?branch=develop#572165f7795c05f9c34e51dd9ac3f40582ad53b0"
 dependencies = [
  "argon2min",
  "arrayref",
