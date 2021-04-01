@@ -621,7 +621,7 @@ dependencies = [
  "isahc",
  "observability",
  "reqwest",
- "rmp-serde 0.14.4",
+ "rmp-serde",
  "serde",
  "serde_json",
  "serde_yaml",
@@ -1810,7 +1810,7 @@ dependencies = [
  "parking_lot 0.10.2",
  "rand 0.7.3",
  "rkv",
- "rmp-serde 0.15.4",
+ "rmp-serde",
  "serde",
  "serde_derive",
  "shrinkwraprs",
@@ -1855,7 +1855,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e77d1f384e8c8908f12d12301d5fc7861779fa68e6f74078d8876ed6aedf7eab"
 dependencies = [
  "holochain_serialized_bytes_derive",
- "rmp-serde 0.15.4",
+ "rmp-serde",
  "serde",
  "serde-transcode",
  "serde_bytes",
@@ -2383,7 +2383,7 @@ dependencies = [
  "lair_keystore_api",
  "nanoid",
  "observability",
- "rmp-serde 0.15.4",
+ "rmp-serde",
  "rustls",
  "serde",
  "serde_bytes",
@@ -2425,7 +2425,7 @@ dependencies = [
  "once_cell",
  "parking_lot 0.11.1",
  "paste 1.0.3",
- "rmp-serde 0.15.4",
+ "rmp-serde",
  "serde",
  "serde_json",
  "sysinfo",
@@ -2737,7 +2737,7 @@ dependencies = [
  "flate2",
  "futures",
  "reqwest",
- "rmp-serde 0.15.4",
+ "rmp-serde",
  "serde",
  "serde_bytes",
  "serde_derive",
@@ -3740,17 +3740,6 @@ checksum = "4f55e5fa1446c4d5dd1f5daeed2a4fe193071771a2636274d0d7a3b082aa7ad6"
 dependencies = [
  "byteorder",
  "num-traits",
-]
-
-[[package]]
-name = "rmp-serde"
-version = "0.14.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4ce7d70c926fe472aed493b902010bccc17fa9f7284145cb8772fd22fdb052d8"
-dependencies = [
- "byteorder",
- "rmp",
- "serde",
 ]
 
 [[package]]
