@@ -37,11 +37,6 @@ git = "https://github.com/holochain/holochain"
 rev = "86d6b2db3829f198b947a26181cc7cb67bf7178b"
 package = "holochain_types"
 
-[dependencies.holochain_zome_types]
-git = "https://github.com/holochain/holochain"
-rev = "86d6b2db3829f198b947a26181cc7cb67bf7178b"
-package = "holochain_zome_types"
-
 [dependencies.holochain_websocket]
 git = "https://github.com/holochain/holochain"
 rev = "86d6b2db3829f198b947a26181cc7cb67bf7178b"
@@ -52,11 +47,9 @@ version = "1"
 features = ["run-cargo-fmt", "run-cargo-clippy"]
 
 # Holochain requires a patch to crates.io registry
-
 [patch.crates-io]
 rkv = { git = "https://github.com/holochain/rkv.git", branch = "master" }
 lmdb-rkv = { git = "https://github.com/holochain/lmdb-rs.git" }
-hdk = {git = "https://github.com/holochain/holochain", rev = "86d6b2db3829f198b947a26181cc7cb67bf7178b", package = "hdk"}
-hdk_derive = {git = "https://github.com/holochain/holochain", rev = "86d6b2db3829f198b947a26181cc7cb67bf7178b", package = "hdk_derive"}
+holochain_zome_types = {git = "https://github.com/holochain/holochain", rev = "86d6b2db3829f198b947a26181cc7cb67bf7178b", package = "holochain_zome_types"}
 holo_hash = {git = "https://github.com/holochain/holochain", rev = "86d6b2db3829f198b947a26181cc7cb67bf7178b", package = "holo_hash"}
-fixt = {git = "https://github.com/holochain/holochain", rev = "86d6b2db3829f198b947a26181cc7cb67bf7178b", package = "fixt"}
+hdk_derive = {git = "https://github.com/holochain/holochain", rev = "86d6b2db3829f198b947a26181cc7cb67bf7178b", package = "hdk_derive"}
