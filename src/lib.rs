@@ -2,7 +2,7 @@
 #![allow(clippy::unit_arg)]
 
 mod config;
-pub use config::{Config, Happ, HappsFile, MembraneProofPayload, ProofPayload};
+pub use config::{Config, Happ, HappsFile, MembraneProofFile, ProofPayload};
 
 mod entries;
 pub use entries::{
@@ -168,11 +168,11 @@ pub fn load_mem_proof_file(path: impl AsRef<Path>) -> Result<HashMap<String, Mem
     use std::fs::File;
 
     let file = File::open(path).context("failed to open file")?;
-    let proof: MembraneProofPayload =
+    let proof: MembraneProofFile =
         serde_yaml::from_reader(&file).context("failed to deserialize YAML as MembraneProof")?;
     debug!(?proof);
     let mem_proof: HashMap<String, MembraneProof> = proof
-        .0
+        .payload
         .into_iter()
         .map(|p| (p.cell_nick, p.proof))
         .collect();
