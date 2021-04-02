@@ -23,8 +23,7 @@ use url::Url;
 
 use hc_utils::WrappedHeaderHash;
 use holochain::conductor::api::{AppResponse, InstalledAppInfo, ZomeCall};
-use holochain_types::prelude::{ExternIO, FunctionName, ZomeName};
-use holochain_zome_types::{zome_io::ExternInput, SerializedBytes};
+use holochain_types::prelude::{ExternIO, FunctionName, SerializedBytes, ZomeName};
 type HappIds = Vec<String>;
 
 pub async fn activate_holo_hosted_happs(core_happ: Happ) -> Result<()> {
