@@ -22,13 +22,9 @@ use tracing::{debug, info, instrument, warn};
 use url::Url;
 
 use hc_utils::WrappedHeaderHash;
-use holochain::conductor::api::AppResponse;
-use holochain::conductor::api::ZomeCall;
-use holochain_zome_types::{
-    zome::{FunctionName, ZomeName},
-    zome_io::ExternInput,
-    SerializedBytes,
-};
+use holochain::conductor::api::{AppResponse, InstalledAppInfo, ZomeCall};
+use holochain_types::prelude::{ExternIO, FunctionName, ZomeName};
+use holochain_zome_types::{zome_io::ExternInput, SerializedBytes};
 type HappIds = Vec<String>;
 
 pub async fn activate_holo_hosted_happs(core_happ: Happ) -> Result<()> {
@@ -76,8 +72,8 @@ pub async fn get_enabled_hosted_happs(
     let mut app_websocket = AppWebsocket::connect(42233)
         .await
         .context("failed to connect to holochain's app interface")?;
-    match app_websocket.get_app_info(core_happ.id_from_config()).await {
-        Some(holochain_types::prelude::InstalledApp {
+    match app_websocket.get_app_info(core_happ.id()).await {
+        Some(InstalledAppInfo {
             // This works on the assumption that the core happs has HHA in the first position of the vec
             cell_data,
             ..
@@ -86,7 +82,7 @@ pub async fn get_enabled_hosted_happs(
                 cell_id: cell_data[0].as_id().clone(),
                 zome_name: ZomeName::from("hha"),
                 fn_name: FunctionName::from("get_happs"),
-                payload: ExternInput::new(SerializedBytes::default()),
+                payload: ExternIO(SerializedBytes::default().bytes().to_vec()),
                 cap: None,
                 provenance: cell_data[0].clone().into_id().into_dna_and_agent().1,
             };
@@ -98,7 +94,7 @@ pub async fn get_enabled_hosted_happs(
                 AppResponse::ZomeCall(r) => {
                     info!("ZomeCall Response - Hosted happs List {:?}", r);
                     let happ_bundles: Vec<HappBundleDetails> =
-                        rmp_serde::from_read_ref(r.into_inner().bytes())?;
+                        rmp_serde::from_read_ref(r.as_bytes())?;
                     let happ_bundle_ids = happ_bundles.into_iter().map(|happ| happ.happ_id);
                     Ok(happ_bundle_ids)
                 }

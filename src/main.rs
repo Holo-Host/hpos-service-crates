@@ -23,7 +23,7 @@ async fn run() -> Result<()> {
     let core_happ_list = happ_file
         .core_happs
         .into_iter()
-        .find(|x| x.app_id.contains("core-happ"));
+        .find(|x| x.id().contains("core-happ"));
     match core_happ_list {
         Some(core) => activate_holo_hosted_happs(core).await,
         None => Ok(()),
