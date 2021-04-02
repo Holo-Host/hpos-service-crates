@@ -219,6 +219,7 @@ async fn install_ui(happ: &Happ, config: &Config) -> Result<()> {
     Ok(())
 }
 
+// TODO: use reqwest and remove isahc
 #[instrument(err, skip(url))]
 pub(crate) async fn download_file(url: &Url) -> Result<PathBuf> {
     use isahc::config::RedirectPolicy;
