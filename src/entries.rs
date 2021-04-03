@@ -1,8 +1,8 @@
 use hc_utils::{WrappedAgentPubKey, WrappedHeaderHash};
+use holochain_types::prelude::MembraneProof;
 use serde::Deserialize;
 use serde::Serialize;
 use std::collections::HashMap;
-use holochain_types::prelude::MembraneProof;
 
 #[derive(Deserialize, Debug, Clone)]
 pub struct DnaResource {
@@ -29,7 +29,7 @@ pub struct HappBundleDetails {
 pub struct Body {
     pub happ_id: String,
     pub preferences: Preferences,
-    pub membrane_proofs: HashMap<String, MembraneProof>
+    pub membrane_proofs: HashMap<String, MembraneProof>,
 }
 #[derive(Serialize, Debug, Clone)]
 pub struct Preferences {

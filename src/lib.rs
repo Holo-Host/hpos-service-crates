@@ -37,7 +37,7 @@ pub async fn activate_holo_hosted_happs(core_happ: Happ, mem_proof_path: PathBuf
 
 pub async fn install_holo_hosted_happs(
     happs: impl Iterator<Item = WrappedHeaderHash>,
-    mem_proof: HashMap<String, MembraneProof>
+    mem_proof: HashMap<String, MembraneProof>,
 ) -> Result<()> {
     info!("Starting to install....");
     // iterate through the vec and
@@ -57,7 +57,7 @@ pub async fn install_holo_hosted_happs(
         let body = Body {
             happ_id: happ_id.0.to_string(),
             preferences: preferences.clone(),
-            membrane_proofs : mem_proof.clone()
+            membrane_proofs: mem_proof.clone(),
         };
         let response = client
             .post("http://localhost/holochain-api/install_hosted_happ")

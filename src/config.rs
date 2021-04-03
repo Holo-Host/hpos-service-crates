@@ -1,9 +1,9 @@
+use holochain_types::prelude::MembraneProof;
 use serde::Deserialize;
 use std::path::PathBuf;
 use structopt::StructOpt;
 use tracing::debug;
 use url::Url;
-use holochain_types::prelude::MembraneProof;
 
 #[derive(Debug, StructOpt)]
 pub struct Config {
@@ -40,8 +40,8 @@ pub struct ProofPayload {
 /// payload vec of all the mem_proof for one happ
 /// current implementation is implemented to contain mem_proof for elemental_chat
 #[derive(Debug, Deserialize)]
-pub struct MembraneProofFile{
-    pub payload: Vec<ProofPayload>
+pub struct MembraneProofFile {
+    pub payload: Vec<ProofPayload>,
 }
 
 /// Configuration of a single hApp from config.yaml
