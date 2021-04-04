@@ -2,19 +2,15 @@
 #![allow(clippy::unit_arg)]
 
 mod config;
-pub use config::{Config, Happ, HappsFile, MembraneProofPayload, ProofPayload};
+pub use config::{Config, Happ, HappsFile, MembraneProofFile, ProofPayload};
 
 mod entries;
-pub use entries::{
-    AddHostBody, DnaResource, HappBundle, HappBundleDetails, InstallHappBody, Preferences,
-    RemoveHostBody,
-};
+pub use entries::{DnaResource, HappBundle, HappBundleDetails, InstallHappBody, Preferences};
 
 mod websocket;
 pub use websocket::{AdminWebsocket, AppWebsocket};
 
 use std::collections::HashMap;
-use std::env;
 use std::fs;
 use std::path::{Path, PathBuf};
 use std::process;
@@ -31,56 +27,6 @@ use holochain::conductor::api::{AppResponse, InstalledAppInfo};
 use holochain_types::prelude::MembraneProof;
 use holochain_types::prelude::{zome_io::ExternIO, FunctionName, ZomeName};
 type HappIds = Vec<String>;
-
-use ed25519_dalek::{PublicKey, SecretKey};
-use hpos_config_core::*;
-
-pub async fn handle_test_network_registration(core_happ: &Happ) -> Result<()> {
-    let hpos_config_path = env::var("HPOS_CONFIG_PATH")?;
-    let is_test_network = env::var("IS_TEST_NETWORK").is_ok();
-    let host_id = get_host_id(hpos_config_path)?;
-    let list_of_happs = get_enabled_hosted_happs(&core_happ).await?;
-    update_test_network(list_of_happs, host_id, is_test_network).await?;
-    Ok(())
-}
-
-pub fn get_host_id(config_path: String) -> Result<String> {
-    let contents = fs::read(&config_path)?;
-    let hpos_config_core::Config::V1 { seed, .. } = serde_json::from_slice(&contents)?;
-
-    let secret_key = SecretKey::from_bytes(&seed)?;
-    let public_key = PublicKey::from(&secret_key);
-
-    Ok(public_key::to_base36_id(&public_key))
-}
-
-pub async fn update_test_network(
-    happs: impl Iterator<Item = WrappedHeaderHash>,
-    host_id: String,
-    register_host: bool,
-) -> Result<()> {
-    info!("Starting to register....");
-    let client = reqwest::Client::new();
-
-    let body = if register_host {
-        info!("registering {:?} with resolver-scaletest", host_id);
-        serde_json::to_value(AddHostBody {
-            happ_ids: happs.collect(),
-            host_id,
-        })
-    } else {
-        serde_json::to_value(RemoveHostBody { host_id })
-    };
-
-    let response = client
-        .post("https://resolver-scaletest.holohost.dev/addHost")
-        .json(&body?)
-        .send()
-        .await?;
-    info!("Response {:?}", response);
-
-    Ok(())
-}
 
 pub async fn activate_holo_hosted_happs(core_happ: &Happ, mem_proof_path: PathBuf) -> Result<()> {
     let list_of_happs = get_enabled_hosted_happs(&core_happ).await?;
@@ -168,11 +114,11 @@ pub fn load_mem_proof_file(path: impl AsRef<Path>) -> Result<HashMap<String, Mem
     use std::fs::File;
 
     let file = File::open(path).context("failed to open file")?;
-    let proof: MembraneProofPayload =
+    let proof: MembraneProofFile =
         serde_yaml::from_reader(&file).context("failed to deserialize YAML as MembraneProof")?;
     debug!(?proof);
     let mem_proof: HashMap<String, MembraneProof> = proof
-        .0
+        .payload
         .into_iter()
         .map(|p| (p.cell_nick, p.proof))
         .collect();

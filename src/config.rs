@@ -37,10 +37,12 @@ pub struct ProofPayload {
     pub cell_nick: String,
     pub proof: MembraneProof,
 }
-/// vec of all the mem_proof for one happ
+/// payload vec of all the mem_proof for one happ
 /// current implementation is implemented to contain mem_proof for elemental_chat
 #[derive(Debug, Deserialize)]
-pub struct MembraneProofPayload(pub Vec<ProofPayload>);
+pub struct MembraneProofFile {
+    pub payload: Vec<ProofPayload>,
+}
 
 /// Configuration of a single hApp from config.yaml
 /// ui_path and dna_path takes precedence over ui_url and dna_url respectively
