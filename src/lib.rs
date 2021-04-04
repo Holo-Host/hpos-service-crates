@@ -5,9 +5,7 @@ mod config;
 pub use config::{Config, Happ, HappsFile, MembraneProofFile, ProofPayload};
 
 mod entries;
-pub use entries::{
-    DnaResource, HappBundle, HappBundleDetails, InstallHappBody, Preferences
-};
+pub use entries::{DnaResource, HappBundle, HappBundleDetails, InstallHappBody, Preferences};
 
 mod websocket;
 pub use websocket::{AdminWebsocket, AppWebsocket};
