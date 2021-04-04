@@ -41,14 +41,3 @@ pub struct InstallHappBody {
     pub preferences: Preferences,
     pub membrane_proofs: HashMap<String, MembraneProof>,
 }
-
-#[derive(Serialize, Debug, Clone)]
-pub struct AddHostBody {
-    pub happ_ids: Vec<WrappedHeaderHash>,
-    pub host_id: String,
-}
-
-#[derive(Serialize, Debug, Clone)]
-pub struct RemoveHostBody {
-    pub host_id: String,
-}
