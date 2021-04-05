@@ -1,6 +1,6 @@
 use holochain_types::prelude::MembraneProof;
 use serde::Deserialize;
-use std::path::PathBuf;
+use std::{path::PathBuf, env};
 use structopt::StructOpt;
 use tracing::debug;
 use url::Url;
@@ -79,7 +79,12 @@ impl Happ {
             //TODO fix
             "unreabable".to_string()
         };
-        name.replace(".happ", "").replace(".", ":")
+        if let Ok(uid) = env::var("DEV_UID_OVERRIDE") {
+            format!("{}::{}", name.replace(".happ", "").replace(".", ":"), uid)
+        }
+        else {
+            name.replace(".happ", "").replace(".", ":")
+        }
     }
 }
 
