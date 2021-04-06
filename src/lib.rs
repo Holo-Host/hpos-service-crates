@@ -17,6 +17,7 @@ use std::process;
 use std::sync::Arc;
 
 use anyhow::{anyhow, Context, Result};
+use base64;
 use tempfile::TempDir;
 use tracing::{debug, info, instrument, warn};
 use url::Url;
@@ -120,8 +121,8 @@ pub fn load_mem_proof_file(path: impl AsRef<Path>) -> Result<HashMap<String, Mem
     let mem_proof: HashMap<String, MembraneProof> = proof
         .payload
         .into_iter()
-        .map(|p| (p.cell_nick, p.proof))
-        .collect();
+        .map(|p| (p.cell_nick, base64::decode(p.proof)))
+        .collect()?;
     Ok(mem_proof)
 }
 
