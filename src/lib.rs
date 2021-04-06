@@ -17,7 +17,6 @@ use std::process;
 use std::sync::Arc;
 
 use anyhow::{anyhow, Context, Result};
-use base64;
 use tempfile::TempDir;
 use tracing::{debug, info, instrument, warn};
 use url::Url;
@@ -25,8 +24,8 @@ use url::Url;
 use hc_utils::WrappedHeaderHash;
 use holochain::conductor::api::ZomeCall;
 use holochain::conductor::api::{AppResponse, InstalledAppInfo};
-use holochain_types::prelude::MembraneProof;
 use holochain_types::prelude::{zome_io::ExternIO, FunctionName, ZomeName};
+use holochain_types::prelude::{MembraneProof, UnsafeBytes};
 type HappIds = Vec<String>;
 
 pub async fn activate_holo_hosted_happs(core_happ: &Happ, mem_proof_path: PathBuf) -> Result<()> {
@@ -118,12 +117,15 @@ pub fn load_mem_proof_file(path: impl AsRef<Path>) -> Result<HashMap<String, Mem
     let proof: MembraneProofFile =
         serde_yaml::from_reader(&file).context("failed to deserialize YAML as MembraneProof")?;
     debug!(?proof);
-    let mem_proof: HashMap<String, MembraneProof> = proof
+    proof
         .payload
         .into_iter()
-        .map(|p| (p.cell_nick, base64::decode(p.proof)))
-        .collect()?;
-    Ok(mem_proof)
+        .map(|p| {
+            base64::decode(p.proof.clone())
+                .map(|proof| (p.cell_nick, MembraneProof::from(UnsafeBytes::from(proof))))
+                .map_err(|e| anyhow!("failed to decode proof: {:?}", e))
+        })
+        .collect()
 }
 
 #[instrument(err, fields(path = %path.as_ref().display()))]
