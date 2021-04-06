@@ -127,26 +127,25 @@ impl AdminWebsocket {
         };
 
         let payload;
-         if let Ok(id) = env::var("DEV_UID_OVERRIDE") {
-             info!("using uid to install: {}", id);
-             payload = InstallAppBundlePayload {
-                 agent_key,
-                 installed_app_id: Some(happ.id()),
-                 source: AppBundleSource::Path(path),
-                 membrane_proofs,
-                 uid: Some(id),
-             };
-         }
-         else {
-             info!("using default uid to install");
-             payload = InstallAppBundlePayload {
-                 agent_key,
-                 installed_app_id: Some(happ.id()),
-                 source: AppBundleSource::Path(path),
-                 membrane_proofs,
-                 uid: None,
-             };
-         }
+        if let Ok(id) = env::var("DEV_UID_OVERRIDE") {
+            info!("using uid to install: {}", id);
+            payload = InstallAppBundlePayload {
+                agent_key,
+                installed_app_id: Some(happ.id()),
+                source: AppBundleSource::Path(path),
+                membrane_proofs,
+                uid: Some(id),
+            };
+        } else {
+            info!("using default uid to install");
+            payload = InstallAppBundlePayload {
+                agent_key,
+                installed_app_id: Some(happ.id()),
+                source: AppBundleSource::Path(path),
+                membrane_proofs,
+                uid: None,
+            };
+        }
 
         let msg = AdminRequest::InstallAppBundle(Box::new(payload));
         let response = self.send(msg).await?;

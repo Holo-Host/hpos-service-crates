@@ -1,6 +1,6 @@
 use holochain_types::prelude::MembraneProof;
 use serde::Deserialize;
-use std::{path::PathBuf, env};
+use std::{env, path::PathBuf};
 use structopt::StructOpt;
 use tracing::debug;
 use url::Url;
@@ -81,8 +81,7 @@ impl Happ {
         };
         if let Ok(uid) = env::var("DEV_UID_OVERRIDE") {
             format!("{}::{}", name.replace(".happ", "").replace(".", ":"), uid)
-        }
-        else {
+        } else {
             name.replace(".happ", "").replace(".", ":")
         }
     }
