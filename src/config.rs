@@ -1,4 +1,3 @@
-use holochain_types::prelude::MembraneProof;
 use serde::Deserialize;
 use std::path::PathBuf;
 use structopt::StructOpt;
@@ -35,7 +34,8 @@ impl Config {
 #[derive(Debug, Deserialize)]
 pub struct ProofPayload {
     pub cell_nick: String,
-    pub proof: MembraneProof,
+    /// Base64-encoded MembraneProof.
+    pub proof: String,
 }
 /// payload vec of all the mem_proof for one happ
 /// current implementation is implemented to contain mem_proof for elemental_chat
@@ -59,7 +59,9 @@ impl Happ {
     /// returns the name that will be used to access the ui
     pub fn ui_name(&self) -> String {
         let mut name = self.id();
-        name.truncate(name.find(':').unwrap());
+        if let Some(idx) = name.find(':') {
+            name.truncate(idx);
+        }
         name
     }
     /// generates the installed app id that should be used

@@ -568,6 +568,7 @@ version = "0.1.0"
 dependencies = [
  "again",
  "anyhow",
+ "base64",
  "cargo-husky",
  "futures",
  "hc_utils",
