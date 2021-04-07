@@ -90,7 +90,7 @@ impl AdminWebsocket {
         }
     }
 
-    #[instrument(skip(self, happ))]
+    #[instrument(skip(self, happ, membrane_proofs))]
     pub async fn install_and_activate_happ(
         &mut self,
         happ: &Happ,
@@ -109,7 +109,7 @@ impl AdminWebsocket {
         Ok(())
     }
 
-    #[instrument(err, skip(self, happ))]
+    #[instrument(err, skip(self, happ, membrane_proofs))]
     async fn install_happ(
         &mut self,
         happ: &Happ,

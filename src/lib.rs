@@ -24,8 +24,8 @@ use url::Url;
 use hc_utils::WrappedHeaderHash;
 use holochain::conductor::api::ZomeCall;
 use holochain::conductor::api::{AppResponse, InstalledAppInfo};
-use holochain_types::prelude::MembraneProof;
 use holochain_types::prelude::{zome_io::ExternIO, FunctionName, ZomeName};
+use holochain_types::prelude::{MembraneProof, UnsafeBytes};
 type HappIds = Vec<String>;
 
 pub async fn activate_holo_hosted_happs(core_happ: &Happ, mem_proof_path: PathBuf) -> Result<()> {
@@ -70,6 +70,7 @@ pub async fn install_holo_hosted_happs(
     Ok(())
 }
 
+#[instrument(err)]
 pub async fn get_enabled_hosted_happs(
     core_happ: &Happ,
 ) -> Result<impl Iterator<Item = WrappedHeaderHash>> {
@@ -117,12 +118,15 @@ pub fn load_mem_proof_file(path: impl AsRef<Path>) -> Result<HashMap<String, Mem
     let proof: MembraneProofFile =
         serde_yaml::from_reader(&file).context("failed to deserialize YAML as MembraneProof")?;
     debug!(?proof);
-    let mem_proof: HashMap<String, MembraneProof> = proof
+    proof
         .payload
         .into_iter()
-        .map(|p| (p.cell_nick, p.proof))
-        .collect();
-    Ok(mem_proof)
+        .map(|p| {
+            base64::decode(p.proof.clone())
+                .map(|proof| (p.cell_nick, MembraneProof::from(UnsafeBytes::from(proof))))
+                .map_err(|e| anyhow!("failed to decode proof: {:?}", e))
+        })
+        .collect()
 }
 
 #[instrument(err, fields(path = %path.as_ref().display()))]
@@ -244,34 +248,41 @@ pub(crate) async fn download_file(url: &Url) -> Result<PathBuf> {
     use isahc::config::RedirectPolicy;
     use isahc::prelude::*;
 
-    debug!("downloading");
-    let mut url = Url::clone(&url);
-    url.set_scheme("https")
-        .map_err(|_| anyhow!("failed to set scheme to https"))?;
-    let client = HttpClient::builder()
-        .redirect_policy(RedirectPolicy::Follow)
-        .build()
-        .context("failed to initiate download request")?;
-    let mut response = client
-        .get(url.as_str())
-        .context("failed to send GET request")?;
-    if !response.status().is_success() {
-        return Err(anyhow!(
-            "response status code {} indicated failure",
-            response.status().as_str()
-        ));
-    }
-    let dir = TempDir::new().context("failed to create tempdir")?;
-    let url_path = PathBuf::from(url.path());
-    let basename = url_path
-        .file_name()
-        .context("failed to get basename from url")?;
-    let path = dir.into_path().join(basename);
-    let mut file = fs::File::create(&path).context("failed to create target file")?;
-    response
-        .copy_to(&mut file)
-        .context("failed to write response to file")?;
-    debug!("download successful");
+    let path = if url.scheme() == "file" {
+        let p = PathBuf::from(url.path());
+        debug!("Using: {:?}", p);
+        p
+    } else {
+        debug!("downloading");
+        let mut url = Url::clone(&url);
+        url.set_scheme("https")
+            .map_err(|_| anyhow!("failed to set scheme to https"))?;
+        let client = HttpClient::builder()
+            .redirect_policy(RedirectPolicy::Follow)
+            .build()
+            .context("failed to initiate download request")?;
+        let mut response = client
+            .get(url.as_str())
+            .context("failed to send GET request")?;
+        if !response.status().is_success() {
+            return Err(anyhow!(
+                "response status code {} indicated failure",
+                response.status().as_str()
+            ));
+        }
+        let dir = TempDir::new().context("failed to create tempdir")?;
+        let url_path = PathBuf::from(url.path());
+        let basename = url_path
+            .file_name()
+            .context("failed to get basename from url")?;
+        let path = dir.into_path().join(basename);
+        let mut file = fs::File::create(&path).context("failed to create target file")?;
+        response
+            .copy_to(&mut file)
+            .context("failed to write response to file")?;
+        debug!("download successful");
+        path
+    };
     Ok(path)
 }
 
