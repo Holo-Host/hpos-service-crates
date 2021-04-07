@@ -59,7 +59,9 @@ impl Happ {
     /// returns the name that will be used to access the ui
     pub fn ui_name(&self) -> String {
         let mut name = self.id();
-        name.truncate(name.find(':').unwrap());
+        if let Some(idx) = name.find(':') {
+            name.truncate(idx);
+        }
         name
     }
     /// generates the installed app id that should be used

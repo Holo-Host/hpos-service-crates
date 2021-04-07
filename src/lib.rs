@@ -70,6 +70,7 @@ pub async fn install_holo_hosted_happs(
     Ok(())
 }
 
+#[instrument(err)]
 pub async fn get_enabled_hosted_happs(
     core_happ: &Happ,
 ) -> Result<impl Iterator<Item = WrappedHeaderHash>> {
@@ -247,34 +248,41 @@ pub(crate) async fn download_file(url: &Url) -> Result<PathBuf> {
     use isahc::config::RedirectPolicy;
     use isahc::prelude::*;
 
-    debug!("downloading");
-    let mut url = Url::clone(&url);
-    url.set_scheme("https")
-        .map_err(|_| anyhow!("failed to set scheme to https"))?;
-    let client = HttpClient::builder()
-        .redirect_policy(RedirectPolicy::Follow)
-        .build()
-        .context("failed to initiate download request")?;
-    let mut response = client
-        .get(url.as_str())
-        .context("failed to send GET request")?;
-    if !response.status().is_success() {
-        return Err(anyhow!(
-            "response status code {} indicated failure",
-            response.status().as_str()
-        ));
-    }
-    let dir = TempDir::new().context("failed to create tempdir")?;
-    let url_path = PathBuf::from(url.path());
-    let basename = url_path
-        .file_name()
-        .context("failed to get basename from url")?;
-    let path = dir.into_path().join(basename);
-    let mut file = fs::File::create(&path).context("failed to create target file")?;
-    response
-        .copy_to(&mut file)
-        .context("failed to write response to file")?;
-    debug!("download successful");
+    let path = if url.scheme() == "file" {
+        let p = PathBuf::from(url.path());
+        debug!("Using: {:?}", p);
+        p
+    } else {
+        debug!("downloading");
+        let mut url = Url::clone(&url);
+        url.set_scheme("https")
+            .map_err(|_| anyhow!("failed to set scheme to https"))?;
+        let client = HttpClient::builder()
+            .redirect_policy(RedirectPolicy::Follow)
+            .build()
+            .context("failed to initiate download request")?;
+        let mut response = client
+            .get(url.as_str())
+            .context("failed to send GET request")?;
+        if !response.status().is_success() {
+            return Err(anyhow!(
+                "response status code {} indicated failure",
+                response.status().as_str()
+            ));
+        }
+        let dir = TempDir::new().context("failed to create tempdir")?;
+        let url_path = PathBuf::from(url.path());
+        let basename = url_path
+            .file_name()
+            .context("failed to get basename from url")?;
+        let path = dir.into_path().join(basename);
+        let mut file = fs::File::create(&path).context("failed to create target file")?;
+        response
+            .copy_to(&mut file)
+            .context("failed to write response to file")?;
+        debug!("download successful");
+        path
+    };
     Ok(path)
 }
 
