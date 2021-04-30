@@ -87,7 +87,7 @@ pub async fn get_enabled_hosted_happs(
                 cell_id: cell_data[0].as_id().clone(),
                 zome_name: ZomeName::from("hha"),
                 fn_name: FunctionName::from("get_happs"),
-                payload: ExternIO(vec![]),
+                payload: ExternIO::encode(())?,
                 cap: None,
                 provenance: cell_data[0].clone().into_id().into_dna_and_agent().1,
             };
