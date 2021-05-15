@@ -5,12 +5,13 @@ use holochain::conductor::api::{
     AdminRequest, AdminResponse, AppRequest, AppResponse, InstalledAppInfo, ZomeCall,
 };
 use holochain_types::{
-    app::{AppBundleSource, InstallAppBundlePayload, InstalledAppId, MembraneProof},
+    app::{AppBundleSource, InstallAppBundlePayload, InstalledAppId},
     dna::AgentPubKey,
 };
 use holochain_websocket::{connect, WebsocketConfig, WebsocketSender};
 use tracing::{info, instrument, trace};
 use url::Url;
+use holochain_types::prelude::MembraneProof;
 
 use crate::config::Happ;
 
