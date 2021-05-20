@@ -4,9 +4,6 @@
 mod config;
 pub use config::{Config, Happ, HappsFile, MembraneProofFile, ProofPayload};
 
-mod entries;
-pub use entries::{DnaResource, HappBundle, HappBundleDetails, InstallHappBody, Preferences};
-
 mod websocket;
 pub use websocket::{AdminWebsocket, AppWebsocket};
 
@@ -21,94 +18,8 @@ use tempfile::TempDir;
 use tracing::{debug, info, instrument, warn};
 use url::Url;
 
-use hc_utils::WrappedHeaderHash;
-use holochain::conductor::api::ZomeCall;
-use holochain::conductor::api::{AppResponse, InstalledAppInfo};
-use holochain_types::prelude::{zome_io::ExternIO, FunctionName, ZomeName};
 use holochain_types::prelude::{MembraneProof, UnsafeBytes};
 type HappIds = Vec<String>;
-
-pub async fn activate_holo_hosted_happs(core_happ: &Happ, mem_proof_path: PathBuf) -> Result<()> {
-    let list_of_happs = get_enabled_hosted_happs(&core_happ).await?;
-    let mem_proof = load_mem_proof_file(mem_proof_path)?;
-    install_holo_hosted_happs(list_of_happs, mem_proof).await?;
-    Ok(())
-}
-
-pub async fn install_holo_hosted_happs(
-    happs: impl Iterator<Item = WrappedHeaderHash>,
-    mem_proof: HashMap<String, MembraneProof>,
-) -> Result<()> {
-    info!("Starting to install....");
-    // iterate through the vec and
-    // Call http://localhost/holochain-api/install_hosted_happ
-    // for each WrappedHeaderHash to install the hosted_happ
-    let client = reqwest::Client::new();
-    // Note: Tmp preferences
-    let preferences = Preferences {
-        max_fuel_before_invoice: 1.0,
-        max_time_before_invoice: vec![86400, 0],
-        price_compute: 1.0,
-        price_storage: 1.0,
-        price_bandwidth: 1.0,
-    };
-    for happ_id in happs {
-        info!("Installing happ-id {:?}", happ_id);
-        let body = InstallHappBody {
-            happ_id: happ_id.0.to_string(),
-            preferences: preferences.clone(),
-            membrane_proofs: mem_proof.clone(),
-        };
-        let response = client
-            .post("http://localhost/holochain-api/install_hosted_happ")
-            .json(&body)
-            .send()
-            .await?;
-        info!("Installed happ-id {:?}", happ_id);
-        info!("Response {:?}", response);
-    }
-    Ok(())
-}
-
-#[instrument(err)]
-pub async fn get_enabled_hosted_happs(
-    core_happ: &Happ,
-) -> Result<impl Iterator<Item = WrappedHeaderHash>> {
-    let mut app_websocket = AppWebsocket::connect(42233)
-        .await
-        .context("failed to connect to holochain's app interface")?;
-    match app_websocket.get_app_info(core_happ.id()).await {
-        Some(InstalledAppInfo {
-            // This works on the assumption that the core happs has HHA in the first position of the vec
-            cell_data,
-            ..
-        }) => {
-            let zome_call_payload = ZomeCall {
-                cell_id: cell_data[0].as_id().clone(),
-                zome_name: ZomeName::from("hha"),
-                fn_name: FunctionName::from("get_happs"),
-                payload: ExternIO::encode(())?,
-                cap: None,
-                provenance: cell_data[0].clone().into_id().into_dna_and_agent().1,
-            };
-            let response = app_websocket.zome_call(zome_call_payload).await?;
-            match response {
-                // This is the happs list that is returned from the hha DNA
-                // https://github.com/Holo-Host/holo-hosting-app-rsm/blob/develop/zomes/hha/src/lib.rs#L54
-                // return Vec of happ_list.happ_id
-                AppResponse::ZomeCall(r) => {
-                    info!("ZomeCall Response - Hosted happs List {:?}", r);
-                    let happ_bundles: Vec<HappBundleDetails> =
-                        rmp_serde::from_read_ref(r.as_bytes())?;
-                    let happ_bundle_ids = happ_bundles.into_iter().map(|happ| happ.happ_id);
-                    Ok(happ_bundle_ids)
-                }
-                _ => Err(anyhow!("unexpected response: {:?}", response)),
-            }
-        }
-        None => Err(anyhow!("HHA is not installed")),
-    }
-}
 
 #[instrument(err, fields(path = %path.as_ref().display()))]
 pub fn load_mem_proof_file(path: impl AsRef<Path>) -> Result<HashMap<String, MembraneProof>> {
