@@ -48,11 +48,11 @@ impl AdminWebsocket {
         }
 
         // Based on the holo-network choose what agent key is to be used
-        // For mainNet: use the holoport ID as the holochain key
+        // For mainNet and alphaNet: use the holoport ID as the holochain key
         // For devNet and flexNet: create a random agent key
         if let Ok(holo_network) = env::var("HOLO_NETWORK") {
-            // For mainNet
-            if holo_network == "mainNet" {
+            // For mainNet and alphaNet
+            if holo_network == "mainNet" || holo_network == "alphaNet" {
                 // Use agent key from from the config file in main net
                 if let Ok(config_path) = env::var("HPOS_CONFIG_PATH") {
                     if let Ok(config_json) = fs::read(&config_path) {
