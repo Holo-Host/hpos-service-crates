@@ -27,7 +27,7 @@ spinning_top = "=0.2.0"
 
 [dependencies.hpos-config-core]
 git = "https://github.com/Holo-Host/hpos-config"
-branch = "hc-pub-keys-07-07"
+branch = "config-v2-07-07"
 
 [dependencies.holochain]
 git = "https://github.com/holochain/holochain"
