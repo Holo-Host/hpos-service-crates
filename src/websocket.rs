@@ -10,6 +10,7 @@ use holochain_types::{
     dna::AgentPubKey,
 };
 use holochain_websocket::{connect, WebsocketConfig, WebsocketSender};
+use hpos_config_core::Config;
 use tracing::{info, instrument, trace};
 use url::Url;
 
@@ -45,6 +46,37 @@ impl AdminWebsocket {
             info!("returning agent key from memory");
             return Ok(key);
         }
+
+        // Based on the holo-network choose what agent key is to be used
+        // For mainNet and alphaNet: use the holoport ID as the holochain key
+        // For devNet and flexNet: create a random agent key
+        if let Ok(holo_network) = env::var("HOLO_NETWORK") {
+            // For mainNet and alphaNet
+            if holo_network == "mainNet" || holo_network == "alphaNet" {
+                // Use agent key from from the config file in main net
+                if let Ok(config_path) = env::var("HPOS_CONFIG_PATH") {
+                    if let Ok(config_json) = fs::read(&config_path) {
+                        if let Config::V2 {
+                            seed: _, settings, ..
+                        } = serde_json::from_slice(&config_json)?
+                        {
+                            info!("returning agent key from hpos config file");
+                            let key = AgentPubKey::from_raw_32(
+                                settings.admin.public_key.to_bytes().to_vec(),
+                            );
+                            // Copy to the `agent-key.pub` files for other apps that use it as reference
+                            if let Ok(pubkey_path) = env::var("PUBKEY_PATH") {
+                                let mut file = File::create(pubkey_path)?;
+                                file.write_all(&key.get_raw_39())?;
+                            }
+                            self.agent_key = Some(key.clone());
+                            return Ok(key);
+                        }
+                    }
+                }
+            }
+        }
+        // For devNet or flexNet
         // Try agent key from disc
         if let Ok(pubkey_path) = env::var("PUBKEY_PATH") {
             if let Ok(key_vec) = fs::read(&pubkey_path) {
@@ -55,7 +87,6 @@ impl AdminWebsocket {
                 }
             }
         }
-
         // Create agent key in Lair and save it in file
         let response = self.send(AdminRequest::GenerateAgentPubKey).await?;
         match response {
