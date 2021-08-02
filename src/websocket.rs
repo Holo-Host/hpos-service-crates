@@ -65,7 +65,7 @@ impl AdminWebsocket {
                             // Copy to the `agent-key.pub` files for other apps that use it as reference
                             if let Ok(pubkey_path) = env::var("PUBKEY_PATH") {
                                 let mut file = File::create(pubkey_path)?;
-                                file.write_all(&key.get_raw_39())?;
+                                file.write_all(key.get_raw_39())?;
                             }
                             self.agent_key = Some(key.clone());
                             return Ok(key);
@@ -92,7 +92,7 @@ impl AdminWebsocket {
                 let key_vec = key.get_raw_39();
                 if let Ok(pubkey_path) = env::var("PUBKEY_PATH") {
                     let mut file = File::create(pubkey_path)?;
-                    file.write_all(&key_vec)?;
+                    file.write_all(key_vec)?;
                 }
                 info!("returning newly created agent key");
                 self.agent_key = Some(key.clone());
