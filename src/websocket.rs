@@ -57,12 +57,13 @@ impl AdminWebsocket {
                 if let Ok(config_path) = env::var("HPOS_CONFIG_PATH") {
                     if let Ok(config_json) = fs::read(&config_path) {
                         if let Config::V2 {
-                            seed: _, settings, ..
+                            encrypted_key, ..
                         } = serde_json::from_slice(&config_json)?
                         {
                             info!("returning agent key from hpos config file");
+                            let keypair = Config::decode_key(&encrypted_key).unwrap();
                             let key = AgentPubKey::from_raw_32(
-                                settings.admin.public_key.to_bytes().to_vec(),
+                                keypair.public.to_bytes().to_vec(),
                             );
                             // Copy to the `agent-key.pub` files for other apps that use it as reference
                             if let Ok(pubkey_path) = env::var("PUBKEY_PATH") {
