@@ -56,18 +56,16 @@ impl AdminWebsocket {
                 // Use agent key from from the config file in main net
                 if let Ok(config_path) = env::var("HPOS_CONFIG_PATH") {
                     if let Ok(config_json) = fs::read(&config_path) {
-                        if let Config::V2 {
-                            seed: _, settings, ..
-                        } = serde_json::from_slice(&config_json)?
+                        if let Config::V2 { encrypted_key, .. } =
+                            serde_json::from_slice(&config_json)?
                         {
                             info!("returning agent key from hpos config file");
-                            let key = AgentPubKey::from_raw_32(
-                                settings.admin.public_key.to_bytes().to_vec(),
-                            );
+                            let keypair = Config::decode_key(&encrypted_key).unwrap();
+                            let key = AgentPubKey::from_raw_32(keypair.public.to_bytes().to_vec());
                             // Copy to the `agent-key.pub` files for other apps that use it as reference
                             if let Ok(pubkey_path) = env::var("PUBKEY_PATH") {
                                 let mut file = File::create(pubkey_path)?;
-                                file.write_all(&key.get_raw_39())?;
+                                file.write_all(key.get_raw_39())?;
                             }
                             self.agent_key = Some(key.clone());
                             return Ok(key);
@@ -94,7 +92,7 @@ impl AdminWebsocket {
                 let key_vec = key.get_raw_39();
                 if let Ok(pubkey_path) = env::var("PUBKEY_PATH") {
                     let mut file = File::create(pubkey_path)?;
-                    file.write_all(&key_vec)?;
+                    file.write_all(key_vec)?;
                 }
                 info!("returning newly created agent key");
                 self.agent_key = Some(key.clone());
