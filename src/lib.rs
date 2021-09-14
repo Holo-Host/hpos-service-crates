@@ -79,8 +79,9 @@ pub async fn install_happs(happ_file: &HappsFile, config: &Config) -> Result<()>
             info!("Installing app {}", full_happ_id);
             let mut mem_proof = HashMap::new();
             if full_happ_id.contains("core-app") {
-                let proof = load_mem_proof_file(config.membrane_proofs_file_path.clone())?;
-                mem_proof.insert("core-app".to_string(), proof);
+                if let Ok(proof) = load_mem_proof_file(config.membrane_proofs_file_path.clone()) {
+                    mem_proof.insert("core-app".to_string(), proof);
+                }
             }
             if let Err(err) = admin_websocket
                 .install_and_activate_happ(happ, mem_proof)
