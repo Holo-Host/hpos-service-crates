@@ -26,7 +26,7 @@ pub fn load_mem_proof_file(path: impl AsRef<Path>) -> Result<MembraneProof> {
     use std::str;
     let file = fs::read(&path).context("failed to open file")?;
     let mem_proof_str = str::from_utf8(&file)?;
-    let mem_proof_bytes = base64::decode(mem_proof_str.clone())?;
+    let mem_proof_bytes = base64::decode(mem_proof_str)?;
     Ok(MembraneProof::from(UnsafeBytes::from(mem_proof_bytes)))
 }
 
@@ -80,28 +80,6 @@ pub async fn install_happs(happ_file: &HappsFile, config: &Config) -> Result<()>
             let mut mem_proof = HashMap::new();
             if full_happ_id.contains("core-app") {
                 let proof = load_mem_proof_file(config.membrane_proofs_file_path.clone())?;
-                info!("+++++++++++++++++++++++++++");
-                info!("+++++++++++++++++++++++++++");
-                info!("+++++++++++++++++++++++++++");
-                info!("+++++++++++++++++++++++++++");
-                info!("+++++++++++++++++++++++++++");
-                info!("+++++++++++++++++++++++++++");
-                info!("+++++++++++++++++++++++++++");
-                info!("+++++++++++++++++++++++++++");
-                info!("+++++++++++++++++++++++++++");
-                info!("+++++++++++++++++++++++++++");
-                info!("+++++++++++++++++++++++++++");
-                info!("Proof {:?}", proof);
-                info!("+++++++++++++++++++++++++++");
-                info!("+++++++++++++++++++++++++++");
-                info!("+++++++++++++++++++++++++++");
-                info!("+++++++++++++++++++++++++++");
-                info!("+++++++++++++++++++++++++++");
-                info!("+++++++++++++++++++++++++++");
-                info!("+++++++++++++++++++++++++++");
-                info!("+++++++++++++++++++++++++++");
-                info!("+++++++++++++++++++++++++++");
-                info!("+++++++++++++++++++++++++++");
                 mem_proof.insert("core-app".to_string(), proof);
             }
             if let Err(err) = admin_websocket
