@@ -7,5 +7,5 @@ mkdir test/tmp/uis
 echo 'starting holochain'
 holochain -c test/holochain-config.yaml &
 echo 'running configure-holochain'
-RUST_LOG=debug cargo run --bin configure-holochain -- test/config.yaml test/membrane-proofs.yaml --ui-store-folder test/tmp/uis
+RUST_LOG=debug cargo run --bin configure-holochain -- test/config.yaml test/mem-proof --ui-store-folder test/tmp/uis
 killall holochain
