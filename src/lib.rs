@@ -22,22 +22,12 @@ use holochain_types::prelude::{MembraneProof, UnsafeBytes};
 type HappIds = Vec<String>;
 
 #[instrument(err, fields(path = %path.as_ref().display()))]
-pub fn load_mem_proof_file(path: impl AsRef<Path>) -> Result<HashMap<String, MembraneProof>> {
-    use std::fs::File;
-
-    let file = File::open(path).context("failed to open file")?;
-    let proof: MembraneProofFile =
-        serde_yaml::from_reader(&file).context("failed to deserialize YAML as MembraneProof")?;
-    debug!(?proof);
-    proof
-        .payload
-        .into_iter()
-        .map(|p| {
-            base64::decode(p.proof.clone())
-                .map(|proof| (p.cell_nick, MembraneProof::from(UnsafeBytes::from(proof))))
-                .map_err(|e| anyhow!("failed to decode proof: {:?}", e))
-        })
-        .collect()
+pub fn load_mem_proof_file(path: impl AsRef<Path>) -> Result<MembraneProof> {
+    use std::str;
+    let file = fs::read(&path).context("failed to open file")?;
+    let mem_proof_str = str::from_utf8(&file)?;
+    let mem_proof_bytes = base64::decode(mem_proof_str)?;
+    Ok(MembraneProof::from(UnsafeBytes::from(mem_proof_bytes)))
 }
 
 #[instrument(err, fields(path = %path.as_ref().display()))]
@@ -88,8 +78,10 @@ pub async fn install_happs(happ_file: &HappsFile, config: &Config) -> Result<()>
         } else {
             info!("Installing app {}", full_happ_id);
             let mut mem_proof = HashMap::new();
-            if full_happ_id.contains("elemental-chat") {
-                mem_proof = load_mem_proof_file(config.membrane_proofs_file_path.clone())?;
+            if full_happ_id.contains("core-app") {
+                if let Ok(proof) = load_mem_proof_file(config.membrane_proofs_file_path.clone()) {
+                    mem_proof.insert("core-app".to_string(), proof);
+                }
             }
             if let Err(err) = admin_websocket
                 .install_and_activate_happ(happ, mem_proof)
