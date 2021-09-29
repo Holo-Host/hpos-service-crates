@@ -656,6 +656,7 @@ dependencies = [
  "again",
  "anyhow",
  "base64 0.13.0",
+ "bit-set 0.5.2",
  "cargo-husky",
  "futures",
  "holochain",
