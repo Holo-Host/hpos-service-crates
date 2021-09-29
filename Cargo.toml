@@ -27,18 +27,18 @@ spinning_top = "=0.2.0"
 
 [dependencies.holochain]
 git = "https://github.com/holochain/holochain"
-rev = "ab02f36c87999d42026b7429164ded503bb39853"
+rev = "a1206a694fe3b521440fe633db99a50b8255c1b2"
 package = "holochain"
 default-features = false
 
 [dependencies.holochain_types]
 git = "https://github.com/holochain/holochain"
-rev = "ab02f36c87999d42026b7429164ded503bb39853"
+rev = "a1206a694fe3b521440fe633db99a50b8255c1b2"
 package = "holochain_types"
 
 [dependencies.holochain_websocket]
 git = "https://github.com/holochain/holochain"
-rev = "ab02f36c87999d42026b7429164ded503bb39853"
+rev = "a1206a694fe3b521440fe633db99a50b8255c1b2"
 package = "holochain_websocket"
 
 [dev-dependencies.cargo-husky]
@@ -47,6 +47,6 @@ features = ["run-cargo-fmt", "run-cargo-clippy"]
 
 # Holochain requires a patch to crates.io registry
 [patch.crates-io]
-holochain_zome_types = {git = "https://github.com/holochain/holochain", rev = "ab02f36c87999d42026b7429164ded503bb39853", package = "holochain_zome_types"}
-holo_hash = {git = "https://github.com/holochain/holochain", rev = "ab02f36c87999d42026b7429164ded503bb39853", package = "holo_hash"}
-hdk_derive = {git = "https://github.com/holochain/holochain", rev = "ab02f36c87999d42026b7429164ded503bb39853", package = "hdk_derive"}
+holochain_zome_types = {git = "https://github.com/holochain/holochain", rev = "a1206a694fe3b521440fe633db99a50b8255c1b2", package = "holochain_zome_types"}
+holo_hash = {git = "https://github.com/holochain/holochain", rev = "a1206a694fe3b521440fe633db99a50b8255c1b2", package = "holo_hash"}
+hdk_derive = {git = "https://github.com/holochain/holochain", rev = "a1206a694fe3b521440fe633db99a50b8255c1b2", package = "hdk_derive"}
