@@ -19,7 +19,7 @@ pub struct Config {
     pub happs_file_path: PathBuf,
     /// Path to a YAML file containing hApp membrane proofs
     pub membrane_proofs_file_path: PathBuf,
-    #[structopt(long, env)]
+    #[structopt(long)]
     /// If passed, causes existing existing happs that have `::servicelogger` to be disabled
     pub disable_servicelogger: bool,
 }
