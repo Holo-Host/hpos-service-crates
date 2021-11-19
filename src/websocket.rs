@@ -145,7 +145,7 @@ impl AdminWebsocket {
         &mut self,
         happ: &Happ,
         membrane_proofs: HashMap<String, MembraneProof>,
-    ) -> Result<AdminResponse> {
+    ) -> Result<()> {
         let agent_key = self
             .get_agent_key()
             .await
@@ -179,8 +179,15 @@ impl AdminWebsocket {
         }
 
         let msg = AdminRequest::InstallAppBundle(Box::new(payload));
-        let response = self.send(msg).await?;
-        Ok(response)
+        match self.send(msg).await {
+            Ok(_) => Ok(()),
+            Err(e) => {
+                if e.to_string().contains("AppAlreadyInstalled") {
+                    return Ok(());
+                }
+                Err(e)
+            }
+        }
     }
 
     #[instrument(skip(self), err)]
