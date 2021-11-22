@@ -635,7 +635,7 @@ dependencies = [
 
 [[package]]
 name = "configure-holochain"
-version = "0.3.0"
+version = "0.3.1"
 dependencies = [
  "again",
  "anyhow",
@@ -2242,7 +2242,7 @@ dependencies = [
 [[package]]
 name = "hpos-config-core"
 version = "0.1.1"
-source = "git+https://github.com/Holo-Host/hpos-config?rev=c74834c652ec99d398d2478b4c1365dc705e574b#c74834c652ec99d398d2478b4c1365dc705e574b"
+source = "git+https://github.com/Holo-Host/hpos-config?rev=b86acb4120445dcdd155b87d94c7bc27fc8096b0#b86acb4120445dcdd155b87d94c7bc27fc8096b0"
 dependencies = [
  "argon2min",
  "arrayref",
@@ -2260,7 +2260,7 @@ dependencies = [
 [[package]]
 name = "hpos-config-seed-bundle-explorer"
 version = "0.1.0"
-source = "git+https://github.com/Holo-Host/hpos-config?rev=c74834c652ec99d398d2478b4c1365dc705e574b#c74834c652ec99d398d2478b4c1365dc705e574b"
+source = "git+https://github.com/Holo-Host/hpos-config?rev=b86acb4120445dcdd155b87d94c7bc27fc8096b0#b86acb4120445dcdd155b87d94c7bc27fc8096b0"
 dependencies = [
  "base64",
  "ed25519-dalek",

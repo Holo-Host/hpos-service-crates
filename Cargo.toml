@@ -1,6 +1,6 @@
 [package]
 name = "configure-holochain"
-version = "0.3.0"
+version = "0.3.1"
 authors = ["Oleksii Filonenko <oleksii.filonenko@holo.host>", "zo-el <joelulahanna@gmaail.com>"]
 edition = "2018"
 
@@ -33,11 +33,11 @@ hdk_derive = "=0.0.12"
 
 [dependencies.hpos-config-core]
 git = "https://github.com/Holo-Host/hpos-config"
-rev = "c74834c652ec99d398d2478b4c1365dc705e574b"
+rev = "b86acb4120445dcdd155b87d94c7bc27fc8096b0"
 
 [dependencies.hpos-config-seed-bundle-explorer]
 git = "https://github.com/Holo-Host/hpos-config"
-rev = "c74834c652ec99d398d2478b4c1365dc705e574b"
+rev = "b86acb4120445dcdd155b87d94c7bc27fc8096b0"
 
 [dev-dependencies.cargo-husky]
 version = "1"
