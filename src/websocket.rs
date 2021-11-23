@@ -56,20 +56,21 @@ impl AdminWebsocket {
                 // Use agent key from from the config file in main net
                 if let Ok(config_path) = env::var("HPOS_CONFIG_PATH") {
                     if let Ok(config_json) = fs::read(&config_path) {
-                        if let Config::V2 { encrypted_key, .. } =
-                            serde_json::from_slice(&config_json)?
-                        {
-                            info!("returning agent key from hpos config file");
-                            let keypair = Config::decode_key(&encrypted_key).unwrap();
-                            let key = AgentPubKey::from_raw_32(keypair.public.to_bytes().to_vec());
-                            // Copy to the `agent-key.pub` files for other apps that use it as reference
-                            if let Ok(pubkey_path) = env::var("PUBKEY_PATH") {
-                                let mut file = File::create(pubkey_path)?;
-                                file.write_all(key.get_raw_39())?;
-                            }
-                            self.agent_key = Some(key.clone());
-                            return Ok(key);
+                        let config: Config = serde_json::from_slice(&config_json)?;
+                        let pub_key = hpos_config_seed_bundle_explorer::holoport_public_key(
+                            &config,
+                            Some("pass".to_string()),
+                        )
+                        .await
+                        .unwrap();
+                        let key = AgentPubKey::from_raw_32(pub_key.to_bytes().to_vec());
+                        // Copy to the `agent-key.pub` files for other apps that use it as reference
+                        if let Ok(pubkey_path) = env::var("PUBKEY_PATH") {
+                            let mut file = File::create(pubkey_path)?;
+                            file.write_all(key.get_raw_39())?;
                         }
+                        self.agent_key = Some(key.clone());
+                        return Ok(key);
                     }
                 }
             }
@@ -144,7 +145,7 @@ impl AdminWebsocket {
         &mut self,
         happ: &Happ,
         membrane_proofs: HashMap<String, MembraneProof>,
-    ) -> Result<AdminResponse> {
+    ) -> Result<()> {
         let agent_key = self
             .get_agent_key()
             .await
@@ -178,8 +179,15 @@ impl AdminWebsocket {
         }
 
         let msg = AdminRequest::InstallAppBundle(Box::new(payload));
-        let response = self.send(msg).await?;
-        Ok(response)
+        match self.send(msg).await {
+            Ok(_) => Ok(()),
+            Err(e) => {
+                if e.to_string().contains("AppAlreadyInstalled") {
+                    return Ok(());
+                }
+                Err(e)
+            }
+        }
     }
 
     #[instrument(skip(self), err)]
