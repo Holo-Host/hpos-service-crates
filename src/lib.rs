@@ -169,7 +169,7 @@ pub(crate) async fn download_file(url: &Url) -> Result<PathBuf> {
         p
     } else {
         debug!("downloading");
-        let mut url = Url::clone(&url);
+        let mut url = Url::clone(url);
         url.set_scheme("https")
             .map_err(|_| anyhow!("failed to set scheme to https"))?;
         let client = HttpClient::builder()
