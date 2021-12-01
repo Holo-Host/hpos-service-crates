@@ -118,7 +118,11 @@ pub async fn install_happs(happ_file: &HappsFile, config: &Config) -> Result<()>
 
     for app in &*active_happs {
         if let Some(app_info) = app_websocket.get_app_info(app.to_string()).await {
-            if !keep_app_active(&app_info.installed_app_id, happs_to_keep.clone()) {
+            if !keep_app_active(
+                &app_info.installed_app_id,
+                happs_to_keep.clone(),
+                config.disable_servicelogger,
+            ) {
                 info!("deactivating app {}", app_info.installed_app_id);
                 admin_websocket
                     .deactivate_app(&app_info.installed_app_id)
@@ -224,8 +228,14 @@ pub(crate) fn extract_zip<P: AsRef<Path>>(source_path: P, unpack_path: P) -> Res
 }
 
 // Returns true if app should be kept active in holochain
-fn keep_app_active(installed_app_id: &str, happs_to_keep: HappIds) -> bool {
-    happs_to_keep.contains(&installed_app_id.to_string()) || installed_app_id.contains("uhCkk")
+fn keep_app_active(
+    installed_app_id: &str,
+    happs_to_keep: HappIds,
+    disable_servicelogger: bool,
+) -> bool {
+    happs_to_keep.contains(&installed_app_id.to_string())
+        || (installed_app_id.contains("uhCkk")
+            && !(disable_servicelogger && installed_app_id.contains("::servicelogger")))
 }
 
 #[cfg(test)]
@@ -237,12 +247,19 @@ mod tests {
         let happs_to_keep = vec!["elemental-chat:2".to_string(), "hha:1".to_string()];
         let app_1 = "elemental-chat:1";
         let app_2 = "elemental-chat:2";
-        let app_3 = "uhCkkcF0X1dpwHFeIPI6-7rzM6ma9IgyiqD-othxgENSkL1So1Slt::servicelogger";
-        let app_4 = "other-app";
+        let app_3 = "uhCkkcF0X1dpwHFeIPI6-7rzM6ma9IgyiqD-othxgENSkL1So1Slt";
+        let app_4 = "uhCkkcF0X1dpwHFeIPI6-7rzM6ma9IgyiqD-othxgENSkL1So1Slt::servicelogger";
+        let app_5 = "other-app";
 
-        assert_eq!(keep_app_active(app_1, happs_to_keep.clone()), false);
-        assert_eq!(keep_app_active(app_2, happs_to_keep.clone()), true); // because it is in config
-        assert_eq!(keep_app_active(app_3, happs_to_keep.clone()), true); // because it is hosted
-        assert_eq!(keep_app_active(app_4, happs_to_keep.clone()), false);
+        assert_eq!(keep_app_active(app_1, happs_to_keep.clone(), false), false);
+        assert_eq!(keep_app_active(app_2, happs_to_keep.clone(), false), true); // because it is in config
+        assert_eq!(keep_app_active(app_3, happs_to_keep.clone(), false), true); // because it is hosted
+        assert_eq!(keep_app_active(app_4, happs_to_keep.clone(), false), true); // because it is hosted servicelogger
+        assert_eq!(keep_app_active(app_5, happs_to_keep.clone(), false), false);
+        assert_eq!(keep_app_active(app_1, happs_to_keep.clone(), true), false);
+        assert_eq!(keep_app_active(app_2, happs_to_keep.clone(), true), true); // because it is in config
+        assert_eq!(keep_app_active(app_3, happs_to_keep.clone(), true), true); // because it is hosted
+        assert_eq!(keep_app_active(app_4, happs_to_keep.clone(), true), false); // because it is hosted servicelogger
+        assert_eq!(keep_app_active(app_5, happs_to_keep.clone(), true), false);
     }
 }
