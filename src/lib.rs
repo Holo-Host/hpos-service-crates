@@ -88,7 +88,7 @@ pub async fn install_happs(happ_file: &HappsFile, config: &Config) -> Result<()>
                     mem_proof.insert("core-app".to_string(), proof);
                 }
                 if let Some(p) = happ.properties.clone() {
-                    let prop = format!(r#"{}"#, p);
+                    let prop = p.to_string();
                     info!("Core app Properties: {}", prop);
                     properties = Some(YamlProperties::new(serde_yaml::from_str(&prop).unwrap()));
                 }

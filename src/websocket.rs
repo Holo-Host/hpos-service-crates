@@ -132,15 +132,12 @@ impl AdminWebsocket {
         membrane_proofs: HashMap<String, MembraneProof>,
         properties: Option<YamlProperties>,
     ) -> Result<()> {
-        match &happ.dnas {
-            Some(h) => {
-                self.register_and_install_happ(happ, membrane_proofs, properties)
-                    .await?;
-            }
-            None => {
-                self.install_happ(happ, membrane_proofs).await?;
-            }
-        };
+        if happ.dnas.is_some() {
+            self.register_and_install_happ(happ, membrane_proofs, properties)
+                .await?;
+        } else {
+            self.install_happ(happ, membrane_proofs).await?;
+        }
         self.activate_app(happ).await?;
         info!("installed & activated hApp: {}", happ.id());
         Ok(())
@@ -247,14 +244,10 @@ impl AdminWebsocket {
                     let response = self.send(msg).await?;
                     match response {
                         AdminResponse::DnaRegistered(hash) => {
-                            let membrane_proof = match membrane_proofs.get(&dna.id) {
-                                Some(a) => Some(a.clone()),
-                                None => None,
-                            };
                             dna_payload.push(InstallAppDnaPayload {
                                 hash,
                                 role_id: dna.id.clone(),
-                                membrane_proof,
+                                membrane_proof: membrane_proofs.get(&dna.id).cloned(),
                             });
                         }
                         _ => return Err(anyhow!("unexpected response: {:?}", response)),
