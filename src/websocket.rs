@@ -1,16 +1,20 @@
-use std::{collections::HashMap, env, fs, fs::File, io::prelude::*, sync::Arc};
-
 use anyhow::{anyhow, Context, Result};
+use holo_hash::AgentPubKeyB64;
 use holochain::conductor::api::{
     AdminRequest, AdminResponse, AppRequest, AppResponse, InstalledAppInfo, ZomeCall,
 };
 use holochain_types::prelude::MembraneProof;
 use holochain_types::{
-    app::{AppBundleSource, InstallAppBundlePayload, InstalledAppId},
+    app::{
+        AppBundleSource, DnaSource, InstallAppBundlePayload, InstallAppDnaPayload,
+        InstallAppPayload, InstalledAppId, RegisterDnaPayload,
+    },
     dna::AgentPubKey,
+    properties::YamlProperties,
 };
 use holochain_websocket::{connect, WebsocketConfig, WebsocketSender};
 use hpos_config_core::Config;
+use std::{collections::HashMap, env, fs, fs::File, io::prelude::*, sync::Arc};
 use tracing::{info, instrument, trace};
 use url::Url;
 
@@ -126,8 +130,17 @@ impl AdminWebsocket {
         &mut self,
         happ: &Happ,
         membrane_proofs: HashMap<String, MembraneProof>,
+        properties: Option<YamlProperties>,
     ) -> Result<()> {
-        self.install_happ(happ, membrane_proofs).await?;
+        match &happ.dnas {
+            Some(h) => {
+                self.register_and_install_happ(happ, membrane_proofs, properties)
+                    .await?;
+            }
+            None => {
+                self.install_happ(happ, membrane_proofs).await?;
+            }
+        };
         self.activate_app(happ).await?;
         info!("installed & activated hApp: {}", happ.id());
         Ok(())
@@ -179,6 +192,87 @@ impl AdminWebsocket {
         }
 
         let msg = AdminRequest::InstallAppBundle(Box::new(payload));
+        match self.send(msg).await {
+            Ok(_) => Ok(()),
+            Err(e) => {
+                if e.to_string().contains("AppAlreadyInstalled") {
+                    return Ok(());
+                }
+                Err(e)
+            }
+        }
+    }
+
+    #[instrument(err, skip(self, happ, membrane_proofs))]
+    async fn register_and_install_happ(
+        &mut self,
+        happ: &Happ,
+        membrane_proofs: HashMap<String, MembraneProof>,
+        properties: Option<YamlProperties>,
+    ) -> Result<()> {
+        let agent_key = self
+            .get_agent_key()
+            .await
+            .context("failed to generate agent key")?;
+        let mut dna_payload: Vec<InstallAppDnaPayload> = Vec::new();
+        match &happ.dnas {
+            Some(dnas) => {
+                for dna in dnas.iter() {
+                    let path = crate::download_file(dna.url.as_ref().context("dna_url is None")?)
+                        .await
+                        .context("failed to download DNA archive")?;
+                    #[derive(serde::Serialize, serde::Deserialize)]
+                    struct Props {
+                        pub skip_proof: bool,
+                        pub holo_agent_override: Option<AgentPubKeyB64>,
+                    }
+                    let register_dna_payload;
+                    if let Ok(id) = env::var("DEV_UID_OVERRIDE") {
+                        info!("using uid to install: {}", id);
+                        register_dna_payload = RegisterDnaPayload {
+                            uid: Some(id),
+                            properties: properties.clone(),
+                            source: DnaSource::Path(path),
+                        };
+                    } else {
+                        info!("using default uid to install");
+                        register_dna_payload = RegisterDnaPayload {
+                            uid: None,
+                            properties: properties.clone(),
+                            source: DnaSource::Path(path),
+                        };
+                    }
+
+                    let msg = AdminRequest::RegisterDna(Box::new(register_dna_payload));
+                    let response = self.send(msg).await?;
+                    match response {
+                        AdminResponse::DnaRegistered(hash) => {
+                            let membrane_proof = match membrane_proofs.get(&dna.id) {
+                                Some(a) => Some(a.clone()),
+                                None => None,
+                            };
+                            dna_payload.push(InstallAppDnaPayload {
+                                hash,
+                                role_id: dna.id.clone(),
+                                membrane_proof,
+                            });
+                        }
+                        _ => return Err(anyhow!("unexpected response: {:?}", response)),
+                    };
+                }
+            }
+            None => {
+                self.install_happ(happ, membrane_proofs).await?;
+            }
+        };
+
+        let payload = InstallAppPayload {
+            agent_key,
+            installed_app_id: happ.id(),
+            dnas: dna_payload,
+        };
+
+        let msg = AdminRequest::InstallApp(Box::new(payload));
         match self.send(msg).await {
             Ok(_) => Ok(()),
             Err(e) => {
