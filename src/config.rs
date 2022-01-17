@@ -47,12 +47,20 @@ pub struct MembraneProofFile {
 /// Configuration of a single hApp from config.yaml
 /// ui_path and dna_path takes precedence over ui_url and dna_url respectively
 /// and is meant for running tests
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Clone)]
 pub struct Happ {
     pub ui_url: Option<Url>,
     pub ui_path: Option<PathBuf>,
     pub bundle_url: Option<Url>,
     pub bundle_path: Option<PathBuf>,
+    pub dnas: Option<Vec<DnaUrl>>,
+    pub properties: Option<String>,
+}
+
+#[derive(Debug, Deserialize, Clone)]
+pub struct DnaUrl {
+    pub id: String,
+    pub url: Option<Url>,
 }
 
 impl Happ {
@@ -107,6 +115,8 @@ mod tests {
             bundle_url: None,
             ui_url: None,
             ui_path: None,
+            dnas: None,
+            properties: None,
         };
         assert_eq!(cfg.id(), String::from("elemental_chat:1:0001"));
         let cfg = Happ {
@@ -114,6 +124,8 @@ mod tests {
             bundle_url: Some(Url::parse("https://github.com/holochain/elemental-chat/releases/download/v0.1.0-alpha1/elemental_chat.1.0001.happ").unwrap()),
             ui_url: None,
             ui_path: None,
+            dnas: None,
+            properties: None
         };
         assert_eq!(cfg.id(), String::from("elemental_chat:1:0001"));
     }
@@ -125,6 +137,8 @@ mod tests {
             bundle_url: None,
             ui_url: None,
             ui_path: None,
+            dnas: None,
+            properties: None,
         };
         assert_eq!(cfg.ui_name(), String::from("elemental_chat"));
     }

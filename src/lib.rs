@@ -18,7 +18,11 @@ use tempfile::TempDir;
 use tracing::{debug, info, instrument, warn};
 use url::Url;
 
-use holochain_types::prelude::{MembraneProof, UnsafeBytes};
+use holochain_types::{
+    prelude::{MembraneProof, UnsafeBytes},
+    properties::YamlProperties,
+};
+
 type HappIds = Vec<String>;
 
 #[instrument(err, fields(path = %path.as_ref().display()))]
@@ -78,13 +82,20 @@ pub async fn install_happs(happ_file: &HappsFile, config: &Config) -> Result<()>
         } else {
             info!("Installing app {}", full_happ_id);
             let mut mem_proof = HashMap::new();
+            let mut properties: Option<YamlProperties> = None;
             if full_happ_id.contains("core-app") {
                 if let Ok(proof) = load_mem_proof_file(config.membrane_proofs_file_path.clone()) {
                     mem_proof.insert("core-app".to_string(), proof);
                 }
+                if let Some(p) = happ.properties.clone() {
+                    let prop = p.to_string();
+                    info!("Core app Properties: {}", prop);
+                    properties = Some(YamlProperties::new(serde_yaml::from_str(&prop).unwrap()));
+                }
             }
+
             if let Err(err) = admin_websocket
-                .install_and_activate_happ(happ, mem_proof)
+                .install_and_activate_happ(happ, mem_proof, properties)
                 .await
             {
                 if err.to_string().contains("AppAlreadyInstalled") {
