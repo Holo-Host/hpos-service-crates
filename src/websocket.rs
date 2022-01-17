@@ -1,5 +1,4 @@
 use anyhow::{anyhow, Context, Result};
-use holo_hash::AgentPubKeyB64;
 use holochain::conductor::api::{
     AdminRequest, AdminResponse, AppRequest, AppResponse, InstalledAppInfo, ZomeCall,
 };
@@ -218,11 +217,6 @@ impl AdminWebsocket {
                     let path = crate::download_file(dna.url.as_ref().context("dna_url is None")?)
                         .await
                         .context("failed to download DNA archive")?;
-                    #[derive(serde::Serialize, serde::Deserialize)]
-                    struct Props {
-                        pub skip_proof: bool,
-                        pub holo_agent_override: Option<AgentPubKeyB64>,
-                    }
                     let register_dna_payload;
                     if let Ok(id) = env::var("DEV_UID_OVERRIDE") {
                         info!("using uid to install: {}", id);
