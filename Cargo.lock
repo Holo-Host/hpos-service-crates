@@ -636,7 +636,7 @@ dependencies = [
 
 [[package]]
 name = "configure-holochain"
-version = "0.3.1"
+version = "0.3.2"
 dependencies = [
  "again",
  "anyhow",

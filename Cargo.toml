@@ -1,6 +1,6 @@
 [package]
 name = "configure-holochain"
-version = "0.3.1"
+version = "0.3.2"
 authors = ["Oleksii Filonenko <oleksii.filonenko@holo.host>", "zo-el <joelulahanna@gmaail.com>"]
 edition = "2018"
 
