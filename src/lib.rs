@@ -19,8 +19,8 @@ use tracing::{debug, info, instrument, warn};
 use url::Url;
 
 use holochain_types::{
+    prelude::YamlProperties,
     prelude::{MembraneProof, UnsafeBytes},
-    properties::YamlProperties,
 };
 
 type HappIds = Vec<String>;
