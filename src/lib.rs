@@ -86,6 +86,12 @@ pub async fn install_happs(happ_file: &HappsFile, config: &Config) -> Result<()>
             if full_happ_id.contains("core-app") {
                 if let Ok(proof) = load_mem_proof_file(config.membrane_proofs_file_path.clone()) {
                     mem_proof.insert("core-app".to_string(), proof);
+                } else {
+                    // when mem-proof is not found you will want to install hha as read-only for our servers in holo-nixpkgs
+                    mem_proof.insert(
+                        "core-app".to_string(),
+                        MembraneProof::from(UnsafeBytes::from(vec![0])),
+                    );
                 }
                 if let Some(p) = happ.properties.clone() {
                     let prop = p.to_string();
