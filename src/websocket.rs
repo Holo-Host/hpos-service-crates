@@ -9,7 +9,7 @@ use holochain_types::{
         InstallAppPayload, InstalledAppId, RegisterDnaPayload,
     },
     dna::AgentPubKey,
-    properties::YamlProperties,
+    prelude::YamlProperties,
 };
 use holochain_websocket::{connect, WebsocketConfig, WebsocketSender};
 use hpos_config_core::Config;
