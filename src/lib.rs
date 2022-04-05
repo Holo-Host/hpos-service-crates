@@ -8,10 +8,10 @@ mod websocket;
 pub use websocket::{AdminWebsocket, AppWebsocket};
 
 use std::collections::HashMap;
-use std::fs;
 use std::path::{Path, PathBuf};
 use std::process;
 use std::sync::Arc;
+use std::{env, fs};
 
 use anyhow::{anyhow, Context, Result};
 use tempfile::TempDir;
@@ -43,6 +43,13 @@ pub fn load_happ_file(path: impl AsRef<Path>) -> Result<HappsFile> {
         serde_yaml::from_reader(&file).context("failed to deserialize YAML as HappsFile")?;
     debug!(?happ_file);
     Ok(happ_file)
+}
+
+fn mem_proof_path() -> String {
+    match env::var("MEM_PROOF_PATH") {
+        Ok(path) => path,
+        _ => "/var/lib/configure-holochain/mem-proof".to_string(),
+    }
 }
 
 pub async fn install_happs(happ_file: &HappsFile, config: &Config) -> Result<()> {
@@ -84,7 +91,7 @@ pub async fn install_happs(happ_file: &HappsFile, config: &Config) -> Result<()>
             let mut mem_proof = HashMap::new();
             let mut properties: Option<YamlProperties> = None;
             if full_happ_id.contains("core-app") {
-                if let Ok(proof) = load_mem_proof_file(config.membrane_proofs_file_path.clone()) {
+                if let Ok(proof) = load_mem_proof_file(mem_proof_path()) {
                     mem_proof.insert("core-app".to_string(), proof);
                 } else {
                     // when mem-proof is not found you will want to install hha as read-only for our servers in holo-nixpkgs
