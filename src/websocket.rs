@@ -117,7 +117,7 @@ impl AdminWebsocket {
         Ok(())
     }
 
-    async fn enable_memproof_dev_net(&mut self) {
+    async fn enable_memproof_dev_net(&mut self) -> Fallible<()> {
         let config = self.get_hpos_config()?;
         let password = self.device_bundle_password();
         let holochain_public_key =
