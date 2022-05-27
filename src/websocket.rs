@@ -63,7 +63,11 @@ impl AdminWebsocket {
         }
     }
 
-    async fn try_registration_auth(&mut self, config: &Config, holochain_public_key: PublicKey) -> Fallible<()> {
+    async fn try_registration_auth(
+        &mut self,
+        config: &Config,
+        holochain_public_key: PublicKey,
+    ) -> Fallible<()> {
         match config {
             Config::V2 {
                 registration_code,
@@ -79,7 +83,8 @@ impl AdminWebsocket {
                         role: "host".to_string(),
                     },
                 };
-                let mem_proof_server_url = format!("{}/register-user/", self.mem_proof_server_url());
+                let mem_proof_server_url =
+                    format!("{}/register-user/", self.mem_proof_server_url());
                 let resp = CLIENT
                     .post(mem_proof_server_url)
                     .json(&payload)
@@ -115,9 +120,13 @@ impl AdminWebsocket {
     async fn enable_memproof_dev_net(&mut self) {
         let config = self.get_hpos_config()?;
         let password = self.device_bundle_password();
-        let holochain_public_key = hpos_config_seed_bundle_explorer::holoport_public_key(&config, password).await?;
+        let holochain_public_key =
+            hpos_config_seed_bundle_explorer::holoport_public_key(&config, password).await?;
         // Get mem-proof by registering on the ops-console
-        if let Err(e) = self.try_registration_auth(&config, holochain_public_key).await {
+        if let Err(e) = self
+            .try_registration_auth(&config, holochain_public_key)
+            .await
+        {
             error!("{}", e);
             return Err(e);
         }
