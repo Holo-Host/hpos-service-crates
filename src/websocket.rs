@@ -17,6 +17,7 @@ use std::{collections::HashMap, env, fs, fs::File, io::prelude::*, sync::Arc};
 use tracing::{info, instrument, trace};
 use url::Url;
 use failure::*;
+use hpos_config_core::{public_key, Config};
 
 use crate::config::Happ;
 
