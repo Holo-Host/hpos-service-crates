@@ -25,6 +25,18 @@ pub struct AdminWebsocket {
     agent_key: Option<AgentPubKey>,
 }
 
+#[derive(Debug, Fail)]
+pub enum AuthError {
+    #[fail(display = "Error: Invalid config version used. please upgrade to hpos-config v2")]
+    ConfigVersionError,
+    #[fail(display = "Registration Error: {}", _0)]
+    RegistrationError(String),
+    #[fail(display = "ZtRegistration Error: {}", _0)]
+    ZtRegistrationError(String),
+    #[fail(display = "InitializationError Error: {}", _0)]
+    InitializationError(String),
+}
+
 impl AdminWebsocket {
     #[instrument(err)]
     pub async fn connect(admin_port: u16) -> Result<Self> {
