@@ -42,6 +42,89 @@ impl AdminWebsocket {
         })
     }
 
+    fn get_hpos_config(&mut self) -> Fallible<Config> {
+        let config_path = env::var("HPOS_CONFIG_PATH")?;
+        let config_json = fs::read(config_path)?;
+        let config: Config = serde_json::from_slice(&config_json)?;
+        Ok(config)
+    }
+
+    fn device_bundle_password() -> Option<String> {
+        match env::var("DEVICE_BUNDLE_PASSWORD") {
+            Ok(pass) => Some(pass),
+            _ => None,
+        }
+    }
+
+    fn mem_proof_server_url(&mut self) -> String {
+        match env::var("MEM_PROOF_SERVER_URL") {
+            Ok(url) => url,
+            _ => "https://test-membrane-proof-service.holo.host".to_string(),
+        }
+    }
+
+    async fn try_registration_auth(&mut self, config: &Config, holochain_public_key: PublicKey) -> Fallible<()> {
+        match config {
+            Config::V2 {
+                registration_code,
+                settings,
+                ..
+            } => {
+                let email = settings.admin.email.clone();
+                let payload = Registration {
+                    registration_code: registration_code.clone(),
+                    agent_pub_key: holochain_public_key,
+                    email: email.clone(),
+                    payload: RegistrationPayload {
+                        role: "host".to_string(),
+                    },
+                };
+                let mem_proof_server_url = format!("{}/register-user/", self.mem_proof_server_url());
+                let resp = CLIENT
+                    .post(mem_proof_server_url)
+                    .json(&payload)
+                    .send()
+                    .await?;
+                match resp.error_for_status_ref() {
+                    Ok(_) => {
+                        let reg: RegistrationRequest = resp.json().await?;
+                        println!("Registration completed message ID: {:?}", reg);
+                        // save mem-proofs into a file on the hpos
+                        let mut file = File::create(mem_proof_path())?;
+                        file.write_all(reg.mem_proof.as_bytes())?;
+                    }
+                    Err(_) => {
+                        let err: RegistrationError = resp.json().await?;
+                        send_failure_email(email, err.to_string()).await?;
+                        return Err(AuthError::RegistrationError(err.to_string()).into());
+                    }
+                }
+            }
+            Config::V1 { settings, .. } => {
+                send_failure_email(
+                    settings.admin.email.clone(),
+                    AuthError::ConfigVersionError.to_string(),
+                )
+                .await?;
+                return Err(AuthError::ConfigVersionError.into());
+            }
+        }
+        Ok(())
+    }
+
+    async fn enable_memproof_dev_net(&mut self) {
+        let config = get_hpos_config()?;
+        let password = device_bundle_password();
+        let holochain_public_key = hpos_config_seed_bundle_explorer::holoport_public_key(&config, password).await?;
+        // Get mem-proof by registering on the ops-console
+        if !Path::new(&mem_proof_path()).exists() {
+            if let Err(e) = try_registration_auth(&config, holochain_public_key).await {
+                error!("{}", e);
+                return Err(e);
+            }
+        }
+    }
+
     #[instrument(skip(self), err)]
     pub async fn get_agent_key(&mut self) -> Result<AgentPubKey> {
         // Try agent key from memory
@@ -85,6 +168,9 @@ impl AdminWebsocket {
                 if let Ok(key) = AgentPubKey::from_raw_39(key_vec) {
                     info!("returning agent key from file");
                     self.agent_key = Some(key.clone());
+                    // if using devNet,
+                    // enable membrane proof using generated key
+                    self.enable_memproof_dev_net();
                     return Ok(key);
                 }
             }
@@ -100,6 +186,9 @@ impl AdminWebsocket {
                 }
                 info!("returning newly created agent key");
                 self.agent_key = Some(key.clone());
+                // if using devNet,
+                // enable membrane proof using generated key
+                self.enable_memproof_dev_net();
                 Ok(key)
             }
             _ => Err(anyhow!("unexpected response: {:?}", response)),
