@@ -49,7 +49,7 @@ impl AdminWebsocket {
         Ok(config)
     }
 
-    fn device_bundle_password() -> Option<String> {
+    fn device_bundle_password(&mut self) -> Option<String> {
         match env::var("DEVICE_BUNDLE_PASSWORD") {
             Ok(pass) => Some(pass),
             _ => None,
@@ -113,15 +113,13 @@ impl AdminWebsocket {
     }
 
     async fn enable_memproof_dev_net(&mut self) {
-        let config = get_hpos_config()?;
-        let password = device_bundle_password();
+        let config = self.get_hpos_config()?;
+        let password = self.device_bundle_password();
         let holochain_public_key = hpos_config_seed_bundle_explorer::holoport_public_key(&config, password).await?;
         // Get mem-proof by registering on the ops-console
-        if !Path::new(&mem_proof_path()).exists() {
-            if let Err(e) = self.try_registration_auth(&config, holochain_public_key).await {
-                error!("{}", e);
-                return Err(e);
-            }
+        if let Err(e) = self.try_registration_auth(&config, holochain_public_key).await {
+            error!("{}", e);
+            return Err(e);
         }
     }
 
