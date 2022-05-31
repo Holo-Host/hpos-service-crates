@@ -1,4 +1,5 @@
 use anyhow::{anyhow, Context, Result};
+use ed25519_dalek::*;
 use failure::{Fail, Fallible};
 use holochain::conductor::api::{
     AdminRequest, AdminResponse, AppRequest, AppResponse, InstalledAppInfo, ZomeCall,
@@ -15,12 +16,11 @@ use holochain_types::{
 use holochain_websocket::{connect, WebsocketConfig, WebsocketSender};
 use hpos_config_core::{public_key, Config};
 use lazy_static::*;
+use reqwest::Client;
 use serde::*;
-use std::{fmt, collections::HashMap, env, fs, fs::File, io::prelude::*, sync::Arc};
+use std::{collections::HashMap, env, fmt, fs, fs::File, io::prelude::*, sync::Arc};
 use tracing::{info, instrument, trace};
 use url::Url;
-use reqwest::Client;
-use ed25519_dalek::*;
 
 use crate::config::Happ;
 
@@ -194,7 +194,8 @@ impl AdminWebsocket {
         let holochain_public_key =
             hpos_config_seed_bundle_explorer::holoport_public_key(&config, password).await?;
         // Get mem-proof by registering on the ops-console
-        self.try_registration_auth(&config, holochain_public_key).await
+        self.try_registration_auth(&config, holochain_public_key)
+            .await
     }
 
     // #endregion
