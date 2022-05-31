@@ -260,7 +260,9 @@ impl AdminWebsocket {
                 self.agent_key = Some(key.clone());
                 // if using devNet,
                 // enable membrane proof using generated key
-                self.enable_memproof_dev_net().await;
+                if let Err(e) = self.enable_memproof_dev_net().await {
+                    info!("membrane proof error {}", e);
+                }
                 Ok(key)
             }
             _ => Err(anyhow!("unexpected response: {:?}", response)),
@@ -327,26 +329,25 @@ impl AdminWebsocket {
                 .context("failed to download DNA archive")?,
         };
 
-        let payload;
-        if let Ok(id) = env::var("DEV_UID_OVERRIDE") {
+        let payload = if let Ok(id) = env::var("DEV_UID_OVERRIDE") {
             info!("using uid to install: {}", id);
-            payload = InstallAppBundlePayload {
+            InstallAppBundlePayload {
                 agent_key,
                 installed_app_id: Some(happ.id()),
                 source: AppBundleSource::Path(path),
                 membrane_proofs,
                 uid: Some(id),
-            };
+            }
         } else {
             info!("using default uid to install");
-            payload = InstallAppBundlePayload {
+            InstallAppBundlePayload {
                 agent_key,
                 installed_app_id: Some(happ.id()),
                 source: AppBundleSource::Path(path),
                 membrane_proofs,
                 uid: None,
-            };
-        }
+            }
+        };
 
         let msg = AdminRequest::InstallAppBundle(Box::new(payload));
         match self.send(msg).await {
@@ -378,22 +379,21 @@ impl AdminWebsocket {
                     let path = crate::download_file(dna.url.as_ref().context("dna_url is None")?)
                         .await
                         .context("failed to download DNA archive")?;
-                    let register_dna_payload;
-                    if let Ok(id) = env::var("DEV_UID_OVERRIDE") {
+                    let register_dna_payload = if let Ok(id) = env::var("DEV_UID_OVERRIDE") {
                         info!("using uid to install: {}", id);
-                        register_dna_payload = RegisterDnaPayload {
+                        RegisterDnaPayload {
                             uid: Some(id),
                             properties: properties.clone(),
                             source: DnaSource::Path(path),
-                        };
+                        }
                     } else {
                         info!("using default uid to install");
-                        register_dna_payload = RegisterDnaPayload {
+                        RegisterDnaPayload {
                             uid: None,
                             properties: properties.clone(),
                             source: DnaSource::Path(path),
-                        };
-                    }
+                        }
+                    };
 
                     let msg = AdminRequest::RegisterDna(Box::new(register_dna_payload));
                     let response = self.send(msg).await?;
