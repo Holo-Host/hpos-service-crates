@@ -194,10 +194,7 @@ impl AdminWebsocket {
         let holochain_public_key =
             hpos_config_seed_bundle_explorer::holoport_public_key(&config, password).await?;
         // Get mem-proof by registering on the ops-console
-        if let Err(e) = try_registration_auth(&config, holochain_public_key).await {
-            error!("{}", e);
-            return Err(e);
-        }
+        self.try_registration_auth(&config, holochain_public_key).await
     }
 
     // #endregion

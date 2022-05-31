@@ -31,6 +31,9 @@ holo_hash = "=0.0.21"
 holochain_zome_types = "0.0.27"
 hdk_derive = "0.0.27"
 failure = "0.1"
+lazy_static = "1"
+ed25519-dalek = { version = "1.0.1", features = ["serde"] }
+
 
 [dependencies.hpos-config-core]
 git = "https://github.com/Holo-Host/hpos-config"
