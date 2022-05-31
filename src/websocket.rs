@@ -1,5 +1,5 @@
 use anyhow::{anyhow, Context, Result};
-use failure::*;
+use failure::{Fail, Fallible};
 use holochain::conductor::api::{
     AdminRequest, AdminResponse, AppRequest, AppResponse, InstalledAppInfo, ZomeCall,
 };
@@ -14,11 +14,17 @@ use holochain_types::{
 };
 use holochain_websocket::{connect, WebsocketConfig, WebsocketSender};
 use hpos_config_core::{public_key, Config};
-use std::{collections::HashMap, env, fs, fs::File, io::prelude::*, sync::Arc};
+use lazy_static::*;
+use serde::*;
+use std::{fmt, collections::HashMap, env, fs, fs::File, io::prelude::*, sync::Arc};
 use tracing::{info, instrument, trace};
 use url::Url;
+use reqwest::Client;
+use ed25519_dalek::*;
 
 use crate::config::Happ;
+
+// #region structs
 
 #[derive(Clone)]
 pub struct AdminWebsocket {
@@ -32,11 +38,67 @@ pub enum AuthError {
     ConfigVersionError,
     #[fail(display = "Registration Error: {}", _0)]
     RegistrationError(String),
-    #[fail(display = "ZtRegistration Error: {}", _0)]
-    ZtRegistrationError(String),
-    #[fail(display = "InitializationError Error: {}", _0)]
-    InitializationError(String),
 }
+
+#[allow(non_snake_case)]
+#[derive(Debug, Serialize, Deserialize)]
+struct RegistrationError {
+    error: String,
+    isDisplayedToUser: bool,
+    info: String,
+}
+
+impl fmt::Display for RegistrationError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "Error: {}, More Info: {}", self.error, self.info)
+    }
+}
+
+#[derive(Debug, Serialize)]
+struct Registration {
+    registration_code: String,
+    #[serde(serialize_with = "serialize_holochain_agent_pub_key")]
+    agent_pub_key: PublicKey,
+    email: String,
+    payload: RegistrationPayload,
+}
+
+#[derive(Debug, Serialize)]
+struct RegistrationPayload {
+    role: String,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+struct RegistrationRequest {
+    mem_proof: String,
+}
+
+// #endregion
+
+// #region static
+
+lazy_static! {
+    static ref CLIENT: Client = Client::new();
+}
+
+fn serialize_holochain_agent_pub_key<S>(
+    public_key: &PublicKey,
+    serializer: S,
+) -> Result<S::Ok, S::Error>
+where
+    S: Serializer,
+{
+    serializer.serialize_str(&public_key::to_holochain_encoded_agent_key(public_key))
+}
+
+fn mem_proof_path() -> String {
+    match env::var("MEM_PROOF_PATH") {
+        Ok(path) => path,
+        _ => "/var/lib/configure-holochain/mem-proof".to_string(),
+    }
+}
+
+// #endregion
 
 impl AdminWebsocket {
     #[instrument(err)]
@@ -68,6 +130,8 @@ impl AdminWebsocket {
             _ => None,
         }
     }
+
+    // #region membrane proof
 
     fn mem_proof_server_url(&mut self) -> String {
         match env::var("MEM_PROOF_SERVER_URL") {
@@ -113,17 +177,11 @@ impl AdminWebsocket {
                     }
                     Err(_) => {
                         let err: RegistrationError = resp.json().await?;
-                        send_failure_email(email, err.to_string()).await?;
                         return Err(AuthError::RegistrationError(err.to_string()).into());
                     }
                 }
             }
-            Config::V1 { settings, .. } => {
-                send_failure_email(
-                    settings.admin.email.clone(),
-                    AuthError::ConfigVersionError.to_string(),
-                )
-                .await?;
+            Config::V1 { .. } => {
                 return Err(AuthError::ConfigVersionError.into());
             }
         }
@@ -136,9 +194,13 @@ impl AdminWebsocket {
         let holochain_public_key =
             hpos_config_seed_bundle_explorer::holoport_public_key(&config, password).await?;
         // Get mem-proof by registering on the ops-console
-        self.try_registration_auth(&config, holochain_public_key)
-            .await
+        if let Err(e) = try_registration_auth(&config, holochain_public_key).await {
+            error!("{}", e);
+            return Err(e);
+        }
     }
+
+    // #endregion
 
     #[instrument(skip(self), err)]
     pub async fn get_agent_key(&mut self) -> Result<AgentPubKey> {
@@ -183,9 +245,6 @@ impl AdminWebsocket {
                 if let Ok(key) = AgentPubKey::from_raw_39(key_vec) {
                     info!("returning agent key from file");
                     self.agent_key = Some(key.clone());
-                    // if using devNet,
-                    // enable membrane proof using generated key
-                    self.enable_memproof_dev_net();
                     return Ok(key);
                 }
             }
@@ -203,7 +262,7 @@ impl AdminWebsocket {
                 self.agent_key = Some(key.clone());
                 // if using devNet,
                 // enable membrane proof using generated key
-                self.enable_memproof_dev_net();
+                self.enable_memproof_dev_net().await;
                 Ok(key)
             }
             _ => Err(anyhow!("unexpected response: {:?}", response)),
