@@ -124,13 +124,6 @@ impl AdminWebsocket {
         Ok(config)
     }
 
-    fn device_bundle_password(&mut self) -> Option<String> {
-        match env::var("DEVICE_BUNDLE_PASSWORD") {
-            Ok(pass) => Some(pass),
-            _ => None,
-        }
-    }
-
     // #region membrane proof
 
     fn mem_proof_server_url(&mut self) -> String {
@@ -255,7 +248,8 @@ impl AdminWebsocket {
                 self.agent_key = Some(key.clone());
                 // if using devNet,
                 // enable membrane proof using generated key
-                if let Err(e) = self.enable_memproof_dev_net(self.agent_key).await {
+                let agent_pub_key = PublicKey::from_bytes(key.get_raw_32())?;
+                if let Err(e) = self.enable_memproof_dev_net(agent_pub_key).await {
                     info!("membrane proof error {}", e);
                 }
                 Ok(key)
