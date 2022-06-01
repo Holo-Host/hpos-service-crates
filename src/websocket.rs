@@ -188,14 +188,9 @@ impl AdminWebsocket {
         Ok(())
     }
 
-    async fn enable_memproof_dev_net(&mut self) -> Fallible<()> {
+    async fn enable_memproof_dev_net(&mut self, agent_key: PublicKey) -> Fallible<()> {
         let config = self.get_hpos_config()?;
-        let password = self.device_bundle_password();
-        let holochain_public_key =
-            hpos_config_seed_bundle_explorer::holoport_public_key(&config, password).await?;
-        // Get mem-proof by registering on the ops-console
-        self.try_registration_auth(&config, holochain_public_key)
-            .await
+        self.try_registration_auth(&config, agent_key).await
     }
 
     // #endregion
@@ -260,7 +255,7 @@ impl AdminWebsocket {
                 self.agent_key = Some(key.clone());
                 // if using devNet,
                 // enable membrane proof using generated key
-                if let Err(e) = self.enable_memproof_dev_net().await {
+                if let Err(e) = self.enable_memproof_dev_net(self.agent_key).await {
                     info!("membrane proof error {}", e);
                 }
                 Ok(key)
