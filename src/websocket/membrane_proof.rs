@@ -1,10 +1,10 @@
+use ed25519_dalek::*;
+use failure::{Fail, Fallible};
 use hpos_config_core::{public_key, Config};
 use lazy_static::*;
 use reqwest::Client;
 use serde::*;
-use std::{fmt, env, fs, fs::File, io::prelude::*};
-use failure::{Fail, Fallible};
-use ed25519_dalek::*;
+use std::{env, fmt, fs, fs::File, io::prelude::*};
 
 #[derive(Debug, Fail)]
 enum AuthError {
@@ -47,7 +47,6 @@ struct RegistrationRequest {
     mem_proof: String,
 }
 
-
 lazy_static! {
     static ref CLIENT: Client = Client::new();
 }
@@ -83,10 +82,7 @@ fn get_hpos_config() -> Fallible<Config> {
     Ok(config)
 }
 
-async fn try_registration_auth(
-    config: &Config,
-    holochain_public_key: PublicKey,
-) -> Fallible<()> {
+async fn try_registration_auth(config: &Config, holochain_public_key: PublicKey) -> Fallible<()> {
     match config {
         Config::V2 {
             registration_code,
@@ -102,8 +98,7 @@ async fn try_registration_auth(
                     role: "host".to_string(),
                 },
             };
-            let mem_proof_server_url =
-                format!("{}/register-user/", mem_proof_server_url());
+            let mem_proof_server_url = format!("{}/register-user/", mem_proof_server_url());
             let resp = CLIENT
                 .post(mem_proof_server_url)
                 .json(&payload)

@@ -13,7 +13,7 @@ use holochain_types::{
     prelude::YamlProperties,
 };
 use holochain_websocket::{connect, WebsocketConfig, WebsocketSender};
-use hpos_config_core::{Config};
+use hpos_config_core::Config;
 use std::{collections::HashMap, env, fs, fs::File, io::prelude::*, sync::Arc};
 use tracing::{info, instrument, trace};
 use url::Url;
