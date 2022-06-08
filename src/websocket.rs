@@ -1,4 +1,5 @@
 use anyhow::{anyhow, Context, Result};
+use ed25519_dalek::*;
 use holochain::conductor::api::{
     AdminRequest, AdminResponse, AppRequest, AppResponse, InstalledAppInfo, ZomeCall,
 };
@@ -16,6 +17,7 @@ use hpos_config_core::Config;
 use std::{collections::HashMap, env, fs, fs::File, io::prelude::*, sync::Arc};
 use tracing::{info, instrument, trace};
 use url::Url;
+mod membrane_proof;
 
 use crate::config::Happ;
 
@@ -100,6 +102,12 @@ impl AdminWebsocket {
                 }
                 info!("returning newly created agent key");
                 self.agent_key = Some(key.clone());
+                // if using devNet,
+                // enable membrane proof using generated key
+                let agent_pub_key = PublicKey::from_bytes(key.get_raw_32())?;
+                if let Err(e) = membrane_proof::enable_memproof_dev_net(agent_pub_key).await {
+                    info!("membrane proof error {}", e);
+                }
                 Ok(key)
             }
             _ => Err(anyhow!("unexpected response: {:?}", response)),
@@ -166,26 +174,25 @@ impl AdminWebsocket {
                 .context("failed to download DNA archive")?,
         };
 
-        let payload;
-        if let Ok(id) = env::var("DEV_UID_OVERRIDE") {
+        let payload = if let Ok(id) = env::var("DEV_UID_OVERRIDE") {
             info!("using uid to install: {}", id);
-            payload = InstallAppBundlePayload {
+            InstallAppBundlePayload {
                 agent_key,
                 installed_app_id: Some(happ.id()),
                 source: AppBundleSource::Path(path),
                 membrane_proofs,
                 uid: Some(id),
-            };
+            }
         } else {
             info!("using default uid to install");
-            payload = InstallAppBundlePayload {
+            InstallAppBundlePayload {
                 agent_key,
                 installed_app_id: Some(happ.id()),
                 source: AppBundleSource::Path(path),
                 membrane_proofs,
                 uid: None,
-            };
-        }
+            }
+        };
 
         let msg = AdminRequest::InstallAppBundle(Box::new(payload));
         match self.send(msg).await {
@@ -217,22 +224,21 @@ impl AdminWebsocket {
                     let path = crate::download_file(dna.url.as_ref().context("dna_url is None")?)
                         .await
                         .context("failed to download DNA archive")?;
-                    let register_dna_payload;
-                    if let Ok(id) = env::var("DEV_UID_OVERRIDE") {
+                    let register_dna_payload = if let Ok(id) = env::var("DEV_UID_OVERRIDE") {
                         info!("using uid to install: {}", id);
-                        register_dna_payload = RegisterDnaPayload {
+                        RegisterDnaPayload {
                             uid: Some(id),
                             properties: properties.clone(),
                             source: DnaSource::Path(path),
-                        };
+                        }
                     } else {
                         info!("using default uid to install");
-                        register_dna_payload = RegisterDnaPayload {
+                        RegisterDnaPayload {
                             uid: None,
                             properties: properties.clone(),
                             source: DnaSource::Path(path),
-                        };
-                    }
+                        }
+                    };
 
                     let msg = AdminRequest::RegisterDna(Box::new(register_dna_payload));
                     let response = self.send(msg).await?;
