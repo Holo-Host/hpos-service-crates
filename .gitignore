@@ -1,2 +1,4 @@
 /target
-/test/tmp
+/tests/tmp
+tmp
+.cargo
