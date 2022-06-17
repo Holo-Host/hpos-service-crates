@@ -1,10 +1,32 @@
+use anyhow::{Context, Result};
 use ed25519_dalek::*;
 use failure::{Fail, Fallible};
+use holochain_types::prelude::{MembraneProof, UnsafeBytes};
 use hpos_config_core::{public_key, Config};
 use lazy_static::*;
 use reqwest::Client;
 use serde::*;
+use std::path::Path;
 use std::{env, fmt, fs, fs::File, io::prelude::*};
+use tracing::instrument;
+
+pub fn mem_proof_path() -> String {
+    match env::var("MEM_PROOF_PATH") {
+        Ok(path) => path,
+        _ => "./tests/config/mem-proof".to_string(),
+    }
+}
+
+/// reads the mem-proof that is stored on the holoport
+/// this proof is used for the core-app i.e. hha and holofuel
+#[instrument(err, fields(path = %path.as_ref().display()))]
+pub fn load_mem_proof_file(path: impl AsRef<Path>) -> Result<MembraneProof> {
+    use std::str;
+    let file = fs::read(&path).context("failed to open file")?;
+    let mem_proof_str = str::from_utf8(&file)?;
+    let mem_proof_bytes = base64::decode(mem_proof_str)?;
+    Ok(MembraneProof::from(UnsafeBytes::from(mem_proof_bytes)))
+}
 
 #[derive(Debug, Fail)]
 enum AuthError {
@@ -59,13 +81,6 @@ where
     S: Serializer,
 {
     serializer.serialize_str(&public_key::to_holochain_encoded_agent_key(public_key))
-}
-
-fn mem_proof_path() -> String {
-    match env::var("MEM_PROOF_PATH") {
-        Ok(path) => path,
-        _ => "/var/lib/configure-holochain/mem-proof".to_string(),
-    }
 }
 
 fn mem_proof_server_url() -> String {

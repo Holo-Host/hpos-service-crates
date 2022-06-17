@@ -1,3 +1,5 @@
+use crate::config::Happ;
+use crate::membrane_proof;
 use anyhow::{anyhow, Context, Result};
 use ed25519_dalek::*;
 use holochain::conductor::api::{
@@ -17,9 +19,6 @@ use hpos_config_core::Config;
 use std::{collections::HashMap, env, fs, fs::File, io::prelude::*, sync::Arc};
 use tracing::{info, instrument, trace};
 use url::Url;
-mod membrane_proof;
-
-use crate::config::Happ;
 
 #[derive(Clone)]
 pub struct AdminWebsocket {
@@ -137,10 +136,9 @@ impl AdminWebsocket {
         &mut self,
         happ: &Happ,
         membrane_proofs: HashMap<String, MembraneProof>,
-        properties: Option<YamlProperties>,
     ) -> Result<()> {
         if happ.dnas.is_some() {
-            self.register_and_install_happ(happ, membrane_proofs, properties)
+            self.register_and_install_happ(happ, membrane_proofs)
                 .await?;
         } else {
             self.install_happ(happ, membrane_proofs).await?;
@@ -169,9 +167,11 @@ impl AdminWebsocket {
             .context("failed to generate agent key")?;
         let path = match happ.bundle_path.clone() {
             Some(path) => path,
-            None => crate::download_file(happ.bundle_url.as_ref().context("dna_url is None")?)
-                .await
-                .context("failed to download DNA archive")?,
+            None => {
+                crate::utils::download_file(happ.bundle_url.as_ref().context("dna_url is None")?)
+                    .await
+                    .context("failed to download DNA archive")?
+            }
         };
 
         let payload = if let Ok(id) = env::var("DEV_UID_OVERRIDE") {
@@ -211,7 +211,6 @@ impl AdminWebsocket {
         &mut self,
         happ: &Happ,
         membrane_proofs: HashMap<String, MembraneProof>,
-        properties: Option<YamlProperties>,
     ) -> Result<()> {
         let agent_key = self
             .get_agent_key()
@@ -221,9 +220,18 @@ impl AdminWebsocket {
         match &happ.dnas {
             Some(dnas) => {
                 for dna in dnas.iter() {
-                    let path = crate::download_file(dna.url.as_ref().context("dna_url is None")?)
-                        .await
-                        .context("failed to download DNA archive")?;
+                    let path =
+                        crate::utils::download_file(dna.url.as_ref().context("dna_url is None")?)
+                            .await
+                            .context("failed to download DNA archive")?;
+                    // check for provided properties in the config file and apply if it exists
+                    let mut properties: Option<YamlProperties> = None;
+                    if let Some(p) = dna.properties.clone() {
+                        let prop = p.to_string();
+                        info!("Core app Properties: {}", prop);
+                        properties =
+                            Some(YamlProperties::new(serde_yaml::from_str(&prop).unwrap()));
+                    }
                     let register_dna_payload = if let Ok(id) = env::var("DEV_UID_OVERRIDE") {
                         info!("using uid to install: {}", id);
                         RegisterDnaPayload {

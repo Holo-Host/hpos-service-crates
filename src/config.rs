@@ -1,7 +1,9 @@
+use anyhow::{Context, Result};
 use serde::Deserialize;
-use std::{env, path::PathBuf};
+use std::env;
+use std::path::{Path, PathBuf};
 use structopt::StructOpt;
-use tracing::debug;
+use tracing::{debug, instrument};
 use url::Url;
 
 #[derive(Debug, StructOpt)]
@@ -52,13 +54,13 @@ pub struct Happ {
     pub bundle_url: Option<Url>,
     pub bundle_path: Option<PathBuf>,
     pub dnas: Option<Vec<DnaUrl>>,
-    pub properties: Option<String>,
 }
 
 #[derive(Debug, Deserialize, Clone)]
 pub struct DnaUrl {
     pub id: String,
     pub url: Option<Url>,
+    pub properties: Option<String>,
 }
 
 impl Happ {
@@ -88,9 +90,9 @@ impl Happ {
             "unreabable".to_string()
         };
         if let Ok(uid) = env::var("DEV_UID_OVERRIDE") {
-            format!("{}::{}", name.replace(".happ", "").replace(".", ":"), uid)
+            format!("{}::{}", name.replace(".happ", "").replace('.', ":"), uid)
         } else {
-            name.replace(".happ", "").replace(".", ":")
+            name.replace(".happ", "").replace('.', ":")
         }
     }
 }
@@ -101,7 +103,17 @@ pub struct HappsFile {
     pub self_hosted_happs: Vec<Happ>,
     pub core_happs: Vec<Happ>,
 }
-
+impl HappsFile {
+    #[instrument(err, fields(path = %path.as_ref().display()))]
+    pub fn load_happ_file(path: impl AsRef<Path>) -> Result<HappsFile> {
+        use std::fs::File;
+        let file = File::open(path).context("failed to open file")?;
+        let happ_file =
+            serde_yaml::from_reader(&file).context("failed to deserialize YAML as HappsFile")?;
+        debug!(?happ_file);
+        Ok(happ_file)
+    }
+}
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -114,7 +126,6 @@ mod tests {
             ui_url: None,
             ui_path: None,
             dnas: None,
-            properties: None,
         };
         assert_eq!(cfg.id(), String::from("elemental_chat:1:0001"));
         let cfg = Happ {
@@ -123,7 +134,6 @@ mod tests {
             ui_url: None,
             ui_path: None,
             dnas: None,
-            properties: None
         };
         assert_eq!(cfg.id(), String::from("elemental_chat:1:0001"));
     }
@@ -136,7 +146,6 @@ mod tests {
             ui_url: None,
             ui_path: None,
             dnas: None,
-            properties: None,
         };
         assert_eq!(cfg.ui_name(), String::from("elemental_chat"));
     }

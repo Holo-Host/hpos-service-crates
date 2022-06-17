@@ -1,57 +1,25 @@
-// TODO: https://github.com/tokio-rs/tracing/issues/843
-#![allow(clippy::unit_arg)]
-
 mod config;
 pub use config::{Config, Happ, HappsFile, MembraneProofFile, ProofPayload};
-
 mod websocket;
-pub use websocket::{AdminWebsocket, AppWebsocket};
-
+use anyhow::{Context, Result};
+use holochain_types::prelude::{MembraneProof, UnsafeBytes};
 use std::collections::HashMap;
-use std::path::{Path, PathBuf};
-use std::process;
 use std::sync::Arc;
-use std::{env, fs};
-
-use anyhow::{anyhow, Context, Result};
-use tempfile::TempDir;
 use tracing::{debug, info, instrument, warn};
-use url::Url;
+pub use websocket::{AdminWebsocket, AppWebsocket};
+pub mod membrane_proof;
+mod utils;
 
-use holochain_types::{
-    prelude::YamlProperties,
-    prelude::{MembraneProof, UnsafeBytes},
-};
-
-type HappIds = Vec<String>;
-
-#[instrument(err, fields(path = %path.as_ref().display()))]
-pub fn load_mem_proof_file(path: impl AsRef<Path>) -> Result<MembraneProof> {
-    use std::str;
-    let file = fs::read(&path).context("failed to open file")?;
-    let mem_proof_str = str::from_utf8(&file)?;
-    let mem_proof_bytes = base64::decode(mem_proof_str)?;
-    Ok(MembraneProof::from(UnsafeBytes::from(mem_proof_bytes)))
+#[instrument(err)]
+pub async fn run(config: Config) -> Result<()> {
+    let happ_file = HappsFile::load_happ_file(&config.happs_file_path)
+        .context("failed to load hApps YAML config")?;
+    install_happs(&happ_file, &config).await?;
+    Ok(())
 }
 
-#[instrument(err, fields(path = %path.as_ref().display()))]
-pub fn load_happ_file(path: impl AsRef<Path>) -> Result<HappsFile> {
-    use std::fs::File;
-
-    let file = File::open(path).context("failed to open file")?;
-    let happ_file =
-        serde_yaml::from_reader(&file).context("failed to deserialize YAML as HappsFile")?;
-    debug!(?happ_file);
-    Ok(happ_file)
-}
-
-fn mem_proof_path() -> String {
-    match env::var("MEM_PROOF_PATH") {
-        Ok(path) => path,
-        _ => "/var/lib/configure-holochain/mem-proof".to_string(),
-    }
-}
-
+/// based on the config file provided this installs the core apps on the holoport
+/// It manages getting the mem-proofs and properties that are expected to be used on the holoport
 pub async fn install_happs(happ_file: &HappsFile, config: &Config) -> Result<()> {
     let mut admin_websocket = AdminWebsocket::connect(config.admin_port)
         .await
@@ -61,6 +29,7 @@ pub async fn install_happs(happ_file: &HappsFile, config: &Config) -> Result<()>
         warn!(port = ?config.happ_port, ?error, "failed to start app interface, maybe it's already up?");
     }
 
+    debug!("Getting a list of active happ");
     let active_happs = Arc::new(
         admin_websocket
             .list_active_happs()
@@ -89,26 +58,28 @@ pub async fn install_happs(happ_file: &HappsFile, config: &Config) -> Result<()>
         } else {
             info!("Installing app {}", full_happ_id);
             let mut mem_proof = HashMap::new();
-            let mut properties: Option<YamlProperties> = None;
+            // Special properties and mem-proofs for core-app
             if full_happ_id.contains("core-app") {
-                if let Ok(proof) = load_mem_proof_file(mem_proof_path()) {
-                    mem_proof.insert("core-app".to_string(), proof);
+                if let Ok(proof) =
+                    membrane_proof::load_mem_proof_file(membrane_proof::mem_proof_path())
+                {
+                    mem_proof.insert("core-app".to_string(), proof.clone());
+                    mem_proof.insert("holofuel".to_string(), proof);
                 } else {
                     // when mem-proof is not found you will want to install hha as read-only for our servers in holo-nixpkgs
                     mem_proof.insert(
                         "core-app".to_string(),
                         MembraneProof::from(UnsafeBytes::from(vec![0])),
                     );
-                }
-                if let Some(p) = happ.properties.clone() {
-                    let prop = p.to_string();
-                    info!("Core app Properties: {}", prop);
-                    properties = Some(YamlProperties::new(serde_yaml::from_str(&prop).unwrap()));
+                    mem_proof.insert(
+                        "holofuel".to_string(),
+                        MembraneProof::from(UnsafeBytes::from(vec![0])),
+                    );
                 }
             }
 
             if let Err(err) = admin_websocket
-                .install_and_activate_happ(happ, mem_proof, properties)
+                .install_and_activate_happ(happ, mem_proof)
                 .await
             {
                 if err.to_string().contains("AppAlreadyInstalled") {
@@ -130,11 +101,11 @@ pub async fn install_happs(happ_file: &HappsFile, config: &Config) -> Result<()>
         .await
         .context("failed to connect to holochain's app interface")?;
 
-    let happs_to_keep: HappIds = happs_to_install.iter().map(|happ| happ.id()).collect();
+    let happs_to_keep: utils::HappIds = happs_to_install.iter().map(|happ| happ.id()).collect();
 
     for app in &*active_happs {
         if let Some(app_info) = app_websocket.get_app_info(app.to_string()).await {
-            if !keep_app_active(&app_info.installed_app_id, happs_to_keep.clone()) {
+            if !utils::keep_app_active(&app_info.installed_app_id, happs_to_keep.clone()) {
                 info!("deactivating app {}", app_info.installed_app_id);
                 admin_websocket
                     .deactivate_app(&app_info.installed_app_id)
@@ -149,6 +120,7 @@ pub async fn install_happs(happ_file: &HappsFile, config: &Config) -> Result<()>
     Ok(())
 }
 
+/// Install the UI based on the zip files that are provided in the config
 #[instrument(err, skip(happ, config))]
 async fn install_ui(happ: &Happ, config: &Config) -> Result<()> {
     let source_path = match happ.ui_path.clone() {
@@ -158,107 +130,14 @@ async fn install_ui(happ: &Happ, config: &Config) -> Result<()> {
                 debug!("ui_url == None, skipping UI installation for {}", happ.id());
                 return Ok(());
             }
-            download_file(happ.ui_url.as_ref().unwrap())
+            utils::download_file(happ.ui_url.as_ref().unwrap())
                 .await
                 .context("failed to download UI archive")?
         }
     };
 
     let unpack_path = config.ui_store_folder.join(&happ.ui_name());
-    extract_zip(&source_path, &unpack_path).context("failed to extract UI archive")?;
+    utils::extract_zip(&source_path, &unpack_path).context("failed to extract UI archive")?;
     info!("installed UI: {}", happ.id());
     Ok(())
-}
-
-#[instrument(err, skip(url))]
-pub(crate) async fn download_file(url: &Url) -> Result<PathBuf> {
-    use isahc::config::RedirectPolicy;
-    use isahc::prelude::*;
-
-    let path = if url.scheme() == "file" {
-        let p = PathBuf::from(url.path());
-        debug!("Using: {:?}", p);
-        p
-    } else {
-        debug!("downloading");
-        let mut url = Url::clone(url);
-        url.set_scheme("https")
-            .map_err(|_| anyhow!("failed to set scheme to https"))?;
-        let client = HttpClient::builder()
-            .redirect_policy(RedirectPolicy::Follow)
-            .build()
-            .context("failed to initiate download request")?;
-        let mut response = client
-            .get(url.as_str())
-            .context("failed to send GET request")?;
-        if !response.status().is_success() {
-            return Err(anyhow!(
-                "response status code {} indicated failure",
-                response.status().as_str()
-            ));
-        }
-        let dir = TempDir::new().context("failed to create tempdir")?;
-        let url_path = PathBuf::from(url.path());
-        let basename = url_path
-            .file_name()
-            .context("failed to get basename from url")?;
-        let path = dir.into_path().join(basename);
-        let mut file = fs::File::create(&path).context("failed to create target file")?;
-        response
-            .copy_to(&mut file)
-            .context("failed to write response to file")?;
-        debug!("download successful");
-        path
-    };
-    Ok(path)
-}
-
-#[instrument(
-    err,
-    fields(
-        source_path = %source_path.as_ref().display(),
-        unpack_path = %unpack_path.as_ref().display(),
-    ),
-)]
-pub(crate) fn extract_zip<P: AsRef<Path>>(source_path: P, unpack_path: P) -> Result<()> {
-    let _ = fs::remove_dir_all(unpack_path.as_ref());
-    fs::create_dir(unpack_path.as_ref()).context("failed to create empty unpack_path")?;
-
-    debug!("unziping file");
-
-    let output = process::Command::new("unzip")
-        .arg(source_path.as_ref().as_os_str())
-        .arg("-d")
-        .arg(unpack_path.as_ref().as_os_str())
-        .stdout(process::Stdio::piped())
-        .output()
-        .context("failed to spawn unzip command")?;
-
-    debug!("{}", String::from_utf8_lossy(&output.stdout));
-
-    Ok(())
-}
-
-// Returns true if app should be kept active in holochain
-fn keep_app_active(installed_app_id: &str, happs_to_keep: HappIds) -> bool {
-    happs_to_keep.contains(&installed_app_id.to_string()) || installed_app_id.contains("uhCkk")
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn verify_keep_app_active() {
-        let happs_to_keep = vec!["elemental-chat:2".to_string(), "hha:1".to_string()];
-        let app_1 = "elemental-chat:1";
-        let app_2 = "elemental-chat:2";
-        let app_3 = "uhCkkcF0X1dpwHFeIPI6-7rzM6ma9IgyiqD-othxgENSkL1So1Slt::servicelogger";
-        let app_4 = "other-app";
-
-        assert_eq!(keep_app_active(app_1, happs_to_keep.clone()), false);
-        assert_eq!(keep_app_active(app_2, happs_to_keep.clone()), true); // because it is in config
-        assert_eq!(keep_app_active(app_3, happs_to_keep.clone()), true); // because it is hosted
-        assert_eq!(keep_app_active(app_4, happs_to_keep.clone()), false);
-    }
 }
