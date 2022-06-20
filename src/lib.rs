@@ -32,7 +32,7 @@ pub async fn install_happs(happ_file: &HappsFile, config: &Config) -> Result<()>
     debug!("Getting a list of active happ");
     let active_happs = Arc::new(
         admin_websocket
-            .list_active_happs()
+            .list_running_app()
             .await
             .context("failed to get installed hApps")?,
     );

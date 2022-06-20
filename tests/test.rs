@@ -28,7 +28,7 @@ async fn configure_holochain_test() {
         .unwrap();
 
     let happs = connection
-        .list_active_happs()
+        .list_running_app()
         .await
         .context("failed to get installed hApps")
         .unwrap();
