@@ -3,6 +3,7 @@ pub use config::{Config, Happ, HappsFile, MembraneProofFile, ProofPayload};
 mod websocket;
 use anyhow::{Context, Result};
 use holochain_types::prelude::{MembraneProof, UnsafeBytes};
+use holochain_zome_types::SerializedBytes;
 use std::collections::HashMap;
 use std::sync::Arc;
 use tracing::{debug, info, instrument, warn};
@@ -67,13 +68,15 @@ pub async fn install_happs(happ_file: &HappsFile, config: &Config) -> Result<()>
                     mem_proof.insert("holofuel".to_string(), proof);
                 } else {
                     // when mem-proof is not found you will want to install hha as read-only for our servers in holo-nixpkgs
+                    let read_only_mem_proof =
+                        Arc::new(SerializedBytes::from(UnsafeBytes::from(vec![0])));
                     mem_proof.insert(
                         "core-app".to_string(),
-                        MembraneProof::from(UnsafeBytes::from(vec![0])),
+                        MembraneProof::from(read_only_mem_proof.clone()),
                     );
                     mem_proof.insert(
                         "holofuel".to_string(),
-                        MembraneProof::from(UnsafeBytes::from(vec![0])),
+                        MembraneProof::from(read_only_mem_proof),
                     );
                 }
             }
