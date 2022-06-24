@@ -18,7 +18,7 @@
         "kitsune-p2p-tx2-proxy"
     ];
 
-    rustVersion = "1.61.0";
+    rustVersion = "1.60.0";
 
     lair = {
         url = "https://github.com/holochain/lair";
@@ -29,7 +29,7 @@
             "lair-keystore"
         ];
 
-        rustVersion = "1.61.0";
+        rustVersion = "1.60.0";
 
         cargoLock = {
             outputHashes = {
