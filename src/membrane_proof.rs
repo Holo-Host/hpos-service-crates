@@ -28,7 +28,7 @@ pub fn load_mem_proof_file(path: impl AsRef<Path>) -> Result<MembraneProof> {
     let mem_proof_str = str::from_utf8(&file)?;
     let mem_proof_bytes = base64::decode(mem_proof_str)?;
     let mem_proof_serialized = Arc::new(SerializedBytes::from(UnsafeBytes::from(mem_proof_bytes)));
-    Ok(MembraneProof::from(mem_proof_serialized))
+    Ok(mem_proof_serialized)
 }
 
 #[derive(Debug, Fail)]
