@@ -17,7 +17,7 @@
         "kitsune-p2p-proxy"
     ];
 
-    rustVersion = "1.59.0";
+    rustVersion = "1.61.0";
 
     lair = {
         url = "https://github.com/holochain/lair";
