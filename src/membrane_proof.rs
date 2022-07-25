@@ -2,11 +2,13 @@ use anyhow::{Context, Result};
 use ed25519_dalek::*;
 use failure::{Fail, Fallible};
 use holochain_types::prelude::{MembraneProof, UnsafeBytes};
+use holochain_zome_types::SerializedBytes;
 use hpos_config_core::{public_key, Config};
 use lazy_static::*;
 use reqwest::Client;
 use serde::*;
 use std::path::Path;
+use std::sync::Arc;
 use std::{env, fmt, fs, fs::File, io::prelude::*};
 use tracing::instrument;
 
@@ -25,7 +27,8 @@ pub fn load_mem_proof_file(path: impl AsRef<Path>) -> Result<MembraneProof> {
     let file = fs::read(&path).context("failed to open file")?;
     let mem_proof_str = str::from_utf8(&file)?;
     let mem_proof_bytes = base64::decode(mem_proof_str)?;
-    Ok(MembraneProof::from(UnsafeBytes::from(mem_proof_bytes)))
+    let mem_proof_serialized = Arc::new(SerializedBytes::from(UnsafeBytes::from(mem_proof_bytes)));
+    Ok(mem_proof_serialized)
 }
 
 #[derive(Debug, Fail)]
