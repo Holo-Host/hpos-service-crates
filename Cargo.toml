@@ -27,7 +27,7 @@ spinning_top = "=0.2.0"
 holochain = {version = "0.0.145", default-features = false}
 holochain_types = "0.0.43"
 holochain_websocket = "0.0.39"
-holo_hash = "=0.0.29"
+holo_hash = { version = "=0.0.29", features = ["encoding"]}
 holochain_zome_types = "0.0.37"
 failure = "0.1"
 lazy_static = "1"

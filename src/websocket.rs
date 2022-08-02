@@ -12,9 +12,11 @@ use holochain_types::{
         AppBundleSource, DnaSource, InstallAppBundlePayload, InstallAppDnaPayload,
         InstallAppPayload, InstalledAppId, RegisterDnaPayload,
     },
-    dna::AgentPubKey,
     prelude::YamlProperties,
 };
+
+use holo_hash::AgentPubKey;
+
 use holochain_websocket::{connect, WebsocketConfig, WebsocketSender};
 use hpos_config_core::Config;
 use std::{collections::HashMap, env, fs, fs::File, io::prelude::*, sync::Arc};
