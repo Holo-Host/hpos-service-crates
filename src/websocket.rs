@@ -57,7 +57,7 @@ impl AdminWebsocket {
         // For devNet: create a random agent key
         if let Ok(force) = env::var("FORCE_RANDOM_AGENT_KEY") {
             // For mainNet and alphaNet
-            if force != "" {
+            if force.is_empty() {
                 // Use agent key from from the config file in main net
                 if let Ok(config_path) = env::var("HPOS_CONFIG_PATH") {
                     info!("reading config at {}", config_path);
