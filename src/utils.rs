@@ -37,8 +37,10 @@ pub(crate) fn extract_zip<P: AsRef<Path>>(source_path: P, unpack_path: P) -> Res
 
 #[instrument(err, skip(url))]
 pub(crate) async fn download_file(url: &Url) -> Result<PathBuf> {
+    use isahc::config::Configurable;
     use isahc::config::RedirectPolicy;
     use isahc::prelude::*;
+    use isahc::HttpClient;
 
     let path = if url.scheme() == "file" {
         let p = PathBuf::from(url.path());
