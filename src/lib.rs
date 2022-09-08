@@ -13,6 +13,7 @@ mod utils;
 
 #[instrument(err)]
 pub async fn run(config: Config) -> Result<()> {
+    debug!("Starting...");
     let happ_file = HappsFile::load_happ_file(&config.happs_file_path)
         .context("failed to load hApps YAML config")?;
     install_happs(&happ_file, &config).await?;

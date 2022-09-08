@@ -47,3 +47,8 @@ features = ["run-cargo-fmt", "run-cargo-clippy"]
 
 [target.'cfg(unix)'.dependencies]
 nix = "0.25.0"
+
+[dev-dependencies]
+lair_keystore_api = "0.2.0"
+snafu = "0.7.1"
+chrono = "0.4.22"
