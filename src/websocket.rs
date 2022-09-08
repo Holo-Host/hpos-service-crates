@@ -2,7 +2,7 @@ use crate::config::Happ;
 use crate::membrane_proof;
 use anyhow::{anyhow, Context, Result};
 use ed25519_dalek::*;
-use holochain::conductor::api::{
+use holochain_conductor_api::{
     AdminRequest, AdminResponse, AppRequest, AppResponse, AppStatusFilter, InstalledAppInfo,
     ZomeCall,
 };
@@ -188,22 +188,22 @@ impl AdminWebsocket {
         };
 
         let payload = if let Ok(id) = env::var("DEV_UID_OVERRIDE") {
-            info!("using uid to install: {}", id);
+            info!("using network_seed to install: {}", id);
             InstallAppBundlePayload {
                 agent_key,
                 installed_app_id: Some(happ.id()),
                 source: AppBundleSource::Path(path),
                 membrane_proofs,
-                uid: Some(id),
+                network_seed: Some(id),
             }
         } else {
-            info!("using default uid to install");
+            info!("using default network_seed to install");
             InstallAppBundlePayload {
                 agent_key,
                 installed_app_id: Some(happ.id()),
                 source: AppBundleSource::Path(path),
                 membrane_proofs,
-                uid: None,
+                network_seed: None,
             }
         };
 
@@ -245,17 +245,18 @@ impl AdminWebsocket {
                         properties =
                             Some(YamlProperties::new(serde_yaml::from_str(&prop).unwrap()));
                     }
-                    let register_dna_payload = if let Ok(id) = env::var("DEV_UID_OVERRIDE") {
-                        info!("using uid to install: {}", id);
+                    let register_dna_payload = if let Ok(id) = env::var("DEV_network_seed_OVERRIDE")
+                    {
+                        info!("using network_seed to install: {}", id);
                         RegisterDnaPayload {
-                            uid: Some(id),
+                            network_seed: Some(id),
                             properties: properties.clone(),
                             source: DnaSource::Path(path),
                         }
                     } else {
-                        info!("using default uid to install");
+                        info!("using default network_seed to install");
                         RegisterDnaPayload {
-                            uid: None,
+                            network_seed: None,
                             properties: properties.clone(),
                             source: DnaSource::Path(path),
                         }

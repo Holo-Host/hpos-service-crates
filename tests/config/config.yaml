@@ -3,17 +3,17 @@
     [
       {
         'app_id': 'core-app',
-        'bundle_url': 'https://holo-host.github.io/holo-hosting-app-rsm/releases/downloads/core-app/0_3_0_alpha0/core-app-skip-proof.0_3_0_alpha0.happ',
+        'bundle_url': 'https://holo-host.github.io/holo-hosting-app-rsm/releases/downloads/core-app/0_3_2_alpha0/core-app-skip-proof.0_3_2_alpha0.happ',
       },
       {
         'app_id': 'servicelogger',
-        'bundle_url': 'https://holo-host.github.io/servicelogger-rsm/releases/downloads/0_3_0/servicelogger.0_3_0.happ',
+        'bundle_url': 'https://holo-host.github.io/servicelogger-rsm/releases/downloads/v0_3_1/servicelogger.v0_3_1.happ',
       },
     ],
   'self_hosted_happs':
     [
       {
-        'bundle_url': 'https://github.com/holochain/elemental-chat/releases/download/v0.3.0/elemental-chat.happ',
+        'bundle_url': 'https://holo-host.github.io/holo-hosting-app-rsm/releases/downloads/core-app/0_3_2_alpha0/core-app-skip-proof.0_3_2_alpha0.happ',
         'ui_url': 'https://github.com/holochain/elemental-chat-ui/releases/download/v0.0.1-alpha40/elemental-chat-ui.zip',
       },
     ],

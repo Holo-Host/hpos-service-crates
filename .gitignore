@@ -2,3 +2,4 @@
 /tests/tmp
 tmp
 .cargo
+logs

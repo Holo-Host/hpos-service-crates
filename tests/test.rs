@@ -5,8 +5,13 @@ use std::path::PathBuf;
 
 #[tokio::test]
 async fn configure_holochain_test() {
+    let tmp_dir = setup::holochain::create_tmp_dir();
+    let log_dir = setup::holochain::create_log_dir();
+    // spin up lair
+    let (_lair, lair_config) = setup::lair::spawn(&tmp_dir, &log_dir, None).unwrap();
+
     println!("Spinning up holochain");
-    let _holochain = setup::holochain::spawn_holochain();
+    let _holochain = setup::holochain::spawn_holochain(&tmp_dir, &log_dir, lair_config);
     let happs_file_path: PathBuf = "./tests/config/config.yaml".into();
     let config = configure_holochain::Config {
         admin_port: 4444,
