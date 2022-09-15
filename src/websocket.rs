@@ -65,7 +65,7 @@ impl AdminWebsocket {
                         let config: Config = serde_json::from_slice(&config_json)?;
                         let pub_key = hpos_config_seed_bundle_explorer::holoport_public_key(
                             &config,
-                            Some("pass".to_string()),
+                            Some(crate::config::DEFAULT_PASSWORD.to_string()),
                         )
                         .await
                         .unwrap();
@@ -105,8 +105,9 @@ impl AdminWebsocket {
                 self.agent_key = Some(key.clone());
                 // if using devNet,
                 // enable membrane proof using generated key
+                let config = crate::membrane_proof::get_hpos_config()?;
                 let agent_pub_key = PublicKey::from_bytes(key.get_raw_32())?;
-                if let Err(e) = membrane_proof::enable_memproof_dev_net(agent_pub_key).await {
+                if let Err(e) = membrane_proof::try_registration_auth(config, agent_pub_key).await {
                     info!("membrane proof error {}", e);
                 }
                 Ok(key)

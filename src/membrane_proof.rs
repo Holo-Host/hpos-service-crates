@@ -1,16 +1,15 @@
-use anyhow::{Context, Result};
+use anyhow::{anyhow, Context, Result};
 use ed25519_dalek::*;
-use failure::{Fail, Fallible};
 use holochain_types::prelude::{MembraneProof, UnsafeBytes};
 use holochain_zome_types::SerializedBytes;
 use hpos_config_core::{public_key, Config};
 use lazy_static::*;
 use reqwest::Client;
 use serde::*;
-use std::path::Path;
+use std::collections::HashMap;
 use std::sync::Arc;
-use std::{env, fmt, fs, fs::File, io::prelude::*};
-use tracing::instrument;
+use std::{env, fmt, fs};
+use tracing::{debug, instrument};
 
 pub fn mem_proof_path() -> String {
     match env::var("MEM_PROOF_PATH") {
@@ -19,23 +18,24 @@ pub fn mem_proof_path() -> String {
     }
 }
 
-/// reads the mem-proof that is stored on the holoport
-/// this proof is used for the core-app i.e. hha and holofuel
-#[instrument(err, fields(path = %path.as_ref().display()))]
-pub fn load_mem_proof_file(path: impl AsRef<Path>) -> Result<MembraneProof> {
-    use std::str;
-    let file = fs::read(&path).context("failed to open file")?;
-    let mem_proof_str = str::from_utf8(&file)?;
-    let mem_proof_bytes = base64::decode(mem_proof_str)?;
-    let mem_proof_serialized = Arc::new(SerializedBytes::from(UnsafeBytes::from(mem_proof_bytes)));
-    Ok(mem_proof_serialized)
+pub fn force_use_read_only_mem_proof() -> bool {
+    match env::var("READ_ONLY_MEM_PROOF") {
+        Ok(path) => {
+            if path == "true" {
+                return true;
+            } else {
+                return false;
+            }
+        }
+        _ => false,
+    }
 }
 
-#[derive(Debug, Fail)]
+#[derive(thiserror::Error, Debug)]
 enum AuthError {
-    #[fail(display = "Error: Invalid config version used. please upgrade to hpos-config v2")]
+    #[error("Error: Invalid config version used. please upgrade to hpos-config v2")]
     ConfigVersionError,
-    #[fail(display = "Registration Error: {}", _0)]
+    #[error("Registration Error: {}", _0)]
     RegistrationError(String),
 }
 
@@ -93,15 +93,70 @@ fn mem_proof_server_url() -> String {
     }
 }
 
-fn get_hpos_config() -> Fallible<Config> {
+pub fn get_hpos_config() -> Result<Config> {
     let config_path = env::var("HPOS_CONFIG_PATH")?;
     let config_json = fs::read(config_path)?;
     let config: Config = serde_json::from_slice(&config_json)?;
     Ok(config)
 }
 
-async fn try_registration_auth(config: &Config, holochain_public_key: PublicKey) -> Fallible<()> {
-    match config {
+/// get the mem-proof needed to be used in this setup
+/// for the holo servers we will want to pass a read-only mem-proof
+/// for the holoports we should always expect a mem-proof, else return an error that will stop the core-app from getting installed
+pub async fn get_mem_proof() -> Result<HashMap<String, Arc<SerializedBytes>>> {
+    let mut mem_proof = HashMap::new();
+    if force_use_read_only_mem_proof() {
+        // This setting is mostly going to be used by the holo servers like mem-proof-server and match-server
+        let read_only_mem_proof = Arc::new(SerializedBytes::from(UnsafeBytes::from(vec![0])));
+        mem_proof.insert("core-app".to_string(), read_only_mem_proof.clone());
+        mem_proof.insert("holofuel".to_string(), read_only_mem_proof);
+    } else {
+        if let Ok(proof) = load_mem_proof_file() {
+            mem_proof.insert("core-app".to_string(), proof.clone());
+            mem_proof.insert("holofuel".to_string(), proof);
+        } else {
+            // Try again to get a mem-proof
+            let config = crate::membrane_proof::get_hpos_config()?;
+            let agent_pub_key = hpos_config_seed_bundle_explorer::holoport_public_key(
+                &config,
+                Some(crate::config::DEFAULT_PASSWORD.to_string()),
+            )
+            .await?;
+            match crate::membrane_proof::try_registration_auth(config, agent_pub_key).await {
+                Ok(_) => {
+                    let proof = load_mem_proof_file()?;
+                    mem_proof.insert("core-app".to_string(), proof.clone());
+                    mem_proof.insert("holofuel".to_string(), proof);
+                }
+                Err(e) => {
+                    return Err(anyhow!(format!(
+                        "Unable to fetch a required mem-proof. {:?}",
+                        e
+                    )))
+                }
+            }
+        }
+    }
+    Ok(mem_proof)
+}
+
+/// reads the mem-proof that is stored on the holoport
+/// this proof is used for the core-app i.e. hha and holofuel
+#[instrument(err)]
+pub fn load_mem_proof_file() -> Result<MembraneProof> {
+    use std::str;
+    let path = mem_proof_path();
+    let file = fs::read(&path).context("failed to open file")?;
+    let mem_proof_str = str::from_utf8(&file)?;
+    debug!("Loaded Proof {:?}", mem_proof_str);
+    let mem_proof_bytes = base64::decode(mem_proof_str)?;
+    let mem_proof_serialized = Arc::new(SerializedBytes::from(UnsafeBytes::from(mem_proof_bytes)));
+    Ok(mem_proof_serialized)
+}
+
+#[instrument(err, skip(holochain_public_key))]
+pub async fn try_registration_auth(config: Config, holochain_public_key: PublicKey) -> Result<()> {
+    match get_hpos_config()? {
         Config::V2 {
             registration_code,
             settings,
@@ -130,8 +185,7 @@ async fn try_registration_auth(config: &Config, holochain_public_key: PublicKey)
                     let reg: RegistrationRequest = resp.json().await?;
                     println!("Registration completed message ID: {:?}", reg);
                     // save mem-proofs into a file on the hpos
-                    let mut file = File::create(mem_proof_path())?;
-                    file.write_all(reg.mem_proof.as_bytes())?;
+                    crate::utils::write(mem_proof_path(), reg.mem_proof.as_bytes())?;
                 }
                 Err(_) => {
                     let err: RegistrationError = resp.json().await?;
@@ -144,9 +198,4 @@ async fn try_registration_auth(config: &Config, holochain_public_key: PublicKey)
         }
     }
     Ok(())
-}
-
-pub async fn enable_memproof_dev_net(agent_key: PublicKey) -> Fallible<()> {
-    let config = get_hpos_config()?;
-    try_registration_auth(&config, agent_key).await
 }
