@@ -1,5 +1,5 @@
 use crate::config::Happ;
-use crate::membrane_proof;
+use crate::membrane_proof::{self, get_hpos_config};
 use anyhow::{anyhow, Context, Result};
 use ed25519_dalek::*;
 use holochain_conductor_api::{
@@ -16,7 +16,6 @@ use holochain_types::{
     prelude::YamlProperties,
 };
 use holochain_websocket::{connect, WebsocketConfig, WebsocketSender};
-use hpos_config_core::Config;
 use std::{collections::HashMap, env, fs, fs::File, io::prelude::*, sync::Arc};
 use tracing::{info, instrument, trace};
 use url::Url;
@@ -51,37 +50,39 @@ impl AdminWebsocket {
             info!("returning agent key from memory");
             return Ok(key);
         }
-
+        let force = match env::var("FORCE_RANDOM_AGENT_KEY") {
+            Ok(f) => {
+                if f.is_empty() {
+                    false
+                } else {
+                    true
+                }
+            }
+            Err(_) => false,
+        };
         // Based on the holo-network choose what agent key is to be used
         // For mainNet,flexNet and alphaNet: use the holoport ID as the holochain key
         // For devNet: create a random agent key
-        if let Ok(force) = env::var("FORCE_RANDOM_AGENT_KEY") {
-            // For mainNet and alphaNet
-            if force.is_empty() {
-                // Use agent key from from the config file in main net
-                if let Ok(config_path) = env::var("HPOS_CONFIG_PATH") {
-                    info!("reading config at {}", config_path);
-                    if let Ok(config_json) = fs::read(&config_path) {
-                        let config: Config = serde_json::from_slice(&config_json)?;
-                        let pub_key = hpos_config_seed_bundle_explorer::holoport_public_key(
-                            &config,
-                            Some(crate::config::DEFAULT_PASSWORD.to_string()),
-                        )
-                        .await
-                        .unwrap();
-                        let key = AgentPubKey::from_raw_32(pub_key.to_bytes().to_vec());
-                        // Copy to the `agent-key.pub` files for other apps that use it as reference
-                        if let Ok(pubkey_path) = env::var("PUBKEY_PATH") {
-                            let mut file = File::create(pubkey_path)?;
-                            file.write_all(key.get_raw_39())?;
-                        }
-                        self.agent_key = Some(key.clone());
-                        return Ok(key);
-                    }
-                }
+        // For mainNet and alphaNet
+        if force {
+            // Use agent key from from the config file in main net
+            let config = get_hpos_config()?;
+            let pub_key = hpos_config_seed_bundle_explorer::holoport_public_key(
+                &config,
+                Some(crate::config::DEFAULT_PASSWORD.to_string()),
+            )
+            .await
+            .unwrap();
+            let key = AgentPubKey::from_raw_32(pub_key.to_bytes().to_vec());
+            // Copy to the `agent-key.pub` files for other apps that use it as reference
+            if let Ok(pubkey_path) = env::var("PUBKEY_PATH") {
+                let mut file = File::create(pubkey_path)?;
+                file.write_all(key.get_raw_39())?;
             }
+            self.agent_key = Some(key.clone());
+            return Ok(key);
         }
-        // For devNet or flexNet
+        // For devNet
         // Try agent key from disc
         if let Ok(pubkey_path) = env::var("PUBKEY_PATH") {
             if let Ok(key_vec) = fs::read(&pubkey_path) {
@@ -98,17 +99,16 @@ impl AdminWebsocket {
             AdminResponse::AgentPubKeyGenerated(key) => {
                 let key_vec = key.get_raw_39();
                 if let Ok(pubkey_path) = env::var("PUBKEY_PATH") {
-                    let mut file = File::create(pubkey_path)?;
-                    file.write_all(key_vec)?;
+                    crate::utils::write(pubkey_path, key_vec)?;
                 }
                 info!("returning newly created agent key");
                 self.agent_key = Some(key.clone());
-                // if using devNet,
-                // enable membrane proof using generated key
-                let config = crate::membrane_proof::get_hpos_config()?;
+                // if a new agent was created, we expect to get a new mem-proof
                 let agent_pub_key = PublicKey::from_bytes(key.get_raw_32())?;
-                if let Err(e) = membrane_proof::try_registration_auth(config, agent_pub_key).await {
-                    info!("membrane proof error {}", e);
+                if let Err(e) =
+                    membrane_proof::try_mem_proof_server_inner(Some(agent_pub_key)).await
+                {
+                    println!("membrane proof error {}", e);
                 }
                 Ok(key)
             }
@@ -178,7 +178,7 @@ impl AdminWebsocket {
         let agent_key = self
             .get_agent_key()
             .await
-            .context("failed to generate agent key")?;
+            .context("failed to generate agent key while installing")?;
         let path = match happ.bundle_path.clone() {
             Some(path) => path,
             None => {
@@ -229,7 +229,7 @@ impl AdminWebsocket {
         let agent_key = self
             .get_agent_key()
             .await
-            .context("failed to generate agent key")?;
+            .context("failed to generate agent key while registering")?;
         let mut dna_payload: Vec<InstallAppDnaPayload> = Vec::new();
         match &happ.dnas {
             Some(dnas) => {

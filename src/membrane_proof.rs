@@ -116,13 +116,7 @@ pub async fn get_mem_proof() -> Result<HashMap<String, Arc<SerializedBytes>>> {
             mem_proof.insert("holofuel".to_string(), proof);
         } else {
             // Try again to get a mem-proof
-            let config = crate::membrane_proof::get_hpos_config()?;
-            let agent_pub_key = hpos_config_seed_bundle_explorer::holoport_public_key(
-                &config,
-                Some(crate::config::DEFAULT_PASSWORD.to_string()),
-            )
-            .await?;
-            match crate::membrane_proof::try_registration_auth(config, agent_pub_key).await {
+            match crate::membrane_proof::try_mem_proof_server_inner(None).await {
                 Ok(_) => {
                     let proof = load_mem_proof_file()?;
                     mem_proof.insert("core-app".to_string(), proof.clone());
@@ -155,8 +149,19 @@ pub fn load_mem_proof_file() -> Result<MembraneProof> {
 }
 
 #[instrument(err, skip(holochain_public_key))]
-pub async fn try_registration_auth(config: Config, holochain_public_key: PublicKey) -> Result<()> {
-    match get_hpos_config()? {
+pub async fn try_mem_proof_server_inner(holochain_public_key: Option<PublicKey>) -> Result<()> {
+    let config = crate::membrane_proof::get_hpos_config()?;
+    let agent_pub_key = if holochain_public_key.is_some() {
+        holochain_public_key.unwrap()
+    } else {
+        hpos_config_seed_bundle_explorer::holoport_public_key(
+            &config,
+            Some(crate::config::DEFAULT_PASSWORD.to_string()),
+        )
+        .await?
+    };
+
+    match config {
         Config::V2 {
             registration_code,
             settings,
@@ -165,7 +170,7 @@ pub async fn try_registration_auth(config: Config, holochain_public_key: PublicK
             let email = settings.admin.email.clone();
             let payload = Registration {
                 registration_code: registration_code.clone(),
-                agent_pub_key: holochain_public_key,
+                agent_pub_key,
                 email: email.clone(),
                 payload: RegistrationPayload {
                     role: "host".to_string(),
