@@ -13,6 +13,7 @@ use url::Url;
 pub type HappIds = Vec<String>;
 
 pub fn write(to: String, value: &[u8]) -> Result<()> {
+    println!("writting {:?} to {:?}", value, to);
     File::create(to.clone())?;
     let mut file = OpenOptions::new().write(true).truncate(true).open(to)?;
     file.write_all(value)?;
