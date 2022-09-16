@@ -10,17 +10,11 @@ use tempfile::TempDir;
 use tracing::{debug, instrument};
 use url::Url;
 
-use crate::membrane_proof::mem_proof_path;
-
 pub type HappIds = Vec<String>;
 
 pub fn write(to: String, value: &[u8]) -> Result<()> {
-    File::create(mem_proof_path())?;
-    let mut file = OpenOptions::new()
-        .create_new(true)
-        .write(true)
-        .truncate(true)
-        .open(to)?;
+    File::create(to.clone())?;
+    let mut file = OpenOptions::new().write(true).truncate(true).open(to)?;
     file.write_all(value)?;
     Ok(())
 }

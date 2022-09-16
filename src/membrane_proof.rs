@@ -183,7 +183,8 @@ pub async fn try_mem_proof_server_inner(holochain_public_key: Option<PublicKey>)
                     // save mem-proofs into a file on the hpos
                     crate::utils::write(mem_proof_path(), reg.mem_proof.as_bytes())?;
                 }
-                Err(_) => {
+                Err(e) => {
+                    println!("Error: {:?}", e);
                     let err: RegistrationError = resp.json().await?;
                     return Err(AuthError::RegistrationError(err.to_string()).into());
                 }
