@@ -9,7 +9,7 @@ pub use websocket::{AdminWebsocket, AppWebsocket};
 pub mod membrane_proof;
 mod utils;
 
-#[instrument(err)]
+#[instrument(err, skip(config))]
 pub async fn run(config: Config) -> Result<()> {
     debug!("Starting...");
     let happ_file = HappsFile::load_happ_file(&config.happs_file_path)
