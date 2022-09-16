@@ -51,13 +51,7 @@ impl AdminWebsocket {
             return Ok(key);
         }
         let force = match env::var("FORCE_RANDOM_AGENT_KEY") {
-            Ok(f) => {
-                if f.is_empty() {
-                    false
-                } else {
-                    true
-                }
-            }
+            Ok(f) => !f.is_empty(),
             Err(_) => false,
         };
         // Based on the holo-network choose what agent key is to be used

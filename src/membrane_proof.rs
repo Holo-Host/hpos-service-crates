@@ -20,13 +20,7 @@ pub fn mem_proof_path() -> String {
 
 pub fn force_use_read_only_mem_proof() -> bool {
     match env::var("READ_ONLY_MEM_PROOF") {
-        Ok(path) => {
-            if path == "true" {
-                return true;
-            } else {
-                return false;
-            }
-        }
+        Ok(path) => path == "true",
         _ => false,
     }
 }
@@ -110,27 +104,26 @@ pub async fn get_mem_proof() -> Result<HashMap<String, Arc<SerializedBytes>>> {
         let read_only_mem_proof = Arc::new(SerializedBytes::from(UnsafeBytes::from(vec![0])));
         mem_proof.insert("core-app".to_string(), read_only_mem_proof.clone());
         mem_proof.insert("holofuel".to_string(), read_only_mem_proof);
+    } else if let Ok(proof) = load_mem_proof_file() {
+        mem_proof.insert("core-app".to_string(), proof.clone());
+        mem_proof.insert("holofuel".to_string(), proof);
     } else {
-        if let Ok(proof) = load_mem_proof_file() {
-            mem_proof.insert("core-app".to_string(), proof.clone());
-            mem_proof.insert("holofuel".to_string(), proof);
-        } else {
-            // Try again to get a mem-proof
-            match crate::membrane_proof::try_mem_proof_server_inner(None).await {
-                Ok(_) => {
-                    let proof = load_mem_proof_file()?;
-                    mem_proof.insert("core-app".to_string(), proof.clone());
-                    mem_proof.insert("holofuel".to_string(), proof);
-                }
-                Err(e) => {
-                    return Err(anyhow!(format!(
-                        "Unable to fetch a required mem-proof. {:?}",
-                        e
-                    )))
-                }
+        // Try again to get a mem-proof
+        match crate::membrane_proof::try_mem_proof_server_inner(None).await {
+            Ok(_) => {
+                let proof = load_mem_proof_file()?;
+                mem_proof.insert("core-app".to_string(), proof.clone());
+                mem_proof.insert("holofuel".to_string(), proof);
+            }
+            Err(e) => {
+                return Err(anyhow!(format!(
+                    "Unable to fetch a required mem-proof. {:?}",
+                    e
+                )))
             }
         }
     }
+
     Ok(mem_proof)
 }
 
@@ -151,14 +144,15 @@ pub fn load_mem_proof_file() -> Result<MembraneProof> {
 #[instrument(err, skip(holochain_public_key))]
 pub async fn try_mem_proof_server_inner(holochain_public_key: Option<PublicKey>) -> Result<()> {
     let config = crate::membrane_proof::get_hpos_config()?;
-    let agent_pub_key = if holochain_public_key.is_some() {
-        holochain_public_key.unwrap()
-    } else {
-        hpos_config_seed_bundle_explorer::holoport_public_key(
-            &config,
-            Some(crate::config::DEFAULT_PASSWORD.to_string()),
-        )
-        .await?
+    let agent_pub_key = match holochain_public_key {
+        Some(a) => a,
+        None => {
+            hpos_config_seed_bundle_explorer::holoport_public_key(
+                &config,
+                Some(crate::config::DEFAULT_PASSWORD.to_string()),
+            )
+            .await?
+        }
     };
 
     match config {
