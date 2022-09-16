@@ -170,10 +170,7 @@ pub async fn try_mem_proof_server_inner(holochain_public_key: Option<PublicKey>)
                     role: "host".to_string(),
                 },
             };
-            let mem_proof_server_url = format!(
-                "{}/registration/api/v1/membrane-proof",
-                mem_proof_server_url()
-            );
+            let mem_proof_server_url = format!("{}/register-user", mem_proof_server_url());
             let resp = CLIENT
                 .post(mem_proof_server_url)
                 .json(&payload)
