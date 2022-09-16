@@ -52,7 +52,7 @@ impl AdminWebsocket {
         }
         let force = match env::var("FORCE_RANDOM_AGENT_KEY") {
             Ok(f) => !f.is_empty(),
-            Err(_) => false,
+            Err(_) => true,
         };
         // Based on the holo-network choose what agent key is to be used
         // For mainNet,flexNet and alphaNet: use the holoport ID as the holochain key
