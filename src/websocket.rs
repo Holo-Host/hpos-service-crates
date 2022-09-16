@@ -58,7 +58,8 @@ impl AdminWebsocket {
         // For mainNet,flexNet and alphaNet: use the holoport ID as the holochain key
         // For devNet: create a random agent key
         // For mainNet and alphaNet
-        if force {
+        if !force {
+            info!("Using agent key from hpos-config file");
             // Use agent key from from the config file in main net
             let config = get_hpos_config()?;
             let pub_key = hpos_config_seed_bundle_explorer::holoport_public_key(
