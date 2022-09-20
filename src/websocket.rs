@@ -52,6 +52,8 @@ impl AdminWebsocket {
         }
         let force = match env::var("FORCE_RANDOM_AGENT_KEY") {
             Ok(f) => !f.is_empty(),
+            // The default is set to true since its only used while running `cargo test`.
+            // In all other instances in holo-nixpkgs we have set a value based on the enviroment
             Err(_) => true,
         };
         // Based on the holo-network choose what agent key is to be used
@@ -94,7 +96,7 @@ impl AdminWebsocket {
             AdminResponse::AgentPubKeyGenerated(key) => {
                 let key_vec = key.get_raw_39();
                 if let Ok(pubkey_path) = env::var("PUBKEY_PATH") {
-                    crate::utils::write(pubkey_path, key_vec)?;
+                    crate::utils::overwrite(pubkey_path, key_vec)?;
                 }
                 info!("returning newly created agent key");
                 self.agent_key = Some(key.clone());

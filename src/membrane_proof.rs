@@ -108,7 +108,9 @@ pub async fn get_mem_proof() -> Result<HashMap<String, Arc<SerializedBytes>>> {
         mem_proof.insert("core-app".to_string(), proof.clone());
         mem_proof.insert("holofuel".to_string(), proof);
     } else {
-        // Try again to get a mem-proof
+        // if a mem-proof did not exist configure-holochain will request a new mem-proof.
+        // This is in the case where a UID was updated, which means the expected mem-proof file name has changed
+        // in this case configure-holochain will fetch the existing mem-proof for this agent by reaching out to the mem-proof-server(not called hbs server)
         match crate::membrane_proof::try_mem_proof_server_inner(None).await {
             Ok(_) => {
                 let proof = load_mem_proof_file()?;
@@ -184,7 +186,7 @@ pub async fn try_mem_proof_server_inner(holochain_public_key: Option<PublicKey>)
                     let reg: RegistrationRequest = resp.json().await?;
                     println!("Registration completed message ID: {:?}", reg);
                     // save mem-proofs into a file on the hpos
-                    crate::utils::write(mem_proof_path(), reg.mem_proof.as_bytes())?;
+                    crate::utils::overwrite(mem_proof_path(), reg.mem_proof.as_bytes())?;
                 }
                 Err(e) => {
                     println!("Error: {:?}", e);
