@@ -1,6 +1,6 @@
 [package]
 name = "configure-holochain"
-version = "0.3.3"
+version = "0.3.4"
 authors = ["Oleksii Filonenko <oleksii.filonenko@holo.host>", "zo-el <joelulahanna@gmaail.com>"]
 edition = "2021"
 
@@ -29,9 +29,9 @@ holochain_conductor_api = "0.0.57"
 holochain_types = "0.0.54"
 holochain_websocket = "0.0.39"
 holochain_zome_types = "0.0.46"
-failure = "0.1"
 lazy_static = "1"
 ed25519-dalek = { version = "1.0.1", features = ["serde"] }
+thiserror = "1.0"
 
 [dependencies.hpos-config-core]
 git = "https://github.com/Holo-Host/hpos-config"

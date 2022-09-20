@@ -2,8 +2,6 @@ mod config;
 pub use config::{Config, Happ, HappsFile, MembraneProofFile, ProofPayload};
 mod websocket;
 use anyhow::{Context, Result};
-use holochain_types::prelude::UnsafeBytes;
-use holochain_zome_types::SerializedBytes;
 use std::collections::HashMap;
 use std::sync::Arc;
 use tracing::{debug, info, instrument, warn};
@@ -11,7 +9,7 @@ pub use websocket::{AdminWebsocket, AppWebsocket};
 pub mod membrane_proof;
 mod utils;
 
-#[instrument(err)]
+#[instrument(err, skip(config))]
 pub async fn run(config: Config) -> Result<()> {
     debug!("Starting...");
     let happ_file = HappsFile::load_happ_file(&config.happs_file_path)
@@ -22,6 +20,7 @@ pub async fn run(config: Config) -> Result<()> {
 
 /// based on the config file provided this installs the core apps on the holoport
 /// It manages getting the mem-proofs and properties that are expected to be used on the holoport
+#[instrument(err, skip(happ_file, config))]
 pub async fn install_happs(happ_file: &HappsFile, config: &Config) -> Result<()> {
     let mut admin_websocket = AdminWebsocket::connect(config.admin_port)
         .await
@@ -45,10 +44,6 @@ pub async fn install_happs(happ_file: &HappsFile, config: &Config) -> Result<()>
         .chain(happ_file.self_hosted_happs.iter())
         .collect();
 
-    // This line makes sure agent key gets created and stored before all the async stuff starts
-    let mut agent_websocket = admin_websocket.clone();
-    let _ = agent_websocket.get_agent_key().await?;
-
     for happ in &happs_to_install {
         let full_happ_id = happ.id();
         if active_happs.contains(&full_happ_id) {
@@ -56,24 +51,12 @@ pub async fn install_happs(happ_file: &HappsFile, config: &Config) -> Result<()>
                 "App {} already installed, just downloading UI",
                 full_happ_id
             );
-            install_ui(happ, config).await?
         } else {
             info!("Installing app {}", full_happ_id);
             let mut mem_proof = HashMap::new();
             // Special properties and mem-proofs for core-app
             if full_happ_id.contains("core-app") {
-                if let Ok(proof) =
-                    membrane_proof::load_mem_proof_file(membrane_proof::mem_proof_path())
-                {
-                    mem_proof.insert("core-app".to_string(), proof.clone());
-                    mem_proof.insert("holofuel".to_string(), proof);
-                } else {
-                    // when mem-proof is not found you will want to install hha as read-only for our servers in holo-nixpkgs
-                    let read_only_mem_proof =
-                        Arc::new(SerializedBytes::from(UnsafeBytes::from(vec![0])));
-                    mem_proof.insert("core-app".to_string(), read_only_mem_proof.clone());
-                    mem_proof.insert("holofuel".to_string(), read_only_mem_proof);
-                }
+                mem_proof = crate::membrane_proof::get_mem_proof().await?;
             }
 
             if let Err(err) = admin_websocket
@@ -90,8 +73,8 @@ pub async fn install_happs(happ_file: &HappsFile, config: &Config) -> Result<()>
                     return Err(err);
                 }
             }
-            install_ui(happ, config).await?;
         }
+        install_ui(happ, config).await?
     }
 
     // Clean-up part of the script
