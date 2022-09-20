@@ -30,6 +30,10 @@ pub async fn install_happs(happ_file: &HappsFile, config: &Config) -> Result<()>
         warn!(port = ?config.happ_port, ?error, "failed to start app interface, maybe it's already up?");
     }
 
+    // setting a agent before any of the async processes starts so that a key is generated if needed and a mem-proof is retrieved if needed
+    let agent = admin_websocket.get_agent_key().await?;
+    debug!("Agent key for all core happs {:?}", agent);
+
     debug!("Getting a list of active happ");
     let active_happs = Arc::new(
         admin_websocket
