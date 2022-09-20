@@ -147,7 +147,7 @@ pub fn load_mem_proof_file() -> Result<MembraneProof> {
 pub async fn try_mem_proof_server_inner(holochain_public_key: Option<PublicKey>) -> Result<()> {
     let config = crate::membrane_proof::get_hpos_config()?;
     let agent_pub_key = match holochain_public_key {
-        Some(a) => a,
+        Some(k) => k,
         None => {
             hpos_config_seed_bundle_explorer::holoport_public_key(
                 &config,
