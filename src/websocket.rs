@@ -243,8 +243,7 @@ impl AdminWebsocket {
                         properties =
                             Some(YamlProperties::new(serde_yaml::from_str(&prop).unwrap()));
                     }
-                    let register_dna_payload = if let Ok(id) = env::var("DEV_network_seed_OVERRIDE")
-                    {
+                    let register_dna_payload = if let Ok(id) = env::var("DEV_UID_OVERRIDE") {
                         info!("using network_seed to install: {}", id);
                         RegisterDnaPayload {
                             network_seed: Some(id),
