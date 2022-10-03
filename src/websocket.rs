@@ -13,9 +13,10 @@ use holochain_types::{
         InstallAppPayload, InstalledAppId, RegisterDnaPayload,
     },
     dna::AgentPubKey,
-    prelude::YamlProperties,
+    prelude::{DnaModifiersOpt, YamlProperties},
 };
 use holochain_websocket::{connect, WebsocketConfig, WebsocketSender};
+use holochain_zome_types::Timestamp;
 use std::{collections::HashMap, env, fs, fs::File, io::prelude::*, sync::Arc};
 use tracing::{info, instrument, trace};
 use url::Url;
@@ -246,15 +247,21 @@ impl AdminWebsocket {
                     let register_dna_payload = if let Ok(id) = env::var("DEV_UID_OVERRIDE") {
                         info!("using network_seed to install: {}", id);
                         RegisterDnaPayload {
-                            network_seed: Some(id),
-                            properties: properties.clone(),
+                            modifiers: DnaModifiersOpt {
+                                network_seed: Some(id),
+                                properties: properties.clone(),
+                                origin_time: Some(Timestamp::now()),
+                            },
                             source: DnaSource::Path(path),
                         }
                     } else {
                         info!("using default network_seed to install");
                         RegisterDnaPayload {
-                            network_seed: None,
-                            properties: properties.clone(),
+                            modifiers: DnaModifiersOpt {
+                                network_seed: None,
+                                properties: properties.clone(),
+                                origin_time: Some(Timestamp::now()),
+                            },
                             source: DnaSource::Path(path),
                         }
                     };

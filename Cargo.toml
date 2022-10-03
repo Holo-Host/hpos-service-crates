@@ -25,21 +25,21 @@ observability = "0.1.3"
 base64 = "0.13.0"
 reqwest = { version = "0.11", features = ["json"]}
 spinning_top = "0.2.4"
-holochain_conductor_api = "0.0.57"
-holochain_types = "0.0.54"
+holochain_conductor_api = "0.0.62"
+holochain_types = "0.0.59"
 holochain_websocket = "0.0.39"
-holochain_zome_types = "0.0.46"
+holochain_zome_types = "0.0.50"
 lazy_static = "1"
 ed25519-dalek = { version = "1.0.1", features = ["serde"] }
 thiserror = "1.0"
 
 [dependencies.hpos-config-core]
 git = "https://github.com/Holo-Host/hpos-config"
-rev = "4ae872baf55f5440d80349505fa45869ca1c4353"
+rev = "01ef40bf118948a279a399d60c52d500643a3e10"
 
 [dependencies.hpos-config-seed-bundle-explorer]
 git = "https://github.com/Holo-Host/hpos-config"
-rev = "4ae872baf55f5440d80349505fa45869ca1c4353"
+rev = "01ef40bf118948a279a399d60c52d500643a3e10"
 
 [dev-dependencies.cargo-husky]
 version = "1"
