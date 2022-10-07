@@ -250,7 +250,7 @@ impl AdminWebsocket {
                             modifiers: DnaModifiersOpt {
                                 network_seed: Some(id),
                                 properties: properties.clone(),
-                                origin_time: Some(Timestamp::now()),
+                                origin_time: None,
                             },
                             source: DnaSource::Path(path),
                         }
@@ -260,7 +260,7 @@ impl AdminWebsocket {
                             modifiers: DnaModifiersOpt {
                                 network_seed: None,
                                 properties: properties.clone(),
-                                origin_time: Some(Timestamp::now()),
+                                origin_time: None,
                             },
                             source: DnaSource::Path(path),
                         }
