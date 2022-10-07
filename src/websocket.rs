@@ -16,7 +16,6 @@ use holochain_types::{
     prelude::{DnaModifiersOpt, YamlProperties},
 };
 use holochain_websocket::{connect, WebsocketConfig, WebsocketSender};
-use holochain_zome_types::Timestamp;
 use std::{collections::HashMap, env, fs, fs::File, io::prelude::*, sync::Arc};
 use tracing::{info, instrument, trace};
 use url::Url;
