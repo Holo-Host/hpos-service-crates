@@ -1,6 +1,8 @@
 mod config;
 pub use config::{Config, Happ, HappsFile, MembraneProofFile, ProofPayload};
+mod agent;
 mod websocket;
+pub use agent::Agent;
 use anyhow::{Context, Result};
 use std::collections::HashMap;
 use std::sync::Arc;
@@ -22,7 +24,7 @@ pub async fn run(config: Config) -> Result<()> {
 /// It manages getting the mem-proofs and properties that are expected to be used on the holoport
 #[instrument(err, skip(happ_file, config))]
 pub async fn install_happs(happ_file: &HappsFile, config: &Config) -> Result<()> {
-    let mut admin_websocket = AdminWebsocket::init(config.admin_port)
+    let mut admin_websocket = AdminWebsocket::connect(config.admin_port)
         .await
         .context("failed to connect to holochain's admin interface")?;
 
@@ -30,10 +32,9 @@ pub async fn install_happs(happ_file: &HappsFile, config: &Config) -> Result<()>
         warn!(port = ?config.happ_port, ?error, "failed to start app interface, maybe it's already up?");
     }
 
-    debug!(
-        "Agent key for all core happs {:?}",
-        admin_websocket.agent_key
-    );
+    let agent = Agent::init(admin_websocket.clone()).await?;
+
+    debug!("Agent key for all core happs {:?}", agent.key);
 
     debug!("Getting a list of active happ");
     let active_happs = Arc::new(
@@ -56,14 +57,11 @@ pub async fn install_happs(happ_file: &HappsFile, config: &Config) -> Result<()>
             info!("Installing app {}", &happ.id());
             let mut mem_proof = HashMap::new();
             // Special properties and mem-proofs for core-app
-            if full_happ_id.contains("core-app") {
+            if happ.id().contains("core-app") {
                 mem_proof = crate::membrane_proof::get_mem_proof().await?;
             }
 
-            if let Err(err) = admin_websocket
-                .install_and_activate_happ(happ, mem_proof)
-                .await
-            {
+            if let Err(err) = admin_websocket.install_and_activate_happ(happ, agent.clone()).await {
                 if err.to_string().contains("AppAlreadyInstalled") {
                     info!("app {} was previously installed, re-activating", &happ.id());
                     admin_websocket.activate_happ(happ).await?;

@@ -24,7 +24,7 @@ async fn configure_holochain_test() {
     println!("Run configure holochain script");
     configure_holochain::run(config).await.unwrap();
 
-    let mut connection = configure_holochain::AdminWebsocket::init(4444)
+    let mut connection = configure_holochain::AdminWebsocket::connect(4444)
         .await
         .unwrap();
 
