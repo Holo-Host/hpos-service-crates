@@ -22,7 +22,7 @@ pub async fn run(config: Config) -> Result<()> {
 /// It manages getting the mem-proofs and properties that are expected to be used on the holoport
 #[instrument(err, skip(happ_file, config))]
 pub async fn install_happs(happ_file: &HappsFile, config: &Config) -> Result<()> {
-    let mut admin_websocket = AdminWebsocket::connect(config.admin_port)
+    let mut admin_websocket = AdminWebsocket::init(config.admin_port)
         .await
         .context("failed to connect to holochain's admin interface")?;
 
@@ -30,9 +30,10 @@ pub async fn install_happs(happ_file: &HappsFile, config: &Config) -> Result<()>
         warn!(port = ?config.happ_port, ?error, "failed to start app interface, maybe it's already up?");
     }
 
-    // setting a agent before any of the async processes starts so that a key is generated if needed and a mem-proof is retrieved if needed
-    let agent = admin_websocket.get_agent_key().await?;
-    debug!("Agent key for all core happs {:?}", agent);
+    debug!(
+        "Agent key for all core happs {:?}",
+        admin_websocket.agent_key
+    );
 
     debug!("Getting a list of active happ");
     let active_happs = Arc::new(
@@ -49,14 +50,10 @@ pub async fn install_happs(happ_file: &HappsFile, config: &Config) -> Result<()>
         .collect();
 
     for happ in &happs_to_install {
-        let full_happ_id = happ.id();
-        if active_happs.contains(&full_happ_id) {
-            info!(
-                "App {} already installed, just downloading UI",
-                full_happ_id
-            );
+        if active_happs.contains(&happ.id()) {
+            info!("App {} already installed, just downloading UI", &happ.id());
         } else {
-            info!("Installing app {}", full_happ_id);
+            info!("Installing app {}", &happ.id());
             let mut mem_proof = HashMap::new();
             // Special properties and mem-proofs for core-app
             if full_happ_id.contains("core-app") {
@@ -68,10 +65,7 @@ pub async fn install_happs(happ_file: &HappsFile, config: &Config) -> Result<()>
                 .await
             {
                 if err.to_string().contains("AppAlreadyInstalled") {
-                    info!(
-                        "app {} was previously installed, re-activating",
-                        full_happ_id
-                    );
+                    info!("app {} was previously installed, re-activating", &happ.id());
                     admin_websocket.activate_happ(happ).await?;
                 } else {
                     return Err(err);

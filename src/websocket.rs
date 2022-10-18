@@ -24,11 +24,14 @@ use url::Url;
 pub struct AdminWebsocket {
     tx: WebsocketSender,
     agent_key: Option<AgentPubKey>,
+    membrane_proofs: HashMap<String, MembraneProof>,
 }
 
 impl AdminWebsocket {
+    /// Initializes websocket connection to holochain's admin interface
+    /// Also it loads agent_key and memproof
     #[instrument(err)]
-    pub async fn connect(admin_port: u16) -> Result<Self> {
+    pub async fn init(admin_port: u16) -> Result<Self> {
         let url = format!("ws://localhost:{}/", admin_port);
         let url = Url::parse(&url).context("invalid ws:// URL")?;
         let websocket_config = Arc::new(WebsocketConfig::default());
@@ -37,19 +40,26 @@ impl AdminWebsocket {
             connect(url.clone().into(), websocket_config)
         })
         .await?;
+        let agent_key = self.get_agent_key.await?;
+        // let membrane_proofs = self.get_memproof().await?;
+
+        // if a new agent was created, we expect to get a new mem-proof
+        // let agent_pub_key = PublicKey::from_bytes(key.get_raw_32())?;
+        // if let Err(e) =
+        //             membrane_proof::try_mem_proof_server_inner(Some(agent_pub_key)).await
+        //         {
+        //             println!("membrane proof error {}", e);
+        //         }
+
         Ok(Self {
             tx,
-            agent_key: None,
+            agent_key,
+            membrane_proofs,
         })
     }
 
     #[instrument(skip(self), err)]
-    pub async fn get_agent_key(&mut self) -> Result<AgentPubKey> {
-        // Try agent key from memory
-        if let Some(key) = self.agent_key.clone() {
-            info!("returning agent key from memory");
-            return Ok(key);
-        }
+    async fn get_agent_key(&mut self) -> Result<AgentPubKey> {
         let force = match env::var("FORCE_RANDOM_AGENT_KEY") {
             Ok(f) => !f.is_empty(),
             // The default is set to true since its only used while running `cargo test`.
@@ -76,7 +86,6 @@ impl AdminWebsocket {
                 let mut file = File::create(pubkey_path)?;
                 file.write_all(key.get_raw_39())?;
             }
-            self.agent_key = Some(key.clone());
             return Ok(key);
         }
         // For devNet
@@ -85,7 +94,6 @@ impl AdminWebsocket {
             if let Ok(key_vec) = fs::read(&pubkey_path) {
                 if let Ok(key) = AgentPubKey::from_raw_39(key_vec) {
                     info!("returning agent key from file");
-                    self.agent_key = Some(key.clone());
                     return Ok(key);
                 }
             }
@@ -99,19 +107,20 @@ impl AdminWebsocket {
                     crate::utils::overwrite(pubkey_path, key_vec)?;
                 }
                 info!("returning newly created agent key");
-                self.agent_key = Some(key.clone());
-                // if a new agent was created, we expect to get a new mem-proof
-                let agent_pub_key = PublicKey::from_bytes(key.get_raw_32())?;
-                if let Err(e) =
-                    membrane_proof::try_mem_proof_server_inner(Some(agent_pub_key)).await
-                {
-                    println!("membrane proof error {}", e);
-                }
                 Ok(key)
             }
             _ => Err(anyhow!("unexpected response: {:?}", response)),
         }
     }
+
+    // Returns HashMap(happ_id, memproof)
+    // get_memproof() {
+    // let mut mem_proof = HashMap::new();
+    //       // Special properties and mem-proofs for core-app
+    //       if full_happ_id.contains("core-app") {
+    //           mem_proof = crate::membrane_proof::get_mem_proof().await?;
+    //       }
+    // }
 
     #[instrument(skip(self))]
     pub async fn attach_app_interface(&mut self, happ_port: u16) -> Result<AdminResponse> {
@@ -148,6 +157,7 @@ impl AdminWebsocket {
         happ: &Happ,
         membrane_proofs: HashMap<String, MembraneProof>,
     ) -> Result<()> {
+        // TODO PJ: This is the only place where membrane_proofs is ever used. We can retrieve it from self right here
         if happ.dnas.is_some() {
             self.register_and_install_happ(happ, membrane_proofs)
                 .await?;
@@ -172,10 +182,6 @@ impl AdminWebsocket {
         happ: &Happ,
         membrane_proofs: HashMap<String, MembraneProof>,
     ) -> Result<()> {
-        let agent_key = self
-            .get_agent_key()
-            .await
-            .context("failed to generate agent key while installing")?;
         let path = match happ.bundle_path.clone() {
             Some(path) => path,
             None => {
@@ -188,7 +194,7 @@ impl AdminWebsocket {
         let payload = if let Ok(id) = env::var("DEV_UID_OVERRIDE") {
             info!("using network_seed to install: {}", id);
             InstallAppBundlePayload {
-                agent_key,
+                agent_key: self.agent_key,
                 installed_app_id: Some(happ.id()),
                 source: AppBundleSource::Path(path),
                 membrane_proofs,
@@ -197,7 +203,7 @@ impl AdminWebsocket {
         } else {
             info!("using default network_seed to install");
             InstallAppBundlePayload {
-                agent_key,
+                agent_key: self.agent_key,
                 installed_app_id: Some(happ.id()),
                 source: AppBundleSource::Path(path),
                 membrane_proofs,
@@ -223,10 +229,6 @@ impl AdminWebsocket {
         happ: &Happ,
         membrane_proofs: HashMap<String, MembraneProof>,
     ) -> Result<()> {
-        let agent_key = self
-            .get_agent_key()
-            .await
-            .context("failed to generate agent key while registering")?;
         let mut dna_payload: Vec<InstallAppDnaPayload> = Vec::new();
         match &happ.dnas {
             Some(dnas) => {
@@ -285,7 +287,7 @@ impl AdminWebsocket {
         };
 
         let payload = InstallAppPayload {
-            agent_key,
+            agent_key: self.agent_key,
             installed_app_id: happ.id(),
             dnas: dna_payload,
         };

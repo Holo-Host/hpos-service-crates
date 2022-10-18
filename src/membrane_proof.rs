@@ -11,14 +11,14 @@ use std::sync::Arc;
 use std::{env, fmt, fs};
 use tracing::{debug, instrument};
 
-pub fn mem_proof_path() -> String {
+fn mem_proof_path() -> String {
     match env::var("MEM_PROOF_PATH") {
         Ok(path) => path,
         _ => "./tests/config/mem-proof".to_string(),
     }
 }
 
-pub fn force_use_read_only_mem_proof() -> bool {
+fn force_use_read_only_mem_proof() -> bool {
     match env::var("READ_ONLY_MEM_PROOF") {
         Ok(path) => path == "true",
         _ => false,
