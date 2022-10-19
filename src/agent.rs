@@ -52,14 +52,14 @@ async fn populate_admin(admin_websocket: AdminWebsocket) -> Result<Admin> {
             settings,
             ..
         } => {
-            return Ok(Admin {
-                key: key,
+            Ok(Admin {
+                key,
                 registration_code,
                 email: settings.admin.email,
             })
         }
         Config::V1 { .. } => {
-            return Err(AuthError::ConfigVersionError.into());
+            Err(AuthError::ConfigVersionError.into())
         }
     }
 }
@@ -92,7 +92,7 @@ async fn get_agent_key(
         match response {
             AdminResponse::AgentPubKeyGenerated(key) => {
                 info!("returning newly created random agent key");
-                return Ok(key);
+                Ok(key)
             }
             _ => Err(anyhow!("unexpected response: {:?}", response)),
         }
@@ -100,13 +100,13 @@ async fn get_agent_key(
         info!("Using agent key from hpos-config file");
 
         let pub_key = hpos_config_seed_bundle_explorer::holoport_public_key(
-            &config,
+            config,
             Some(crate::config::DEFAULT_PASSWORD.to_string()),
         )
         .await
         .unwrap();
 
-        return Ok(AgentPubKey::from_raw_32(pub_key.to_bytes().to_vec()));
+        Ok(AgentPubKey::from_raw_32(pub_key.to_bytes().to_vec()))
     }
 }
 

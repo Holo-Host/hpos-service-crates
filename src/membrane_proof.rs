@@ -183,7 +183,7 @@ async fn download_memproof(admin: Admin) -> Result<String> {
         Err(e) => {
             println!("Error: {:?}", e);
             let err: RegistrationError = resp.json().await?;
-            return Err(AuthError::RegistrationError(err.to_string()).into());
+            Err(AuthError::RegistrationError(err.to_string()).into())
         }
     }
 }
