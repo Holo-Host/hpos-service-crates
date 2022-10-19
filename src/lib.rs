@@ -4,7 +4,6 @@ mod agent;
 mod websocket;
 pub use agent::Agent;
 use anyhow::{Context, Result};
-use std::collections::HashMap;
 use std::sync::Arc;
 use tracing::{debug, info, instrument, warn};
 pub use websocket::{AdminWebsocket, AppWebsocket};
@@ -55,13 +54,14 @@ pub async fn install_happs(happ_file: &HappsFile, config: &Config) -> Result<()>
             info!("App {} already installed, just downloading UI", &happ.id());
         } else {
             info!("Installing app {}", &happ.id());
-            let mut mem_proof = HashMap::new();
-            // Special properties and mem-proofs for core-app
-            if happ.id().contains("core-app") {
-                mem_proof = crate::membrane_proof::get_mem_proof().await?;
-            }
+            let mem_proof_vec =
+                crate::membrane_proof::crate_vec_for_happ(&happ.id(), agent.membrane_proof.clone())
+                    .await?;
 
-            if let Err(err) = admin_websocket.install_and_activate_happ(happ, agent.clone()).await {
+            if let Err(err) = admin_websocket
+                .install_and_activate_happ(happ, mem_proof_vec, agent.clone())
+                .await
+            {
                 if err.to_string().contains("AppAlreadyInstalled") {
                     info!("app {} was previously installed, re-activating", &happ.id());
                     admin_websocket.activate_happ(happ).await?;

@@ -1,5 +1,6 @@
 use crate::agent::Agent;
 use crate::config::Happ;
+use crate::membrane_proof::MembraneProofsVec;
 use anyhow::{anyhow, Context, Result};
 use holochain_conductor_api::{
     AdminRequest, AdminResponse, AppRequest, AppResponse, AppStatusFilter, InstalledAppInfo,
@@ -67,13 +68,18 @@ impl AdminWebsocket {
         Ok(running)
     }
 
-    #[instrument(skip(self, happ, agent))]
-    pub async fn install_and_activate_happ(&mut self, happ: &Happ, agent: Agent) -> Result<()> {
-        // TODO PJ: This is the only place where membrane_proofs is ever used. We can retrieve it from self right here
+    #[instrument(skip(self, happ, mem_proof_vec, agent))]
+    pub async fn install_and_activate_happ(
+        &mut self,
+        happ: &Happ,
+        mem_proof_vec: MembraneProofsVec,
+        agent: Agent,
+    ) -> Result<()> {
         if happ.dnas.is_some() {
-            self.register_and_install_happ(happ, agent).await?;
+            self.register_and_install_happ(happ, mem_proof_vec, agent)
+                .await?;
         } else {
-            self.install_happ(happ, agent).await?;
+            self.install_happ(happ, mem_proof_vec, agent).await?;
         }
         self.activate_app(happ).await?;
         info!("installed & activated hApp: {}", happ.id());
@@ -87,8 +93,13 @@ impl AdminWebsocket {
         Ok(())
     }
 
-    #[instrument(err, skip(self, happ, agent))]
-    async fn install_happ(&mut self, happ: &Happ, agent: Agent) -> Result<()> {
+    #[instrument(err, skip(self, happ, mem_proof_vec, agent))]
+    async fn install_happ(
+        &mut self,
+        happ: &Happ,
+        mem_proof_vec: MembraneProofsVec,
+        agent: Agent,
+    ) -> Result<()> {
         let path = match happ.bundle_path.clone() {
             Some(path) => path,
             None => {
@@ -104,7 +115,7 @@ impl AdminWebsocket {
                 agent_key: agent.key,
                 installed_app_id: Some(happ.id()),
                 source: AppBundleSource::Path(path),
-                membrane_proofs: agent.membrane_proofs,
+                membrane_proofs: mem_proof_vec,
                 network_seed: Some(id),
             }
         } else {
@@ -113,7 +124,7 @@ impl AdminWebsocket {
                 agent_key: agent.key,
                 installed_app_id: Some(happ.id()),
                 source: AppBundleSource::Path(path),
-                membrane_proofs: agent.membrane_proofs,
+                membrane_proofs: mem_proof_vec,
                 network_seed: None,
             }
         };
@@ -130,8 +141,13 @@ impl AdminWebsocket {
         }
     }
 
-    #[instrument(err, skip(self, happ, agent))]
-    async fn register_and_install_happ(&mut self, happ: &Happ, agent: Agent) -> Result<()> {
+    #[instrument(err, skip(self, happ, mem_proof_vec, agent))]
+    async fn register_and_install_happ(
+        &mut self,
+        happ: &Happ,
+        mem_proof_vec: MembraneProofsVec,
+        agent: Agent,
+    ) -> Result<()> {
         let mut dna_payload: Vec<InstallAppDnaPayload> = Vec::new();
         match &happ.dnas {
             Some(dnas) => {
@@ -177,7 +193,7 @@ impl AdminWebsocket {
                             dna_payload.push(InstallAppDnaPayload {
                                 hash,
                                 role_id: dna.id.clone(),
-                                membrane_proof: agent.membrane_proofs.get(&dna.id).cloned(),
+                                membrane_proof: mem_proof_vec.get(&dna.id).cloned(),
                             });
                         }
                         _ => return Err(anyhow!("unexpected response: {:?}", response)),
@@ -185,7 +201,8 @@ impl AdminWebsocket {
                 }
             }
             None => {
-                self.install_happ(happ, agent.clone()).await?;
+                self.install_happ(happ, mem_proof_vec, agent.clone())
+                    .await?;
             }
         };
 
