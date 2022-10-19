@@ -51,16 +51,12 @@ async fn populate_admin(admin_websocket: AdminWebsocket) -> Result<Admin> {
             registration_code,
             settings,
             ..
-        } => {
-            Ok(Admin {
-                key,
-                registration_code,
-                email: settings.admin.email,
-            })
-        }
-        Config::V1 { .. } => {
-            Err(AuthError::ConfigVersionError.into())
-        }
+        } => Ok(Admin {
+            key,
+            registration_code,
+            email: settings.admin.email,
+        }),
+        Config::V1 { .. } => Err(AuthError::ConfigVersionError.into()),
     }
 }
 
