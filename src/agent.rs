@@ -6,10 +6,9 @@ use hpos_config_core::Config;
 use std::{env, fs, fs::File, io::prelude::*};
 use tracing::{info, instrument};
 
-use crate::membrane_proof::{get_hpos_config, get_mem_proof};
+use crate::membrane_proof::get_mem_proof;
 use crate::utils::AuthError;
 use crate::websocket::AdminWebsocket;
-
 
 #[derive(Clone)]
 pub struct Admin {
@@ -39,13 +38,12 @@ impl Agent {
 }
 
 /// Populates Admin struct with agent's pub_key and admin details
-/// from hpos_config
+/// extracted from hpos_config file
 #[instrument(skip(admin_websocket), err)]
 async fn populate_admin(admin_websocket: AdminWebsocket) -> Result<Admin> {
     let config = get_hpos_config()?;
-    let key= get_agent_key(admin_websocket, &config).await?;
+    let key = get_agent_key(admin_websocket, &config).await?;
 
-    // Copy to the `agent-key.pub` files for other apps that use it as reference
     save_pubkey(key.clone().get_raw_39()).await?;
 
     match config {
@@ -59,7 +57,7 @@ async fn populate_admin(admin_websocket: AdminWebsocket) -> Result<Admin> {
                 registration_code,
                 email: settings.admin.email,
             })
-        },
+        }
         Config::V1 { .. } => {
             return Err(AuthError::ConfigVersionError.into());
         }
@@ -72,8 +70,11 @@ async fn populate_admin(admin_websocket: AdminWebsocket) -> Result<Admin> {
 /// For example on devNet FORCE_RANDOM_AGENT_KEY=true in which case
 /// random agent key is used
 #[instrument(skip(admin_websocket), err)]
-async fn get_agent_key(mut admin_websocket: AdminWebsocket, config: &Config) -> Result<AgentPubKey> {
-    if !force_random_agent_key() {
+async fn get_agent_key(
+    mut admin_websocket: AdminWebsocket,
+    config: &Config,
+) -> Result<AgentPubKey> {
+    if force_random_agent_key() {
         // Try agent key from disc
         if let Ok(pubkey_path) = env::var("PUBKEY_PATH") {
             if let Ok(key_vec) = fs::read(&pubkey_path) {
@@ -91,7 +92,7 @@ async fn get_agent_key(mut admin_websocket: AdminWebsocket, config: &Config) -> 
         match response {
             AdminResponse::AgentPubKeyGenerated(key) => {
                 info!("returning newly created random agent key");
-                return Ok(key)
+                return Ok(key);
             }
             _ => Err(anyhow!("unexpected response: {:?}", response)),
         }
@@ -105,10 +106,12 @@ async fn get_agent_key(mut admin_websocket: AdminWebsocket, config: &Config) -> 
         .await
         .unwrap();
 
-        return Ok(AgentPubKey::from_raw_32(pub_key.to_bytes().to_vec()))
+        return Ok(AgentPubKey::from_raw_32(pub_key.to_bytes().to_vec()));
     }
 }
 
+/// Saves host's pub key to the file `agent-key.pub`
+/// so that other apps in the system can access it
 #[instrument(skip(buf), err)]
 async fn save_pubkey(buf: &[u8]) -> Result<()> {
     if let Ok(pubkey_path) = env::var("PUBKEY_PATH") {
@@ -128,4 +131,12 @@ fn force_random_agent_key() -> bool {
         return !f.is_empty();
     }
     true
+}
+
+/// Reads hpos-config into a struct
+pub fn get_hpos_config() -> Result<Config> {
+    let config_path = env::var("HPOS_CONFIG_PATH")?;
+    let config_json = fs::read(config_path)?;
+    let config: Config = serde_json::from_slice(&config_json)?;
+    Ok(config)
 }

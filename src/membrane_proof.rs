@@ -4,7 +4,7 @@ use anyhow::{Context, Result};
 use ed25519_dalek::*;
 use holochain_types::prelude::{MembraneProof, UnsafeBytes};
 use holochain_zome_types::SerializedBytes;
-use hpos_config_core::{public_key, Config};
+use hpos_config_core::public_key;
 use lazy_static::*;
 use reqwest::Client;
 use serde::*;
@@ -83,11 +83,23 @@ fn mem_proof_server_url() -> String {
     }
 }
 
-pub fn get_hpos_config() -> Result<Config> {
-    let config_path = env::var("HPOS_CONFIG_PATH")?;
-    let config_json = fs::read(config_path)?;
-    let config: Config = serde_json::from_slice(&config_json)?;
-    Ok(config)
+/// Returns memproof from a file at MEM_PROOF_PATH
+/// If a file does not exist then function downloads existing mem-proof for given agent
+/// from HBS server and saves it to the file
+/// Returns error if no memproof obtained, because memproof is mandatory
+/// for core-app installation
+#[instrument(skip(admin), err)]
+pub async fn get_mem_proof(admin: Admin) -> Result<MembraneProof> {
+    if let Ok(m) = load_mem_proof_from_file() {
+        return Ok(m);
+    }
+
+    let mem_proof_str = download_memproof(admin).await?;
+    save_mem_proof_to_file(&mem_proof_str)?;
+
+    let mem_proof_bytes = base64::decode(mem_proof_str)?;
+    let mem_proof_serialized = Arc::new(SerializedBytes::from(UnsafeBytes::from(mem_proof_bytes)));
+    Ok(mem_proof_serialized)
 }
 
 /// Creates HashMap of memproofs for dnas based on happ id
@@ -124,25 +136,6 @@ fn add_core_app(mem_proof: MembraneProof) -> MembraneProofsVec {
     vec
 }
 
-/// Returns memproof from a file at MEM_PROOF_PATH
-/// If a file does not exist then function downloads existing mem-proof for given agent
-/// from HBS server and saves it to the file
-/// Returns error if no memproof obtained, because memproof is mandatory
-/// for core-app installation
-#[instrument(skip(admin), err)]
-pub async fn get_mem_proof(admin: Admin) -> Result<MembraneProof> {
-    if let Ok(m) = load_mem_proof_from_file() {
-        return Ok(m);
-    }
-
-    let mem_proof_str = download_memproof(admin).await?;
-    save_mem_proof_to_file(&mem_proof_str)?;
-
-    let mem_proof_bytes = base64::decode(mem_proof_str)?;
-    let mem_proof_serialized = Arc::new(SerializedBytes::from(UnsafeBytes::from(mem_proof_bytes)));
-    Ok(mem_proof_serialized)
-}
-
 /// Reads mem-proof from a file under MEM_PROOF_PATH
 fn load_mem_proof_from_file() -> Result<MembraneProof> {
     use std::str;
@@ -165,6 +158,8 @@ fn save_mem_proof_to_file(mem_proof: &str) -> Result<()> {
     Ok(())
 }
 
+/// Downloads existing mem-proof for a given agent
+/// from HBS server and returns as a string
 async fn download_memproof(admin: Admin) -> Result<String> {
     let payload = Registration {
         registration_code: admin.registration_code,
