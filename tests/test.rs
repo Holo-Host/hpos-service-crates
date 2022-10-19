@@ -1,12 +1,14 @@
 mod setup;
 use anyhow::Context;
 use configure_holochain;
+use std::env::set_var;
 use std::path::PathBuf;
 
 #[tokio::test]
 async fn configure_holochain_test() {
-    let tmp_dir = setup::holochain::create_tmp_dir();
+    let mut tmp_dir = setup::holochain::create_tmp_dir();
     let log_dir = setup::holochain::create_log_dir();
+
     // spin up lair
     let (_lair, lair_config) = setup::lair::spawn(&tmp_dir, &log_dir, None).unwrap();
 
@@ -20,6 +22,13 @@ async fn configure_holochain_test() {
         happs_file_path: happs_file_path.clone(),
     };
     println!("Test running with config: {:?}", &config);
+
+    // Set env var PUBKEY_PATH in a writable temp location
+    tmp_dir.push("agent.key");
+    set_var("PUBKEY_PATH", &tmp_dir);
+
+    // Set env var HPOS_CONFIG_PATH pointing to test config file
+    set_var("HPOS_CONFIG_PATH", "./tests/config/hp-primary-4817u.json");
 
     println!("Run configure holochain script");
     configure_holochain::run(config).await.unwrap();
