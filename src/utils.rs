@@ -9,6 +9,14 @@ use url::Url;
 
 pub type HappIds = Vec<String>;
 
+#[derive(thiserror::Error, Debug)]
+pub enum AuthError {
+    #[error("Error: Invalid config version used. please upgrade to hpos-config v2")]
+    ConfigVersionError,
+    #[error("Registration Error: {}", _0)]
+    RegistrationError(String),
+}
+
 #[instrument(
     err,
     fields(

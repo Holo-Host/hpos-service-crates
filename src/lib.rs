@@ -2,7 +2,7 @@ mod config;
 pub use config::{Config, Happ, HappsFile, MembraneProofFile, ProofPayload};
 mod agent;
 mod websocket;
-pub use agent::Agent;
+use agent::Agent;
 use anyhow::{Context, Result};
 use std::sync::Arc;
 use tracing::{debug, info, instrument, warn};
@@ -33,7 +33,7 @@ pub async fn install_happs(happ_file: &HappsFile, config: &Config) -> Result<()>
 
     let agent = Agent::init(admin_websocket.clone()).await?;
 
-    debug!("Agent key for all core happs {:?}", agent.key);
+    debug!("Agent key for all core happs {:?}", agent.admin.key);
 
     debug!("Getting a list of active happ");
     let active_happs = Arc::new(

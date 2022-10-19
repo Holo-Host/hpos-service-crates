@@ -112,7 +112,7 @@ impl AdminWebsocket {
         let payload = if let Ok(id) = env::var("DEV_UID_OVERRIDE") {
             info!("using network_seed to install: {}", id);
             InstallAppBundlePayload {
-                agent_key: agent.key,
+                agent_key: agent.admin.key,
                 installed_app_id: Some(happ.id()),
                 source: AppBundleSource::Path(path),
                 membrane_proofs: mem_proof_vec,
@@ -121,7 +121,7 @@ impl AdminWebsocket {
         } else {
             info!("using default network_seed to install");
             InstallAppBundlePayload {
-                agent_key: agent.key,
+                agent_key: agent.admin.key,
                 installed_app_id: Some(happ.id()),
                 source: AppBundleSource::Path(path),
                 membrane_proofs: mem_proof_vec,
@@ -207,7 +207,7 @@ impl AdminWebsocket {
         };
 
         let payload = InstallAppPayload {
-            agent_key: agent.key,
+            agent_key: agent.admin.key,
             installed_app_id: happ.id(),
             dnas: dna_payload,
         };

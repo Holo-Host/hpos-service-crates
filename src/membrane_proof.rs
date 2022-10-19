@@ -1,6 +1,7 @@
+use crate::agent::Admin;
+use crate::utils::AuthError;
 use anyhow::{Context, Result};
 use ed25519_dalek::*;
-use holochain_types::dna::AgentPubKey;
 use holochain_types::prelude::{MembraneProof, UnsafeBytes};
 use holochain_zome_types::SerializedBytes;
 use hpos_config_core::{public_key, Config};
@@ -24,14 +25,6 @@ fn force_use_read_only_mem_proof() -> bool {
         Ok(path) => path == "true",
         _ => false,
     }
-}
-
-#[derive(thiserror::Error, Debug)]
-enum AuthError {
-    #[error("Error: Invalid config version used. please upgrade to hpos-config v2")]
-    ConfigVersionError,
-    #[error("Registration Error: {}", _0)]
-    RegistrationError(String),
 }
 
 #[allow(non_snake_case)]
@@ -114,7 +107,9 @@ pub async fn crate_vec_for_happ(
     Ok(mem_proofs_vec)
 }
 
-/// returns core-app specic vec of memproofs for each DNA
+/// returns core-app specic vec of memproofs for each core-app DNA
+/// Holo servers need read only access to core app, therefore
+/// on those servers READ_ONLY_MEM_PROOF=true
 fn add_core_app(mem_proof: MembraneProof) -> MembraneProofsVec {
     let mut vec = HashMap::new();
     if force_use_read_only_mem_proof() {
@@ -129,47 +124,27 @@ fn add_core_app(mem_proof: MembraneProof) -> MembraneProofsVec {
     vec
 }
 
-/// Loads memproof from file
-/// If file does not exist then downloads new memproof from server
-/// and saves it to the file
-#[instrument(skip(agent_key), err)]
-pub async fn get_mem_proof(agent_key: AgentPubKey) -> Result<MembraneProof> {
-    Ok(Arc::new(SerializedBytes::from(UnsafeBytes::from(vec![0]))))
+/// Returns memproof from a file at MEM_PROOF_PATH
+/// If a file does not exist then function downloads existing mem-proof for given agent
+/// from HBS server and saves it to the file
+/// Returns error if no memproof obtained, because memproof is mandatory
+/// for core-app installation
+#[instrument(skip(admin), err)]
+pub async fn get_mem_proof(admin: Admin) -> Result<MembraneProof> {
+    if let Ok(m) = load_mem_proof_from_file() {
+        return Ok(m);
+    }
+
+    let mem_proof_str = download_memproof(admin).await?;
+    save_mem_proof_to_file(&mem_proof_str)?;
+
+    let mem_proof_bytes = base64::decode(mem_proof_str)?;
+    let mem_proof_serialized = Arc::new(SerializedBytes::from(UnsafeBytes::from(mem_proof_bytes)));
+    Ok(mem_proof_serialized)
 }
 
-/// get the mem-proof needed to be used in this setup
-/// for the holo servers we will want to pass a read-only mem-proof
-/// for the holoports we should always expect a mem-proof, else return an error that will stop the core-app from getting installed
-// pub async fn get_mem_proof() -> Result<MembraneProofsVec> {
-//     if let Ok(proof) = load_mem_proof_file() {
-//         mem_proof.insert("core-app".to_string(), proof.clone());
-//         mem_proof.insert("holofuel".to_string(), proof);
-//     } else {
-//         // if a mem-proof did not exist configure-holochain will request a new mem-proof.
-//         // This is in the case where a UID was updated, which means the expected mem-proof file name has changed
-//         // in this case configure-holochain will fetch the existing mem-proof for this agent by reaching out to the mem-proof-server(not called hbs server)
-//         match crate::membrane_proof::try_mem_proof_server_inner(None).await {
-//             Ok(_) => {
-//                 let proof = load_mem_proof_file()?;
-//                 mem_proof.insert("core-app".to_string(), proof.clone());
-//                 mem_proof.insert("holofuel".to_string(), proof);
-//             }
-//             Err(e) => {
-//                 return Err(anyhow!(format!(
-//                     "Unable to fetch a required mem-proof. {:?}",
-//                     e
-//                 )))
-//             }
-//         }
-//     }
-
-//     Ok(mem_proof)
-// }
-
-/// reads the mem-proof that is stored on the holoport
-/// this proof is used for the core-app i.e. hha and holofuel
-#[instrument(err)]
-pub fn load_mem_proof_file() -> Result<MembraneProof> {
+/// Reads mem-proof from a file under MEM_PROOF_PATH
+fn load_mem_proof_from_file() -> Result<MembraneProof> {
     use std::str;
     let path = mem_proof_path();
     let file = fs::read(&path).context("failed to open file")?;
@@ -180,65 +155,40 @@ pub fn load_mem_proof_file() -> Result<MembraneProof> {
     Ok(mem_proof_serialized)
 }
 
-#[instrument(err, skip(holochain_public_key))]
-pub async fn try_mem_proof_server_inner(holochain_public_key: Option<PublicKey>) -> Result<()> {
-    let config = crate::membrane_proof::get_hpos_config()?;
-    let agent_pub_key = match holochain_public_key {
-        Some(k) => k,
-        None => {
-            hpos_config_seed_bundle_explorer::holoport_public_key(
-                &config,
-                Some(crate::config::DEFAULT_PASSWORD.to_string()),
-            )
-            .await?
-        }
-    };
+/// Saves mem-proof to a file under MEM_PROOF_PATH
+fn save_mem_proof_to_file(mem_proof: &str) -> Result<()> {
+    let mut file = fs::File::create(&mem_proof_path())?;
+    file.write_all(mem_proof.as_bytes()).context(format!(
+        "Failed writing memproof to file {}",
+        &mem_proof_path()
+    ))?;
+    Ok(())
+}
 
-    match config {
-        Config::V2 {
-            registration_code,
-            settings,
-            ..
-        } => {
-            let email = settings.admin.email.clone();
-            let payload = Registration {
-                registration_code: registration_code.clone(),
-                agent_pub_key,
-                email: email.clone(),
-                payload: RegistrationPayload {
-                    role: "host".to_string(),
-                },
-            };
-            let mem_proof_server_url = format!(
-                "{}/registration/api/v1/membrane-proof",
-                mem_proof_server_url()
-            );
-            let resp = CLIENT
-                .post(mem_proof_server_url)
-                .json(&payload)
-                .send()
-                .await?;
-            match resp.error_for_status_ref() {
-                Ok(_) => {
-                    let reg: RegistrationRequest = resp.json().await?;
-                    println!("Registration completed message ID: {:?}", reg);
-                    // save mem-proofs into a file on the hpos
-                    let mut file = fs::File::create(&mem_proof_path())?;
-                    file.write_all(reg.mem_proof.as_bytes()).context(format!(
-                        "Failed writing memproof to file {}",
-                        &mem_proof_path()
-                    ))?;
-                }
-                Err(e) => {
-                    println!("Error: {:?}", e);
-                    let err: RegistrationError = resp.json().await?;
-                    return Err(AuthError::RegistrationError(err.to_string()).into());
-                }
-            }
+async fn download_memproof(admin: Admin) -> Result<String> {
+    let payload = Registration {
+        registration_code: admin.registration_code,
+        agent_pub_key: PublicKey::from_bytes(admin.key.get_raw_32())?,
+        email: admin.email,
+        payload: RegistrationPayload {
+            role: "host".to_string(),
+        },
+    };
+    let url = format!(
+        "{}/registration/api/v1/membrane-proof",
+        mem_proof_server_url()
+    );
+    let resp = CLIENT.post(url).json(&payload).send().await?;
+    match resp.error_for_status_ref() {
+        Ok(_) => {
+            let reg: RegistrationRequest = resp.json().await?;
+            println!("Registration completed message ID: {:?}", reg);
+            Ok(reg.mem_proof)
         }
-        Config::V1 { .. } => {
-            return Err(AuthError::ConfigVersionError.into());
+        Err(e) => {
+            println!("Error: {:?}", e);
+            let err: RegistrationError = resp.json().await?;
+            return Err(AuthError::RegistrationError(err.to_string()).into());
         }
     }
-    Ok(())
 }
