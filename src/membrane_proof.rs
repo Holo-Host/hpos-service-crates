@@ -10,7 +10,7 @@ use reqwest::Client;
 use serde::*;
 use std::collections::HashMap;
 use std::sync::Arc;
-use std::{env, fmt, fs, io::Write};
+use std::{env, fmt, fs, io::Write, path::Path};
 use tracing::{debug, instrument};
 
 fn mem_proof_path() -> String {
@@ -107,7 +107,7 @@ pub async fn get_mem_proof(admin: Admin) -> Result<MembraneProof> {
 /// Currently creates memproofs only for core-app
 /// otherwise returns empty HashMap
 /// Returns HashMap<dna_name, memproof_bytes>
-pub async fn crate_vec_for_happ(
+pub async fn create_vec_for_happ(
     happ_id: &str,
     mem_proof: MembraneProof,
 ) -> Result<MembraneProofsVec> {
@@ -155,6 +155,18 @@ fn save_mem_proof_to_file(mem_proof: &str) -> Result<()> {
         "Failed writing memproof to file {}",
         &mem_proof_path()
     ))?;
+    Ok(())
+}
+
+/// Deletes mem-proof file located at MEM_PROOF_PATH
+/// if it does exist
+pub fn delete_mem_proof_file() -> Result<()> {
+    let path = mem_proof_path();
+
+    if Path::new(&path).exists() {
+        fs::remove_file(&path)?;
+    }
+
     Ok(())
 }
 

@@ -6,7 +6,7 @@ use hpos_config_core::Config;
 use std::{env, fs, fs::File, io::prelude::*};
 use tracing::{info, instrument};
 
-use crate::membrane_proof::get_mem_proof;
+use crate::membrane_proof::{delete_mem_proof_file, get_mem_proof};
 use crate::utils::AuthError;
 use crate::websocket::AdminWebsocket;
 
@@ -87,6 +87,13 @@ async fn get_agent_key(
 
         match response {
             AdminResponse::AgentPubKeyGenerated(key) => {
+                // Creating new random agent makes memproof file invalid,
+                // because each memproof is valid only for a particular agent
+                // If we delete memproof file now it will be regenerated
+                // in next step for newly created agent
+                info!("deleting memproof file for previous agent");
+                delete_mem_proof_file()?;
+
                 info!("returning newly created random agent key");
                 Ok(key)
             }
