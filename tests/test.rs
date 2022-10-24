@@ -4,9 +4,10 @@ use configure_holochain;
 use std::env::set_var;
 use std::path::PathBuf;
 
+/// Tests how configure holochian would perform on a Holoport on devNet
 #[tokio::test]
 async fn configure_holochain_test() {
-    let mut tmp_dir = setup::holochain::create_tmp_dir();
+    let tmp_dir = setup::holochain::create_tmp_dir();
     let log_dir = setup::holochain::create_log_dir();
 
     // spin up lair
@@ -23,12 +24,23 @@ async fn configure_holochain_test() {
     };
     println!("Test running with config: {:?}", &config);
 
-    // Set env var PUBKEY_PATH in a writable temp location
-    tmp_dir.push("agent.key");
-    set_var("PUBKEY_PATH", &tmp_dir);
+    // Set PUBKEY_PATH in a writable temp location
+    set_var("PUBKEY_PATH", &tmp_dir.clone().join("agent.key"));
 
-    // Set env var HPOS_CONFIG_PATH pointing to test config file
-    set_var("HPOS_CONFIG_PATH", "./tests/config/hp-primary-4817u.json");
+    // Set MEM_PROOF_PATH in a writable temp location
+    set_var("MEM_PROOF_PATH", &tmp_dir.join("mem-proof"));
+
+    // Point HPOS_CONFIG_PATH to test config file
+    set_var("HPOS_CONFIG_PATH", "./tests/config/hp-primary-bzywj.json");
+
+    // On devNet holoports force random key
+    set_var("FORCE_RANDOM_AGENT_KEY", "1");
+
+    // Holoports do not force read-only memproof
+    set_var("READ_ONLY_MEM_PROOF", "false");
+
+    //
+    set_var("MEM_PROOF_SERVER_URL", "https://hbs.dev.holotest.net");
 
     println!("Run configure holochain script");
     configure_holochain::run(config).await.unwrap();

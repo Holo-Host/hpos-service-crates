@@ -54,9 +54,11 @@ pub async fn install_happs(happ_file: &HappsFile, config: &Config) -> Result<()>
             info!("App {} already installed, just downloading UI", &happ.id());
         } else {
             info!("Installing app {}", &happ.id());
-            let mem_proof_vec =
-                crate::membrane_proof::create_vec_for_happ(&happ.id(), agent.membrane_proof.clone())
-                    .await?;
+            let mem_proof_vec = crate::membrane_proof::create_vec_for_happ(
+                &happ.id(),
+                agent.membrane_proof.clone(),
+            )
+            .await?;
 
             if let Err(err) = admin_websocket
                 .install_and_activate_happ(happ, mem_proof_vec, agent.clone())

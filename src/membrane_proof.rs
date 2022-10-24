@@ -13,20 +13,6 @@ use std::sync::Arc;
 use std::{env, fmt, fs, io::Write, path::Path};
 use tracing::{debug, instrument};
 
-fn mem_proof_path() -> String {
-    match env::var("MEM_PROOF_PATH") {
-        Ok(path) => path,
-        _ => "./tests/config/mem-proof".to_string(),
-    }
-}
-
-fn force_use_read_only_mem_proof() -> bool {
-    match env::var("READ_ONLY_MEM_PROOF") {
-        Ok(path) => path == "true",
-        _ => false,
-    }
-}
-
 #[allow(non_snake_case)]
 #[derive(Debug, Serialize, Deserialize)]
 struct RegistrationError {
@@ -76,13 +62,6 @@ where
     serializer.serialize_str(&public_key::to_holochain_encoded_agent_key(public_key))
 }
 
-fn mem_proof_server_url() -> String {
-    match env::var("MEM_PROOF_SERVER_URL") {
-        Ok(url) => url,
-        _ => "https://hbs.dev.holotest.net".to_string(),
-    }
-}
-
 /// Returns memproof from a file at MEM_PROOF_PATH
 /// If a file does not exist then function downloads existing mem-proof for given agent
 /// from HBS server and saves it to the file
@@ -90,12 +69,14 @@ fn mem_proof_server_url() -> String {
 /// for core-app installation
 #[instrument(skip(admin), err)]
 pub async fn get_mem_proof(admin: Admin) -> Result<MembraneProof> {
-    if let Ok(m) = load_mem_proof_from_file() {
+    let memproof_path =
+        env::var("MEM_PROOF_PATH").context("Failed to read MEM_PROOF_PATH. Is it set in env?")?;
+    if let Ok(m) = load_mem_proof_from_file(&memproof_path) {
         return Ok(m);
     }
 
     let mem_proof_str = download_memproof(admin).await?;
-    save_mem_proof_to_file(&mem_proof_str)?;
+    save_mem_proof_to_file(&mem_proof_str, &memproof_path)?;
 
     let mem_proof_bytes = base64::decode(mem_proof_str)?;
     let mem_proof_serialized = Arc::new(SerializedBytes::from(UnsafeBytes::from(mem_proof_bytes)));
@@ -114,7 +95,7 @@ pub async fn create_vec_for_happ(
     let mut mem_proofs_vec = HashMap::new();
 
     if happ_id.contains("core-app") {
-        mem_proofs_vec = crate::membrane_proof::add_core_app(mem_proof);
+        mem_proofs_vec = crate::membrane_proof::add_core_app(mem_proof)?;
     }
     Ok(mem_proofs_vec)
 }
@@ -122,9 +103,12 @@ pub async fn create_vec_for_happ(
 /// returns core-app specic vec of memproofs for each core-app DNA
 /// Holo servers need read only access to core app, therefore
 /// on those servers READ_ONLY_MEM_PROOF=true
-fn add_core_app(mem_proof: MembraneProof) -> MembraneProofsVec {
+fn add_core_app(mem_proof: MembraneProof) -> Result<MembraneProofsVec> {
     let mut vec = HashMap::new();
-    if force_use_read_only_mem_proof() {
+    if &env::var("READ_ONLY_MEM_PROOF")
+        .context("Failed to read READ_ONLY_MEM_PROOF. Is it set in env?")?
+        == "true"
+    {
         // This setting is mostly going to be used by the holo servers like mem-proof-server and match-server
         let read_only_mem_proof = Arc::new(SerializedBytes::from(UnsafeBytes::from(vec![0])));
         vec.insert("core-app".to_string(), read_only_mem_proof.clone());
@@ -133,14 +117,13 @@ fn add_core_app(mem_proof: MembraneProof) -> MembraneProofsVec {
         vec.insert("core-app".to_string(), mem_proof.clone());
         vec.insert("holofuel".to_string(), mem_proof);
     }
-    vec
+    Ok(vec)
 }
 
 /// Reads mem-proof from a file under MEM_PROOF_PATH
-fn load_mem_proof_from_file() -> Result<MembraneProof> {
+fn load_mem_proof_from_file(path: &str) -> Result<MembraneProof> {
     use std::str;
-    let path = mem_proof_path();
-    let file = fs::read(&path).context("failed to open file")?;
+    let file = fs::read(path).context("failed to open file")?;
     let mem_proof_str = str::from_utf8(&file)?;
     debug!("Loaded Proof {:?}", mem_proof_str);
     let mem_proof_bytes = base64::decode(mem_proof_str)?;
@@ -149,19 +132,18 @@ fn load_mem_proof_from_file() -> Result<MembraneProof> {
 }
 
 /// Saves mem-proof to a file under MEM_PROOF_PATH
-fn save_mem_proof_to_file(mem_proof: &str) -> Result<()> {
-    let mut file = fs::File::create(&mem_proof_path())?;
-    file.write_all(mem_proof.as_bytes()).context(format!(
-        "Failed writing memproof to file {}",
-        &mem_proof_path()
-    ))?;
+fn save_mem_proof_to_file(mem_proof: &str, path: &str) -> Result<()> {
+    let mut file = fs::File::create(path)?;
+    file.write_all(mem_proof.as_bytes())
+        .context(format!("Failed writing memproof to file {}", path))?;
     Ok(())
 }
 
 /// Deletes mem-proof file located at MEM_PROOF_PATH
 /// if it does exist
 pub fn delete_mem_proof_file() -> Result<()> {
-    let path = mem_proof_path();
+    let path =
+        env::var("MEM_PROOF_PATH").context("Failed to read MEM_PROOF_PATH. Is it set in env?")?;
 
     if Path::new(&path).exists() {
         fs::remove_file(&path)?;
@@ -183,7 +165,8 @@ async fn download_memproof(admin: Admin) -> Result<String> {
     };
     let url = format!(
         "{}/registration/api/v1/membrane-proof",
-        mem_proof_server_url()
+        env::var("MEM_PROOF_SERVER_URL")
+            .context("Failed to read MEM_PROOF_SERVER_URL. Is it set in env?")?
     );
     let resp = CLIENT.post(url).json(&payload).send().await?;
     match resp.error_for_status_ref() {
