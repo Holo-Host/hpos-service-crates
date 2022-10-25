@@ -2,6 +2,7 @@ mod setup;
 use anyhow::Context;
 use configure_holochain;
 use configure_holochain::agent::get_hpos_config;
+use configure_holochain::membrane_proof::delete_mem_proof_file;
 use hpos_config_core::Config;
 use std::env::set_var;
 use std::path::PathBuf;
@@ -82,6 +83,16 @@ async fn holoport_on_alpha_net() {
     println!("Test running with config: {:?}", &config);
 
     println!("Run configure holochain script");
+    configure_holochain::run(config.clone()).await.unwrap();
+
+    // Second run should not error out
+    configure_holochain::run(config.clone()).await.unwrap();
+
+    // Delete memproof which is an equivalent of changing DEV_UID_OVERRIDE for holoport
+    // which was creating a bug https://github.com/Holo-Host/hpos-configure-holochain/issues/136
+    delete_mem_proof_file().unwrap();
+
+    // Third run should not error out
     configure_holochain::run(config).await.unwrap();
 
     let mut connection = configure_holochain::AdminWebsocket::connect(4444)
