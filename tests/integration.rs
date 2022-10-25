@@ -4,11 +4,13 @@ use configure_holochain;
 use configure_holochain::agent::get_hpos_config;
 use configure_holochain::membrane_proof::delete_mem_proof_file;
 use hpos_config_core::Config;
+use serial_test::serial;
 use std::env::set_var;
 use std::path::PathBuf;
+use test_case::test_case;
 
 /// Integration test for configure-holochain binary
-/// The purpose of those test is to show that binary does what it's
+/// The purpose of this integration test is to show that binary does what it's
 /// supposed to do in 3 different environments:
 /// - holoport on alphaNet
 /// - holoport on devNet
@@ -18,16 +20,15 @@ use std::path::PathBuf;
 /// running instance holochain and running instance of lair-keystore with
 /// appropriate keys initialized
 
-/// Testing scenario for holoport running on alphaNet
-/// Holoport is in blank state with holochain running and lair-keystore initialized
+/// Machine starts in a blank state with holochain running and lair-keystore initialized
 /// Host's keypair is imported to lair-keystore from hpos-config file and device_bundle is unlocked
 /// with default password `pass`
 /// Env vars:
 ///   HPOS_CONFIG_PATH - local file to read from
 ///   MEM_PROOF_PATH - local file to write to
 ///   PUBKEY_PATH - local file to write to
-///   FORCE_RANDOM_AGENT_KEY - set to "" on alphaNet
-///   READ_ONLY_MEM_PROOF - false on holoports
+///   FORCE_RANDOM_AGENT_KEY - set to "" on alphaNet, 1 on devNet
+///   READ_ONLY_MEM_PROOF - use actual memproof or a read only one
 ///   MEM_PROOF_SERVER_URL - HBS server url
 ///
 /// Note about MEM_PROOF_SERVER_URL:
@@ -37,8 +38,23 @@ use std::path::PathBuf;
 /// will match settings on HBS server. If you start getting an error of a type
 /// ConductorApiError(WorkflowError(GenesisFailure(\"Joining code invalid: unexpected author ...
 /// you're out of sync with HBS server
+
+/// Testing scenario for holoport running on alphaNet
+/// FORCE_RANDOM_AGENT_KEY="", READ_ONLY_MEM_PROOF="false"
+#[test_case("", "false" ; "holoport on alpha net")]
+
+/// Testing scenario for holoport running on devNet
+/// FORCE_RANDOM_AGENT_KEY="1", READ_ONLY_MEM_PROOF="false"
+#[test_case("1", "false" ; "holoport on dev net")]
+
+/// Testing scenario for server with read only access to core-app
+/// FORCE_RANDOM_AGENT_KEY="", READ_ONLY_MEM_PROOF="true"
+#[test_case("", "true" ; "server with read only memproof")]
+#[serial]
 #[tokio::test]
-async fn holoport_on_alpha_net() {
+/// Tests cannot run in parallel because they are all accessing same /tmp dir
+
+async fn run_configure_holochain(f_r_a_k: &str, r_o_m_p: &str) {
     // Point HPOS_CONFIG_PATH to test config file
     set_var("HPOS_CONFIG_PATH", "./tests/config/hp-primary-bzywj.json");
 
@@ -52,10 +68,10 @@ async fn holoport_on_alpha_net() {
     set_var("MEM_PROOF_PATH", &tmp_dir.join("mem-proof"));
 
     // On devNet holoports force random key
-    set_var("FORCE_RANDOM_AGENT_KEY", "");
+    set_var("FORCE_RANDOM_AGENT_KEY", f_r_a_k);
 
     // Holoports do not force read-only memproof
-    set_var("READ_ONLY_MEM_PROOF", "false");
+    set_var("READ_ONLY_MEM_PROOF", r_o_m_p);
 
     // devNet HBS server url, because given hpos-config is registered in devNet database
     set_var("MEM_PROOF_SERVER_URL", "https://hbs.dev.holotest.net");
