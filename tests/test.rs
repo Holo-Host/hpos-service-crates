@@ -66,7 +66,8 @@ async fn holoport_on_alpha_net() {
 
     // spin up lair
     println!("Starting lair-keystore");
-    let (_lair, lair_config) = setup::lair::spawn(&tmp_dir, &log_dir, &device_bundle, None).unwrap();
+    let (_lair, lair_config) =
+        setup::lair::spawn(&tmp_dir, &log_dir, &device_bundle, None).unwrap();
 
     println!("Spinning up holochain");
     let _holochain = setup::holochain::spawn_holochain(&tmp_dir, &log_dir, lair_config);
