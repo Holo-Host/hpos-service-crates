@@ -11,7 +11,7 @@ use serde::*;
 use std::collections::HashMap;
 use std::sync::Arc;
 use std::{env, fmt, fs, io::Write, path::Path};
-use tracing::{debug, instrument};
+use tracing::{debug, error, instrument};
 
 #[allow(non_snake_case)]
 #[derive(Debug, Serialize, Deserialize)]
@@ -93,7 +93,6 @@ pub async fn create_vec_for_happ(
     mem_proof: MembraneProof,
 ) -> Result<MembraneProofsVec> {
     let mut mem_proofs_vec = HashMap::new();
-
     if happ_id.contains("core-app") {
         mem_proofs_vec = crate::membrane_proof::add_core_app(mem_proof)?;
     }
@@ -152,7 +151,8 @@ pub fn delete_mem_proof_file() -> Result<()> {
     Ok(())
 }
 
-/// Downloads existing mem-proof for a given agent
+/// Add's a pub key to an existing registration and generates a membrane proof.
+/// If a membrane proof is already generated downloads that membrane proof.
 /// from HBS server and returns as a string
 async fn download_memproof(admin: Admin) -> Result<String> {
     let payload = Registration {
@@ -172,11 +172,11 @@ async fn download_memproof(admin: Admin) -> Result<String> {
     match resp.error_for_status_ref() {
         Ok(_) => {
             let reg: RegistrationRequest = resp.json().await?;
-            println!("Registration completed message ID: {:?}", reg);
+            debug!("Registration completed message: {:?}", reg);
             Ok(reg.mem_proof)
         }
         Err(e) => {
-            println!("Error: {:?}", e);
+            error!("Error: {:?}", e);
             let err: RegistrationError = resp.json().await?;
             Err(AuthError::RegistrationError(err.to_string()).into())
         }

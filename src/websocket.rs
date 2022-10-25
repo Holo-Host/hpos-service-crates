@@ -102,11 +102,13 @@ impl AdminWebsocket {
     ) -> Result<()> {
         let path = match happ.bundle_path.clone() {
             Some(path) => path,
-            None => {
-                crate::utils::download_file(happ.bundle_url.as_ref().context("dna_url is None")?)
-                    .await
-                    .context("failed to download DNA archive")?
-            }
+            None => crate::utils::download_file(
+                happ.bundle_url
+                    .as_ref()
+                    .context("bundle_url in happ is None")?,
+            )
+            .await
+            .context("failed to download happ bundle")?,
         };
 
         let payload = if let Ok(id) = env::var("DEV_UID_OVERRIDE") {

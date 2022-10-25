@@ -13,14 +13,21 @@ use std::{
 pub fn spawn(
     tmp_dir: &Path,
     logs_dir: &Path,
+    device_bundle: &str,
     fallback: Option<(PathBuf, u16)>,
 ) -> Result<(KillChildOnDrop, LairConfig), SpawnError> {
     let lair_dir = tmp_dir.join("lair");
     std::fs::create_dir_all(&lair_dir).unwrap();
 
     let init_log_path = logs_dir.join("lair-keystore-init.txt");
+    println!(
+        "Lair-keystore init logs available at {}",
+        &init_log_path.display()
+    );
     let init_log = File::create(&init_log_path).unwrap();
-    init_lair(&lair_dir, init_log).unwrap();
+
+    init_lair(&lair_dir, init_log.try_clone().unwrap()).unwrap();
+    import_seed(&lair_dir, init_log, device_bundle).unwrap();
 
     let lair_config_path = lair_dir.join("lair-keystore-config.yaml");
     let mut lair_config = read_lair_config(&lair_config_path).unwrap();
@@ -50,7 +57,7 @@ fn init_lair(lair_dir: &Path, log: File) -> Result<(), InitLairError> {
             .spawn()
             .unwrap(),
     );
-    write_passphrase(&mut lair_init).unwrap();
+    write_passphrase(&mut lair_init, b"passphrase\n").unwrap();
     let exit_status = lair_init.wait().unwrap();
     if exit_status.success() {
         Ok(())
@@ -61,12 +68,40 @@ fn init_lair(lair_dir: &Path, log: File) -> Result<(), InitLairError> {
     }
 }
 
-fn write_passphrase(child: &mut KillChildOnDrop) -> Result<(), io::Error> {
+fn import_seed(lair_dir: &Path, log: File, device_bundle: &str) -> Result<(), InitLairError> {
+    let log_2 = log.try_clone().unwrap();
+    let mut lair_init = kill_on_drop(
+        Command::new("lair-keystore")
+            .arg("--lair-root")
+            .arg(&lair_dir)
+            .arg("import-seed")
+            .arg("host")
+            .arg(device_bundle)
+            .arg("--piped")
+            .stdin(process::Stdio::piped())
+            .stdout(log)
+            .stderr(log_2)
+            .spawn()
+            .unwrap(),
+    );
+    // Here format of a passphrase is "<lair_password>/n<seed_bundle_password>"
+    write_passphrase(&mut lair_init, b"passphrase\npass").unwrap();
+    let exit_status = lair_init.wait().unwrap();
+    if exit_status.success() {
+        Ok(())
+    } else {
+        Err(InitLairError::NonZeroExitStatus {
+            status: exit_status,
+        })
+    }
+}
+
+fn write_passphrase(child: &mut KillChildOnDrop, buf: &[u8]) -> Result<(), io::Error> {
     child
         .stdin
         .take()
         .expect("child lair process was spawned with piped stdin")
-        .write_all(b"passphrase\n")
+        .write_all(buf)
 }
 
 fn spawn_lair_server(lair_dir: &Path, log: File) -> Result<KillChildOnDrop, SpawnLairServerError> {
@@ -82,7 +117,7 @@ fn spawn_lair_server(lair_dir: &Path, log: File) -> Result<KillChildOnDrop, Spaw
             .spawn()
             .unwrap(),
     );
-    write_passphrase(&mut lair).unwrap();
+    write_passphrase(&mut lair, b"passphrase\n").unwrap();
     wait_for_ready_string(&mut lair).unwrap();
     Ok(lair)
 }

@@ -1,6 +1,6 @@
 mod config;
 pub use config::{Config, Happ, HappsFile, MembraneProofFile, ProofPayload};
-mod agent;
+pub mod agent;
 mod websocket;
 use agent::Agent;
 use anyhow::{Context, Result};
