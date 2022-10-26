@@ -62,16 +62,27 @@ where
     serializer.serialize_str(&public_key::to_holochain_encoded_agent_key(public_key))
 }
 
-/// Returns memproof from a file at MEM_PROOF_PATH
+/// Some Holo servers (like mem-proof-server and match-server) set READ_ONLY_MEM_PROOF=true because
+/// they need read only access to core app. In that case function returns "empty" memproof.
+/// In other cases returns memproof from a file at MEM_PROOF_PATH
 /// If a file does not exist then function downloads existing mem-proof for given agent
 /// from HBS server and saves it to the file
 /// Returns error if no memproof obtained, because memproof is mandatory
 /// for core-app installation
 #[instrument(skip(admin), err)]
 pub async fn get_mem_proof(admin: Admin) -> Result<MembraneProof> {
+    if &env::var("READ_ONLY_MEM_PROOF")
+        .context("Failed to read READ_ONLY_MEM_PROOF. Is it set in env?")?
+        == "true"
+    {
+        debug!("Using read-only memproof");
+        return Ok(Arc::new(SerializedBytes::from(UnsafeBytes::from(vec![0]))));
+    }
+
     let memproof_path =
         env::var("MEM_PROOF_PATH").context("Failed to read MEM_PROOF_PATH. Is it set in env?")?;
     if let Ok(m) = load_mem_proof_from_file(&memproof_path) {
+        debug!("Using memproof from file");
         return Ok(m);
     }
 
@@ -80,6 +91,8 @@ pub async fn get_mem_proof(admin: Admin) -> Result<MembraneProof> {
 
     let mem_proof_bytes = base64::decode(mem_proof_str)?;
     let mem_proof_serialized = Arc::new(SerializedBytes::from(UnsafeBytes::from(mem_proof_bytes)));
+
+    debug!("Using memproof downloaded from HBS server");
     Ok(mem_proof_serialized)
 }
 
@@ -100,22 +113,10 @@ pub async fn create_vec_for_happ(
 }
 
 /// returns core-app specic vec of memproofs for each core-app DNA
-/// Holo servers need read only access to core app, therefore
-/// on those servers READ_ONLY_MEM_PROOF=true
 fn add_core_app(mem_proof: MembraneProof) -> Result<MembraneProofsVec> {
     let mut vec = HashMap::new();
-    if &env::var("READ_ONLY_MEM_PROOF")
-        .context("Failed to read READ_ONLY_MEM_PROOF. Is it set in env?")?
-        == "true"
-    {
-        // This setting is mostly going to be used by the holo servers like mem-proof-server and match-server
-        let read_only_mem_proof = Arc::new(SerializedBytes::from(UnsafeBytes::from(vec![0])));
-        vec.insert("core-app".to_string(), read_only_mem_proof.clone());
-        vec.insert("holofuel".to_string(), read_only_mem_proof);
-    } else {
-        vec.insert("core-app".to_string(), mem_proof.clone());
-        vec.insert("holofuel".to_string(), mem_proof);
-    }
+    vec.insert("core-app".to_string(), mem_proof.clone());
+    vec.insert("holofuel".to_string(), mem_proof);
     Ok(vec)
 }
 
