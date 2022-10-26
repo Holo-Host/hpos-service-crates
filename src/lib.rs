@@ -21,7 +21,6 @@ pub async fn run(config: Config) -> Result<()> {
 
 /// based on the config file provided this installs the core apps on the holoport
 /// It manages getting the mem-proofs and properties that are expected to be used on the holoport
-#[instrument(err, skip(happ_file, config))]
 pub async fn install_happs(happ_file: &HappsFile, config: &Config) -> Result<()> {
     let mut admin_websocket = AdminWebsocket::connect(config.admin_port)
         .await
@@ -117,6 +116,6 @@ async fn install_ui(happ: &Happ, config: &Config) -> Result<()> {
 
     let unpack_path = config.ui_store_folder.join(&happ.ui_name());
     utils::extract_zip(&source_path, &unpack_path).context("failed to extract UI archive")?;
-    info!("installed UI: {}", happ.id());
+    debug!("installed UI: {}", happ.id());
     Ok(())
 }

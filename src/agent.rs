@@ -63,7 +63,7 @@ async fn populate_admin(admin_websocket: AdminWebsocket) -> Result<Admin> {
 /// a file under PUBKEY_PATH.
 /// For example on devNet FORCE_RANDOM_AGENT_KEY=1 in which case
 /// random agent key is used
-#[instrument(skip(admin_websocket), err)]
+#[instrument(skip(admin_websocket, config), err)]
 async fn get_agent_key(
     mut admin_websocket: AdminWebsocket,
     config: &Config,

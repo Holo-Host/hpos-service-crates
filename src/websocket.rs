@@ -15,7 +15,7 @@ use holochain_types::{
 };
 use holochain_websocket::{connect, WebsocketConfig, WebsocketSender};
 use std::{env, sync::Arc};
-use tracing::{info, instrument, trace};
+use tracing::{debug, info, instrument, trace};
 use url::Url;
 
 #[derive(Clone)]
@@ -39,7 +39,6 @@ impl AdminWebsocket {
         Ok(Self { tx })
     }
 
-    #[instrument(skip(self))]
     pub async fn attach_app_interface(&mut self, happ_port: u16) -> Result<AdminResponse> {
         info!(port = ?happ_port, "starting app interface");
         let msg = AdminRequest::AttachAppInterface {
@@ -82,14 +81,14 @@ impl AdminWebsocket {
             self.install_happ(happ, mem_proof_vec, agent).await?;
         }
         self.activate_app(happ).await?;
-        info!("installed & activated hApp: {}", happ.id());
+        debug!("installed & activated hApp: {}", happ.id());
         Ok(())
     }
 
     #[instrument(skip(self, happ))]
     pub async fn activate_happ(&mut self, happ: &Happ) -> Result<()> {
         self.activate_app(happ).await?;
-        info!("activated hApp: {}", happ.id());
+        debug!("activated hApp: {}", happ.id());
         Ok(())
     }
 
@@ -112,7 +111,7 @@ impl AdminWebsocket {
         };
 
         let payload = if let Ok(id) = env::var("DEV_UID_OVERRIDE") {
-            info!("using network_seed to install: {}", id);
+            debug!("using network_seed to install: {}", id);
             InstallAppBundlePayload {
                 agent_key: agent.admin.key,
                 installed_app_id: Some(happ.id()),
@@ -121,7 +120,7 @@ impl AdminWebsocket {
                 network_seed: Some(id),
             }
         } else {
-            info!("using default network_seed to install");
+            debug!("using default network_seed to install");
             InstallAppBundlePayload {
                 agent_key: agent.admin.key,
                 installed_app_id: Some(happ.id()),
@@ -162,12 +161,12 @@ impl AdminWebsocket {
                     let mut properties: Option<YamlProperties> = None;
                     if let Some(p) = dna.properties.clone() {
                         let prop = p.to_string();
-                        info!("Core app Properties: {}", prop);
+                        debug!("Core app Properties: {}", prop);
                         properties =
                             Some(YamlProperties::new(serde_yaml::from_str(&prop).unwrap()));
                     }
                     let register_dna_payload = if let Ok(id) = env::var("DEV_UID_OVERRIDE") {
-                        info!("using network_seed to install: {}", id);
+                        debug!("using network_seed to install: {}", id);
                         RegisterDnaPayload {
                             modifiers: DnaModifiersOpt {
                                 network_seed: Some(id),
@@ -177,7 +176,7 @@ impl AdminWebsocket {
                             source: DnaSource::Path(path),
                         }
                     } else {
-                        info!("using default network_seed to install");
+                        debug!("using default network_seed to install");
                         RegisterDnaPayload {
                             modifiers: DnaModifiersOpt {
                                 network_seed: None,
