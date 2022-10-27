@@ -1,8 +1,5 @@
 use anyhow::{anyhow, Context, Result};
 use std::fs;
-use std::fs::File;
-use std::fs::OpenOptions;
-use std::io::Write;
 use std::path::Path;
 use std::path::PathBuf;
 use std::process;
@@ -12,12 +9,12 @@ use url::Url;
 
 pub type HappIds = Vec<String>;
 
-pub fn overwrite(to: String, value: &[u8]) -> Result<()> {
-    println!("writting {:?} to {:?}", value, to);
-    File::create(to.clone())?;
-    let mut file = OpenOptions::new().write(true).truncate(true).open(to)?;
-    file.write_all(value)?;
-    Ok(())
+#[derive(thiserror::Error, Debug)]
+pub enum AuthError {
+    #[error("Error: Invalid config version used. please upgrade to hpos-config v2")]
+    ConfigVersionError,
+    #[error("Registration Error: {}", _0)]
+    RegistrationError(String),
 }
 
 #[instrument(

@@ -1,8 +1,9 @@
 mod config;
 pub use config::{Config, Happ, HappsFile, MembraneProofFile, ProofPayload};
+pub mod agent;
 mod websocket;
+use agent::Agent;
 use anyhow::{Context, Result};
-use std::collections::HashMap;
 use std::sync::Arc;
 use tracing::{debug, info, instrument, warn};
 pub use websocket::{AdminWebsocket, AppWebsocket};
@@ -20,7 +21,6 @@ pub async fn run(config: Config) -> Result<()> {
 
 /// based on the config file provided this installs the core apps on the holoport
 /// It manages getting the mem-proofs and properties that are expected to be used on the holoport
-#[instrument(err, skip(happ_file, config))]
 pub async fn install_happs(happ_file: &HappsFile, config: &Config) -> Result<()> {
     let mut admin_websocket = AdminWebsocket::connect(config.admin_port)
         .await
@@ -30,9 +30,9 @@ pub async fn install_happs(happ_file: &HappsFile, config: &Config) -> Result<()>
         warn!(port = ?config.happ_port, ?error, "failed to start app interface, maybe it's already up?");
     }
 
-    // setting a agent before any of the async processes starts so that a key is generated if needed and a mem-proof is retrieved if needed
-    let agent = admin_websocket.get_agent_key().await?;
-    debug!("Agent key for all core happs {:?}", agent);
+    let agent = Agent::init(admin_websocket.clone()).await?;
+
+    debug!("Agent key for all core happs {:?}", agent.admin.key);
 
     debug!("Getting a list of active happ");
     let active_happs = Arc::new(
@@ -49,29 +49,22 @@ pub async fn install_happs(happ_file: &HappsFile, config: &Config) -> Result<()>
         .collect();
 
     for happ in &happs_to_install {
-        let full_happ_id = happ.id();
-        if active_happs.contains(&full_happ_id) {
-            info!(
-                "App {} already installed, just downloading UI",
-                full_happ_id
-            );
+        if active_happs.contains(&happ.id()) {
+            info!("App {} already installed, just downloading UI", &happ.id());
         } else {
-            info!("Installing app {}", full_happ_id);
-            let mut mem_proof = HashMap::new();
-            // Special properties and mem-proofs for core-app
-            if full_happ_id.contains("core-app") {
-                mem_proof = crate::membrane_proof::get_mem_proof().await?;
-            }
+            info!("Installing app {}", &happ.id());
+            let mem_proof_vec = crate::membrane_proof::create_vec_for_happ(
+                &happ.id(),
+                agent.membrane_proof.clone(),
+            )
+            .await?;
 
             if let Err(err) = admin_websocket
-                .install_and_activate_happ(happ, mem_proof)
+                .install_and_activate_happ(happ, mem_proof_vec, agent.clone())
                 .await
             {
                 if err.to_string().contains("AppAlreadyInstalled") {
-                    info!(
-                        "app {} was previously installed, re-activating",
-                        full_happ_id
-                    );
+                    info!("app {} was previously installed, re-activating", &happ.id());
                     admin_websocket.activate_happ(happ).await?;
                 } else {
                     return Err(err);
@@ -123,6 +116,6 @@ async fn install_ui(happ: &Happ, config: &Config) -> Result<()> {
 
     let unpack_path = config.ui_store_folder.join(&happ.ui_name());
     utils::extract_zip(&source_path, &unpack_path).context("failed to extract UI archive")?;
-    info!("installed UI: {}", happ.id());
+    debug!("installed UI: {}", happ.id());
     Ok(())
 }
