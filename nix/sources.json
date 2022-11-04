@@ -1,14 +1,14 @@
 {
-    "holonix": {
-        "branch": "main",
-        "description": "NixOS && Holochain",
-        "homepage": "",
-        "owner": "holochain",
-        "repo": "holonix",
-        "rev": "72e6fe5a8f2a19b0d64f4d501498d2c1623488d0",
-        "sha256": "0ckz2qjk6bww6cwjcclij2h15yqhqsp5qw9dafczf13nhdb79lrq",
-        "type": "tarball",
-        "url": "https://github.com/holochain/holonix/archive/72e6fe5a8f2a19b0d64f4d501498d2c1623488d0.tar.gz",
-        "url_template": "https://github.com/<owner>/<repo>/archive/<rev>.tar.gz"
-    }
+	"holonix": {
+		"branch": "main",
+		"description": "NixOS && Holochain",
+		"homepage": "",
+		"owner": "holochain",
+		"repo": "holonix",
+		"rev": "825bcbbc81e9aa5c4d9cf9adf89abed607e9639c",
+		"sha256": "0k6dk82l89jplw2yi010parbd2vz3hmk3r18pqghgh1vjgnv5yvk",
+		"type": "tarball",
+		"url": "https://github.com/holochain/holonix/archive/825bcbbc81e9aa5c4d9cf9adf89abed607e9639c.tar.gz",
+		"url_template": "https://github.com/<owner>/<repo>/archive/<rev>.tar.gz"
+	}
 }
