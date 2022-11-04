@@ -142,13 +142,11 @@ fn save_mem_proof_to_file(mem_proof: &str, path: &str) -> Result<()> {
 /// Deletes mem-proof file located at MEM_PROOF_PATH
 /// if it does exist
 pub fn delete_mem_proof_file() -> Result<()> {
-    let path =
-        env::var("MEM_PROOF_PATH").context("Failed to read MEM_PROOF_PATH. Is it set in env?")?;
-
-    if Path::new(&path).exists() {
-        fs::remove_file(&path)?;
+    if let Ok(path) = env::var("MEM_PROOF_PATH") {
+        if Path::new(&path).exists() {
+            fs::remove_file(&path)?;
+        }
     }
-
     Ok(())
 }
 
