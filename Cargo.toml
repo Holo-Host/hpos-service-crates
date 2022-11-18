@@ -35,11 +35,11 @@ thiserror = "1.0"
 
 [dependencies.hpos-config-core]
 git = "https://github.com/Holo-Host/hpos-config"
-rev = "01ef40bf118948a279a399d60c52d500643a3e10"
+rev = "14e74e354c12ebfe3a3ab3d6549bc5871ff0bee0"
 
 [dependencies.hpos-config-seed-bundle-explorer]
 git = "https://github.com/Holo-Host/hpos-config"
-rev = "01ef40bf118948a279a399d60c52d500643a3e10"
+rev = "14e74e354c12ebfe3a3ab3d6549bc5871ff0bee0"
 
 [dev-dependencies.cargo-husky]
 version = "1"
@@ -49,7 +49,7 @@ features = ["run-cargo-fmt", "run-cargo-clippy"]
 nix = "0.25.0"
 
 [dev-dependencies]
-lair_keystore_api = "0.2.0"
+lair_keystore_api = "0.2.2"
 snafu = "0.7.1"
 chrono = "0.4.22"
 test-case = "2.2.2"

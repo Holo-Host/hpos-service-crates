@@ -1760,12 +1760,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "aa14c35079167a5e3f8a33f32c43ab080d33dfd495d99c2f4075441b2e7faa91"
 dependencies = [
  "futures",
- "one_err 0.0.7",
+ "one_err",
  "rmp-serde 1.1.1",
  "rmpv",
  "serde",
  "serde_bytes",
- "sodoken 0.0.6",
+ "sodoken",
 ]
 
 [[package]]
@@ -1870,11 +1870,11 @@ dependencies = [
  "lair_keystore",
  "must_future",
  "nanoid 0.4.0",
- "one_err 0.0.7",
+ "one_err",
  "parking_lot 0.11.2",
  "serde",
  "serde_bytes",
- "sodoken 0.0.6",
+ "sodoken",
  "thiserror",
  "tokio",
  "tracing",
@@ -2014,7 +2014,7 @@ dependencies = [
  "kitsune_p2p",
  "mockall",
  "nanoid 0.3.0",
- "one_err 0.0.7",
+ "one_err",
  "parking_lot 0.10.2",
  "serde",
  "serde_json",
@@ -2182,7 +2182,7 @@ dependencies = [
 [[package]]
 name = "hpos-config-core"
 version = "0.1.2"
-source = "git+https://github.com/Holo-Host/hpos-config?rev=01ef40bf118948a279a399d60c52d500643a3e10#01ef40bf118948a279a399d60c52d500643a3e10"
+source = "git+https://github.com/Holo-Host/hpos-config?rev=14e74e354c12ebfe3a3ab3d6549bc5871ff0bee0#14e74e354c12ebfe3a3ab3d6549bc5871ff0bee0"
 dependencies = [
  "argon2min",
  "arrayref",
@@ -2200,16 +2200,16 @@ dependencies = [
 [[package]]
 name = "hpos-config-seed-bundle-explorer"
 version = "0.1.1"
-source = "git+https://github.com/Holo-Host/hpos-config?rev=01ef40bf118948a279a399d60c52d500643a3e10#01ef40bf118948a279a399d60c52d500643a3e10"
+source = "git+https://github.com/Holo-Host/hpos-config?rev=14e74e354c12ebfe3a3ab3d6549bc5871ff0bee0#14e74e354c12ebfe3a3ab3d6549bc5871ff0bee0"
 dependencies = [
  "base64",
  "ed25519-dalek",
  "hc_seed_bundle",
  "hpos-config-core",
- "one_err 0.0.6",
+ "one_err",
  "rmp-serde 1.1.1",
  "serde_json",
- "sodoken 0.0.5",
+ "sodoken",
  "thiserror",
 ]
 
@@ -3456,18 +3456,6 @@ name = "once_cell"
 version = "1.15.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e82dad04139b71a90c080c8463fe0dc7902db5192d939bd0950f074d014339e1"
-
-[[package]]
-name = "one_err"
-version = "0.0.6"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0d51009bb58a2085ad156097b3b88d28298f67ac809ada5656420e46dc38f3a0"
-dependencies = [
- "indexmap",
- "libc",
- "serde",
- "serde_json",
-]
 
 [[package]]
 name = "one_err"
@@ -4963,21 +4951,6 @@ dependencies = [
 
 [[package]]
 name = "sodoken"
-version = "0.0.5"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "fd5c4b4bc5e7c01f4c7efd42f6284487a8e38042e50c0ce82bcce97c8f976806"
-dependencies = [
- "libc",
- "libsodium-sys-stable",
- "num_cpus",
- "once_cell",
- "one_err 0.0.6",
- "parking_lot 0.12.1",
- "tokio",
-]
-
-[[package]]
-name = "sodoken"
 version = "0.0.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ae3bf98be2047aa6a146e372c5b342cdcfd15612041c695bdcaf6604e6bcac42"
@@ -4986,7 +4959,7 @@ dependencies = [
  "libsodium-sys-stable",
  "num_cpus",
  "once_cell",
- "one_err 0.0.7",
+ "one_err",
  "parking_lot 0.12.1",
  "tokio",
 ]
