@@ -172,6 +172,7 @@ impl AdminWebsocket {
                                 network_seed: Some(id),
                                 properties: properties.clone(),
                                 origin_time: None,
+                                quantum_time: None,
                             },
                             source: DnaSource::Path(path),
                         }
@@ -182,6 +183,7 @@ impl AdminWebsocket {
                                 network_seed: None,
                                 properties: properties.clone(),
                                 origin_time: None,
+                                quantum_time: None,
                             },
                             source: DnaSource::Path(path),
                         }
