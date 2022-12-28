@@ -124,7 +124,7 @@ impl Happ {
                 };
                 let AppManifest::V1(mut manifest) = bundle.manifest().clone();
                 for role_manifest in &mut manifest.roles {
-                    if &role_manifest.name == &dna.role_name {
+                    if role_manifest.name == dna.role_name {
                         // check for provided properties in the config file and apply if it exists
                         let mut properties: Option<YamlProperties> = None;
                         if let Some(p) = dna.properties.clone() {
