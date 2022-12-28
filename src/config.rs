@@ -8,8 +8,6 @@ use structopt::StructOpt;
 use tracing::{debug, instrument};
 use url::Url;
 
-pub const DEFAULT_PASSWORD: &str = "pass";
-
 #[derive(Debug, Clone, StructOpt)]
 pub struct Config {
     /// Holochain conductor port
