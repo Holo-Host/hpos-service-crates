@@ -42,7 +42,7 @@ jobs:
         uses: actions-rs/toolchain@v1
         with:
           profile: minimal
-          toolchain: 1.61.0
+          toolchain: 1.64.0
           override: true
       - name: 🔨 Prepare Nix environment
         run: nix-shell --command "echo Completed"
@@ -70,7 +70,7 @@ jobs:
         with:
           profile: minimal
           components: rustfmt, clippy
-          toolchain: 1.61.0
+          toolchain: 1.64.0
           override: true
 
       - name: Run cargo fmt

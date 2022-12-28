@@ -1,4 +1,6 @@
 use anyhow::{Context, Result};
+use holochain_types::prelude::AppBundleSource;
+use holochain_types::{app::AppManifest, prelude::YamlProperties};
 use serde::Deserialize;
 use std::env;
 use std::path::{Path, PathBuf};
@@ -55,13 +57,12 @@ pub struct Happ {
     pub ui_path: Option<PathBuf>,
     pub bundle_url: Option<Url>,
     pub bundle_path: Option<PathBuf>,
-    pub dnas: Option<Vec<DnaUrl>>,
+    pub dnas: Option<Vec<Dna>>,
 }
 
 #[derive(Debug, Deserialize, Clone)]
-pub struct DnaUrl {
-    pub id: String,
-    pub url: Option<Url>,
+pub struct Dna {
+    pub role_name: String,
     pub properties: Option<String>,
 }
 
@@ -96,6 +97,56 @@ impl Happ {
         } else {
             name.replace(".happ", "").replace('.', ":")
         }
+    }
+    /// Downloads the happ bundle and returns its path
+    pub async fn download(&self) -> Result<PathBuf> {
+        match self.bundle_path.clone() {
+            Some(path) => Ok(path),
+            None => {
+                let path = crate::utils::download_file(
+                    self.bundle_url
+                        .as_ref()
+                        .context("bundle_url in happ is None")?,
+                )
+                .await?;
+                Ok(path)
+            }
+        }
+    }
+    // get the source of the happ by retrieving the happ and updating the properties if any
+    pub async fn source(&self) -> Result<AppBundleSource> {
+        let path = self.download().await?;
+        let mut source = AppBundleSource::Path(path);
+        if self.dnas.is_some() {
+            for dna in self.dnas.clone().unwrap().iter() {
+                use mr_bundle::Bundle;
+                let bundle = match source {
+                    AppBundleSource::Bundle(bundle) => bundle.into_inner(),
+                    AppBundleSource::Path(path) => Bundle::read_from_file(&path).await.unwrap(),
+                };
+                let AppManifest::V1(mut manifest) = bundle.manifest().clone();
+                for role_manifest in &mut manifest.roles {
+                    if &role_manifest.name == &dna.role_name {
+                        // check for provided properties in the config file and apply if it exists
+                        let mut properties: Option<YamlProperties> = None;
+                        if let Some(p) = dna.properties.clone() {
+                            let prop = p.to_string();
+                            debug!("Core app Properties: {}", prop);
+                            properties =
+                                Some(YamlProperties::new(serde_yaml::from_str(&prop).unwrap()));
+                        }
+                        role_manifest.dna.modifiers.properties = properties
+                    }
+                }
+                source = AppBundleSource::Bundle(
+                    bundle
+                        .update_manifest(AppManifest::V1(manifest))
+                        .unwrap()
+                        .into(),
+                )
+            }
+        }
+        Ok(source)
     }
 }
 

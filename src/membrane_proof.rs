@@ -46,7 +46,7 @@ struct RegistrationRequest {
     mem_proof: String,
 }
 
-pub type MembraneProofsVec = HashMap<String, Arc<SerializedBytes>>;
+pub type MembraneProofs = HashMap<String, Arc<SerializedBytes>>;
 
 lazy_static! {
     static ref CLIENT: Client = Client::new();
@@ -104,7 +104,7 @@ pub async fn get_mem_proof(admin: Admin) -> Result<MembraneProof> {
 pub async fn create_vec_for_happ(
     happ_id: &str,
     mem_proof: MembraneProof,
-) -> Result<MembraneProofsVec> {
+) -> Result<MembraneProofs> {
     let mut mem_proofs_vec = HashMap::new();
     if happ_id.contains("core-app") {
         mem_proofs_vec = crate::membrane_proof::add_core_app(mem_proof)?;
@@ -113,7 +113,7 @@ pub async fn create_vec_for_happ(
 }
 
 /// returns core-app specic vec of memproofs for each core-app DNA
-fn add_core_app(mem_proof: MembraneProof) -> Result<MembraneProofsVec> {
+fn add_core_app(mem_proof: MembraneProof) -> Result<MembraneProofs> {
     let mut vec = HashMap::new();
     vec.insert("core-app".to_string(), mem_proof.clone());
     vec.insert("holofuel".to_string(), mem_proof);
