@@ -76,6 +76,9 @@ async fn run_configure_holochain(f_r_a_k: &str, r_o_m_p: &str) {
     // devNet HBS server url, because given hpos-config is registered in devNet database
     set_var("MEM_PROOF_SERVER_URL", "https://hbs.dev.holotest.net");
 
+    // pass to unlock the seed
+    set_var("DEVICE_SEED_DEFAULT_PASSWORD", "pass");
+
     let device_bundle = match get_hpos_config().unwrap() {
         Config::V2 { device_bundle, .. } => device_bundle,
         _ => panic!("Unsupported Config version"),
