@@ -36,11 +36,11 @@ thiserror = "1.0"
 
 [dependencies.hpos-config-core]
 git = "https://github.com/Holo-Host/hpos-config"
-rev = "8c0f5a011bd2d7138e49bd6393cacfb8be2be23b"
+rev = "607bdca7f3ee74749994642e197c18aca3eb8e43"
 
 [dependencies.hpos-config-seed-bundle-explorer]
 git = "https://github.com/Holo-Host/hpos-config"
-rev = "8c0f5a011bd2d7138e49bd6393cacfb8be2be23b"
+rev = "607bdca7f3ee74749994642e197c18aca3eb8e43"
 
 [dev-dependencies.cargo-husky]
 version = "1"
