@@ -693,7 +693,6 @@ version = "0.3.4"
 dependencies = [
  "again",
  "anyhow",
- "arbitrary",
  "base64",
  "cargo-husky",
  "chrono",
