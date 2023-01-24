@@ -106,7 +106,7 @@ async fn get_agent_key(
 
         let pub_key = hpos_config_seed_bundle_explorer::holoport_public_key(
             config,
-            Some(crate::config::DEFAULT_PASSWORD.to_string()),
+            Some(default_password()?),
         )
         .await
         .unwrap();
@@ -115,6 +115,11 @@ async fn get_agent_key(
     };
 
     save_pubkey(key_result?, &pubkey_path).await
+}
+
+pub fn default_password() -> Result<String> {
+    env::var("DEVICE_SEED_DEFAULT_PASSWORD")
+        .context("Failed to read DEVICE_SEED_DEFAULT_PASSWORD. Is it set in env?")
 }
 
 /// Saves host's pub key to the file under pubkey_path
