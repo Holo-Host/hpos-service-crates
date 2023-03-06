@@ -108,6 +108,8 @@ pub async fn create_vec_for_happ(
     let mut mem_proofs_vec = HashMap::new();
     if happ_id.contains("core-app") {
         mem_proofs_vec = crate::membrane_proof::add_core_app(mem_proof)?;
+    } else if happ_id.contains("holofuel") {
+        mem_proofs_vec = crate::membrane_proof::add_holofuel(mem_proof)?;
     }
     Ok(mem_proofs_vec)
 }
@@ -116,6 +118,13 @@ pub async fn create_vec_for_happ(
 fn add_core_app(mem_proof: MembraneProof) -> Result<MembraneProofs> {
     let mut vec = HashMap::new();
     vec.insert("core-app".to_string(), mem_proof.clone());
+    vec.insert("holofuel".to_string(), mem_proof);
+    Ok(vec)
+}
+
+/// returns holofuel specic vec of memproofs for each holofuel DNA
+fn add_holofuel(mem_proof: MembraneProof) -> Result<MembraneProofs> {
+    let mut vec = HashMap::new();
     vec.insert("holofuel".to_string(), mem_proof);
     Ok(vec)
 }
@@ -154,13 +163,17 @@ pub fn delete_mem_proof_file() -> Result<()> {
 /// If a membrane proof is already generated downloads that membrane proof.
 /// from HBS server and returns as a string
 async fn download_memproof(admin: Admin) -> Result<String> {
+    let mut role = "host".to_string();
+    if let Ok(bool) = env::var("IS_HOLOFUEL_INSTANCE") {
+        if bool == "true" {
+            role = "holofuel".to_string()
+        }
+    }
     let payload = Registration {
         registration_code: admin.registration_code,
         agent_pub_key: PublicKey::from_bytes(admin.key.get_raw_32())?,
         email: admin.email,
-        payload: RegistrationPayload {
-            role: "host".to_string(),
-        },
+        payload: RegistrationPayload { role },
     };
     let url = format!(
         "{}/registration/api/v1/membrane-proof",
