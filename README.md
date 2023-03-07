@@ -1,5 +1,10 @@
 # hpos-configure-holochain
 
+## Ownership Info
+Codeowner: @zo-el
+Consulted: @peeech
+Informed: None
+
 Installs apps in holochain and downloads UI in the `UI_STORE_FOLDER` directory listed in YAML configuration file. Also basic holochain clean-up is performed (see below).
 
 Optionally if environmental variable `PUBKEY_PATH` is set the holoport's host public key created during first run will be saved in a file at given path and retrieved during subsequent runs.
