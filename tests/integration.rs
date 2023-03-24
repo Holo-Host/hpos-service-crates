@@ -26,7 +26,7 @@ use test_case::test_case;
 /// Env vars:
 ///   HPOS_CONFIG_PATH - local file to read from
 ///   MEM_PROOF_PATH - local file to write to
-///   PUBKEY_PATH - local file to write to
+///   HOST_PUBKEY_PATH - local file to write to
 ///   FORCE_RANDOM_AGENT_KEY - set to "" on alphaNet, 1 on devNet
 ///   READ_ONLY_MEM_PROOF - use actual memproof or a read only one
 ///   MEM_PROOF_SERVER_URL - HBS server url
@@ -60,8 +60,8 @@ async fn run_configure_holochain(f_r_a_k: &str, r_o_m_p: &str) {
     let tmp_dir = setup::holochain::create_tmp_dir();
     let log_dir = setup::holochain::create_log_dir();
 
-    // Set PUBKEY_PATH in a writable temp location
-    set_var("PUBKEY_PATH", &tmp_dir.clone().join("agent.key"));
+    // Set HOST_PUBKEY_PATH in a writable temp location
+    set_var("HOST_PUBKEY_PATH", &tmp_dir.clone().join("agent.key"));
 
     // Set MEM_PROOF_PATH in a writable temp location
     set_var("MEM_PROOF_PATH", &tmp_dir.join("mem-proof"));
