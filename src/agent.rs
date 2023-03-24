@@ -60,7 +60,7 @@ async fn populate_admin(admin_websocket: AdminWebsocket) -> Result<Admin> {
 
 /// Makes sure that the right agent key is in use based on the value
 /// of env var FORCE_RANDOM_AGENT_KEY. Once selected agent key is saved to
-/// a file under PUBKEY_PATH.
+/// a file under HOST_PUBKEY_PATH.
 /// For example on devNet FORCE_RANDOM_AGENT_KEY=1 in which case
 /// random agent key is used
 #[instrument(skip(admin_websocket, config), err)]
@@ -68,8 +68,8 @@ async fn get_agent_key(
     mut admin_websocket: AdminWebsocket,
     config: &Config,
 ) -> Result<AgentPubKey> {
-    let pubkey_path =
-        env::var("PUBKEY_PATH").context("Failed to read PUBKEY_PATH. Is it set in env?")?;
+    let pubkey_path = env::var("HOST_PUBKEY_PATH")
+        .context("Failed to read HOST_PUBKEY_PATH. Is it set in env?")?;
 
     let key_result = if &env::var("FORCE_RANDOM_AGENT_KEY")
         .context("Failed to read FORCE_RANDOM_AGENT_KEY. Is it set in env?")?

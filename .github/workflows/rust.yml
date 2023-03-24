@@ -44,10 +44,8 @@ jobs:
           profile: minimal
           toolchain: 1.64.0
           override: true
-      - name: 🔨 Prepare Nix environment
-        run: nix-shell --command "echo Completed"
       - name: Run cargo test
-        run: nix-shell --run 'cargo test'
+        run: nix develop --command bash -c 'cargo test'
 
   lints:
     name: Lints
