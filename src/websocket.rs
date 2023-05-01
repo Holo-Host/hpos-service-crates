@@ -131,8 +131,8 @@ impl AdminWebsocket {
     }
 
     #[instrument(skip(self), err)]
-    pub async fn deactivate_app(&mut self, installed_app_id: &str) -> Result<AdminResponse> {
-        let msg = AdminRequest::DisableApp {
+    pub async fn uninstall_app(&mut self, installed_app_id: &str) -> Result<AdminResponse> {
+        let msg = AdminRequest::UninstallApp {
             installed_app_id: installed_app_id.to_string(),
         };
         self.send(msg).await

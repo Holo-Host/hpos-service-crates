@@ -75,6 +75,9 @@ pub async fn install_happs(happ_file: &HappsFile, config: &Config) -> Result<()>
     }
 
     // Clean-up part of the script
+    // This clean up will remove any old app that were installed by the old config file
+    // This will also include removing happs that were installed with the old UID
+    // This will leave old servicelogger instances and old hosted happs. (That should be cleaned by the holo-auto-installer service)
     let mut app_websocket = AppWebsocket::connect(config.happ_port)
         .await
         .context("failed to connect to holochain's app interface")?;
@@ -86,13 +89,11 @@ pub async fn install_happs(happ_file: &HappsFile, config: &Config) -> Result<()>
             if !utils::keep_app_active(&app_info.installed_app_id, happs_to_keep.clone()) {
                 info!("deactivating app {}", app_info.installed_app_id);
                 admin_websocket
-                    .deactivate_app(&app_info.installed_app_id)
+                    .uninstall_app(&app_info.installed_app_id)
                     .await?;
             }
         }
     }
-
-    // Here all websocket connections should be closed but ATM holochain_websocket does not provide this functionality
 
     info!("finished installing hApps");
     Ok(())
