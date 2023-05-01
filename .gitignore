@@ -1,1 +1,5 @@
 /target
+/tests/tmp
+tmp
+.cargo
+logs

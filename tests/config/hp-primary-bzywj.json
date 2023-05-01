@@ -1,0 +1,13 @@
+{
+  "v2": {
+    "device_bundle": "k6VoY3NiMJGWonB3xBCO3IVgYD_2Me0Q06A8Um6LzSAAAcQYjQNR4Eh8NfDaPu1_1wd0pKDgisxeI1lbxDGGvCqylDI2Ji3YjVjU5VSaDcuWg1TBRnb6NoVjOG6Cv2glD9CxNlfkxUyLOjsJNx5cxCyCrWRldmljZV9udW1iZXIAq2dlbmVyYXRlX2J5r3F1aWNrc3RhcnQtdjIuMA",
+    "derivation_path": "0",
+    "registration_code": "configure-holochain-test-registration-code",
+    "settings": {
+      "admin": {
+        "email": "configure.holochain@holo.host",
+        "public_key": "i9/AhCiEjG07glN1Me63A1enbe+LkoHJp8pqTdz/rv4"
+      }
+    }
+  }
+}
