@@ -24,29 +24,29 @@ observability = "0.1.3"
 base64 = "0.13.0"
 reqwest = { version = "0.11", features = ["json"]}
 spinning_top = "0.2.4"
-holochain_conductor_api = "0.1.0"
-holochain_types = "0.1.0"
-holochain_websocket = "0.1.0"
-holochain_zome_types = "0.1.0"
-mr_bundle = "0.1.0"
+holochain_conductor_api = "0.2.0"
+holochain_types = "0.2.0"
+holochain_websocket = "0.2.0"
+holochain_zome_types = "0.2.0"
+mr_bundle = "0.2.0"
 lazy_static = "1"
 ed25519-dalek = { version = "1.0.1", features = ["serde"] }
 thiserror = "1.0"
 
 [dependencies.hpos-config-core]
 git = "https://github.com/Holo-Host/hpos-config"
-rev = "607bdca7f3ee74749994642e197c18aca3eb8e43"
+rev = "bfaced6044ae570bf20d4528fa9aaafcc43ddeec"
 
 [dependencies.hpos-config-seed-bundle-explorer]
 git = "https://github.com/Holo-Host/hpos-config"
-rev = "607bdca7f3ee74749994642e197c18aca3eb8e43"
+rev = "bfaced6044ae570bf20d4528fa9aaafcc43ddeec"
 
 [dev-dependencies.cargo-husky]
 version = "1"
 features = ["run-cargo-fmt", "run-cargo-clippy"]
 
 [target.'cfg(unix)'.dependencies]
-nix = "0.25.0"
+nix = "0.26.2"
 
 [dev-dependencies]
 lair_keystore_api = "0.2.3"
