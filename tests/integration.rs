@@ -66,6 +66,9 @@ async fn run_configure_holochain(f_r_a_k: &str, r_o_m_p: &str) {
     // Set MEM_PROOF_PATH in a writable temp location
     set_var("MEM_PROOF_PATH", &tmp_dir.join("mem-proof"));
 
+    // Set HOLOFUEL_INSTANCE_ROLE for the mem-proof server
+    set_var("HOLOFUEL_INSTANCE_ROLE", "host");
+
     // On devNet holoports force random key
     set_var("FORCE_RANDOM_AGENT_KEY", f_r_a_k);
 
