@@ -651,12 +651,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "cargo-husky"
-version = "1.5.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7b02b629252fe8ef6460461409564e2c21d0c8e77e0944f3d189ff06c4e932ad"
-
-[[package]]
 name = "cargo-platform"
 version = "0.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -835,24 +829,13 @@ dependencies = [
 name = "configure_holochain"
 version = "0.4.0"
 dependencies = [
- "again",
  "anyhow",
- "base64 0.13.1",
- "cargo-husky",
  "chrono",
- "ed25519-dalek",
- "holochain_conductor_api",
  "holochain_types",
- "holochain_websocket",
- "hpos-config-core",
- "hpos-config-seed-bundle-explorer",
  "hpos_hc_connect",
  "lair_keystore_api",
- "lazy_static",
  "nix 0.26.2",
- "reqwest",
  "serde",
- "serde_json",
  "serde_yaml",
  "serial_test",
  "snafu",
@@ -2549,11 +2532,21 @@ dependencies = [
 name = "hpos_hc_connect"
 version = "0.1.0"
 dependencies = [
+ "again",
  "anyhow",
+ "base64 0.13.1",
+ "ed25519-dalek",
+ "holochain_conductor_api",
  "holochain_types",
+ "holochain_websocket",
+ "hpos-config-core",
+ "hpos-config-seed-bundle-explorer",
  "isahc",
+ "lazy_static",
  "mr_bundle",
+ "reqwest",
  "serde",
+ "serde_json",
  "serde_yaml",
  "structopt",
  "tempfile",
