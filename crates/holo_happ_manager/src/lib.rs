@@ -14,7 +14,7 @@ pub async fn run(core_happ: &Happ, config: &Config) -> Result<()> {
     for app in apps {
         if !list_of_published_happs
             .iter()
-            .find(|a| a.bundle_url == app.bundle_url)
+            .any(|a| a.bundle_url == app.bundle_url)
         {
             publish::publish_happ(core_happ, config, app).await?;
         } else {
