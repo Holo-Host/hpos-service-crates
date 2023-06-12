@@ -163,7 +163,7 @@ pub fn delete_mem_proof_file() -> Result<()> {
 async fn download_memproof(admin: Admin) -> Result<String> {
     let role = env::var("HOLOFUEL_INSTANCE_ROLE")
         .context("Failed to read HOLOFUEL_INSTANCE_ROLE. Is it set in env?")?;
-    
+
     let payload = Registration {
         registration_code: admin.registration_code,
         agent_pub_key: PublicKey::from_bytes(admin.key.get_raw_32())?,
