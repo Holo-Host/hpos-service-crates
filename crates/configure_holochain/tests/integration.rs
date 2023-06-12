@@ -32,7 +32,7 @@ use test_case::test_case;
 ///   MEM_PROOF_SERVER_URL - HBS server url
 ///
 /// Note about MEM_PROOF_SERVER_URL:
-/// this integration test is downlading memproof from an external server. It is not possible to
+/// this integration test is downloading memproof from an external server. It is not possible to
 /// mock this interaction, because memproof server signs payload with its own private key
 /// So this test will pass only as long as version of core-app in config/config.yaml
 /// will match settings on HBS server. If you start getting an error of a type

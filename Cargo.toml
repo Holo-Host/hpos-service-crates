@@ -1,7 +1,8 @@
 [workspace]
 
 members = [
-  "crates/hpos-configure-holochain",
+  "crates/configure_holochain",
+  "crates/hpos_connect_hc",
 ]
 
 [profile.dev]

@@ -1,5 +1,4 @@
 use crate::agent::Agent;
-use crate::config::Happ;
 use crate::membrane_proof::MembraneProofs;
 use anyhow::{anyhow, Context, Result};
 use holochain_conductor_api::{
@@ -7,6 +6,7 @@ use holochain_conductor_api::{
 };
 use holochain_types::app::{AppBundleSource, InstallAppPayload, InstalledAppId};
 use holochain_websocket::{connect, WebsocketConfig, WebsocketSender};
+use hpos_hc_connect::holo_config::Happ;
 use std::{env, sync::Arc};
 use tracing::{debug, info, instrument, trace};
 use url::Url;

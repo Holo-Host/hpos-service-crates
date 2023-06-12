@@ -101,7 +101,7 @@ impl Happ {
         match self.bundle_path.clone() {
             Some(path) => Ok(path),
             None => {
-                let path = crate::utils::download_file(
+                let path = super::utils::download_file(
                     self.bundle_url
                         .as_ref()
                         .context("bundle_url in happ is None")?,

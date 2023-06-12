@@ -1,5 +1,7 @@
-mod config;
-pub use config::{Config, Happ, HappsFile, MembraneProofFile, ProofPayload};
+pub use hpos_hc_connect::{
+    holo_config::{Config, Happ, HappsFile, MembraneProofFile, ProofPayload},
+    utils::{download_file, extract_zip},
+};
 pub mod agent;
 mod websocket;
 use agent::Agent;
@@ -82,7 +84,7 @@ pub async fn install_happs(happ_file: &HappsFile, config: &Config) -> Result<()>
         .await
         .context("failed to connect to holochain's app interface")?;
 
-    let happs_to_keep: utils::HappIds = happs_to_install.iter().map(|happ| happ.id()).collect();
+    let happs_to_keep: Vec<String> = happs_to_install.iter().map(|happ| happ.id()).collect();
 
     for app in &*active_happs {
         if let Some(app_info) = app_websocket.get_app_info(app.to_string()).await {
@@ -109,14 +111,14 @@ async fn install_ui(happ: &Happ, config: &Config) -> Result<()> {
                 debug!("ui_url == None, skipping UI installation for {}", happ.id());
                 return Ok(());
             }
-            utils::download_file(happ.ui_url.as_ref().unwrap())
+            download_file(happ.ui_url.as_ref().unwrap())
                 .await
                 .context("failed to download UI archive")?
         }
     };
 
     let unpack_path = config.ui_store_folder.join(&happ.ui_name());
-    utils::extract_zip(&source_path, &unpack_path).context("failed to extract UI archive")?;
+    extract_zip(&source_path, &unpack_path).context("failed to extract UI archive")?;
     debug!("installed UI: {}", happ.id());
     Ok(())
 }
