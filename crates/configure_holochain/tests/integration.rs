@@ -1,9 +1,9 @@
 mod setup;
 use anyhow::Context;
 use configure_holochain;
-use configure_holochain::agent::get_hpos_config;
-use configure_holochain::membrane_proof::delete_mem_proof_file;
 use hpos_config_core::Config;
+use hpos_hc_connect::hpos_agent::get_hpos_config;
+use hpos_hc_connect::hpos_membrane_proof::delete_mem_proof_file;
 use serial_test::serial;
 use std::env::set_var;
 use std::path::PathBuf;
@@ -92,7 +92,7 @@ async fn run_configure_holochain(f_r_a_k: &str, r_o_m_p: &str) {
     let _holochain = setup::holochain::spawn_holochain(&tmp_dir, &log_dir, lair_config);
 
     let happs_file_path: PathBuf = "./tests/config/config.yaml".into();
-    let config = configure_holochain::Config {
+    let config = hpos_hc_connect::holo_config::Config {
         admin_port: 4444,
         happ_port: 42233,
         ui_store_folder: "./tmp".into(),

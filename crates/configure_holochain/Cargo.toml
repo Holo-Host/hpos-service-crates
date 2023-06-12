@@ -17,6 +17,10 @@ holochain_types = "0.2.0"
 thiserror = "1.0"
 hpos_hc_connect = { path = "../hpos_connect_hc" }
 
+[dependencies.hpos-config-core]
+git = "https://github.com/Holo-Host/hpos-config"
+rev = "bfaced6044ae570bf20d4528fa9aaafcc43ddeec"
+
 [target.'cfg(unix)'.dependencies]
 nix = "0.26.2"
 

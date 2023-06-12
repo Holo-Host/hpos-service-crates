@@ -832,6 +832,7 @@ dependencies = [
  "anyhow",
  "chrono",
  "holochain_types",
+ "hpos-config-core",
  "hpos_hc_connect",
  "lair_keystore_api",
  "nix 0.26.2",
