@@ -1,5 +1,4 @@
-use crate::agent::Admin;
-use crate::utils::AuthError;
+use super::hpos_agent::{Admin, AuthError};
 use anyhow::{Context, Result};
 use ed25519_dalek::*;
 use holochain_types::prelude::{MembraneProof, SerializedBytes, UnsafeBytes};
@@ -106,9 +105,9 @@ pub async fn create_vec_for_happ(
 ) -> Result<MembraneProofs> {
     let mut mem_proofs_vec = HashMap::new();
     if happ_id.contains("core-app") {
-        mem_proofs_vec = crate::membrane_proof::add_core_app(mem_proof)?;
+        mem_proofs_vec = add_core_app(mem_proof)?;
     } else if happ_id.contains("holofuel") {
-        mem_proofs_vec = crate::membrane_proof::add_holofuel(mem_proof)?;
+        mem_proofs_vec = add_holofuel(mem_proof)?;
     }
     Ok(mem_proofs_vec)
 }

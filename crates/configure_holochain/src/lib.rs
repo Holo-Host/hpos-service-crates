@@ -1,15 +1,12 @@
+use anyhow::{Context, Result};
 pub use hpos_hc_connect::{
     holo_config::{Config, Happ, HappsFile, MembraneProofFile, ProofPayload},
     utils::{download_file, extract_zip},
 };
-pub mod agent;
-mod websocket;
-use agent::Agent;
-use anyhow::{Context, Result};
+use hpos_hc_connect::{hpos_agent::Agent, hpos_membrane_proof};
+pub use hpos_hc_connect::{AdminWebsocket, AppWebsocket};
 use std::sync::Arc;
 use tracing::{debug, info, instrument, warn};
-pub use websocket::{AdminWebsocket, AppWebsocket};
-pub mod membrane_proof;
 mod utils;
 
 #[instrument(err, skip(config))]
@@ -55,11 +52,9 @@ pub async fn install_happs(happ_file: &HappsFile, config: &Config) -> Result<()>
             info!("App {} already installed, just downloading UI", &happ.id());
         } else {
             info!("Installing app {}", &happ.id());
-            let mem_proof_vec = crate::membrane_proof::create_vec_for_happ(
-                &happ.id(),
-                agent.membrane_proof.clone(),
-            )
-            .await?;
+            let mem_proof_vec =
+                hpos_membrane_proof::create_vec_for_happ(&happ.id(), agent.membrane_proof.clone())
+                    .await?;
 
             if let Err(err) = admin_websocket
                 .install_and_activate_happ(happ, mem_proof_vec, agent.clone())

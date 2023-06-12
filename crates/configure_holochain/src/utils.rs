@@ -1,11 +1,3 @@
-#[derive(thiserror::Error, Debug)]
-pub enum AuthError {
-    #[error("Error: Invalid config version used. please upgrade to hpos-config v2")]
-    ConfigVersionError,
-    #[error("Registration Error: {}", _0)]
-    RegistrationError(String),
-}
-
 // Returns true if app should be kept active in holochain
 pub fn keep_app_active(installed_app_id: &str, happs_to_keep: Vec<String>) -> bool {
     happs_to_keep.contains(&installed_app_id.to_string()) || installed_app_id.contains("uhCkk")
