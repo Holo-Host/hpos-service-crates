@@ -97,6 +97,7 @@ async fn run_configure_holochain(f_r_a_k: &str, r_o_m_p: &str) {
         happ_port: 42233,
         ui_store_folder: "./tmp".into(),
         happs_file_path: happs_file_path.clone(),
+        lair_url: None,
     };
     println!("Test running with config: {:?}", &config);
 

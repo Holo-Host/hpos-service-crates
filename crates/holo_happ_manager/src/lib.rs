@@ -12,10 +12,9 @@ pub async fn run(core_happ: &Happ, config: &Config) -> Result<()> {
     let apps = happ_to_published()?;
     let list_of_published_happs = get_my_apps::published(core_happ, config).await?;
     for app in apps {
-        if list_of_published_happs
+        if !list_of_published_happs
             .iter()
             .find(|a| a.bundle_url == app.bundle_url)
-            .is_none()
         {
             publish::publish_happ(core_happ, config, app).await?;
         } else {
