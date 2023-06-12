@@ -21,6 +21,9 @@ pub struct Config {
     pub ui_store_folder: PathBuf,
     /// Path to a YAML file containing the lists of hApps to install
     pub happs_file_path: PathBuf,
+    /// URL at which lair-keystore is running
+    #[structopt(long)]
+    pub lair_url: Option<String>,
 }
 
 impl Config {
@@ -155,6 +158,14 @@ pub struct HappsFile {
     pub core_happs: Vec<Happ>,
 }
 impl HappsFile {
+    pub fn core_app(self) -> Option<Happ> {
+        let core_app = &self
+            .core_happs
+            .into_iter()
+            .find(|x| x.id().contains("core-app"));
+        core_app.clone()
+    }
+
     #[instrument(err, fields(path = %path.as_ref().display()))]
     pub fn load_happ_file(path: impl AsRef<Path>) -> Result<HappsFile> {
         use std::fs::File;
