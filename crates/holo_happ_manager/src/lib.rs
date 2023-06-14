@@ -13,9 +13,11 @@ pub async fn run(config: &Config) -> Result<()> {
 
     let happ_file = HappsFile::load_happ_file(&config.happs_file_path)
         .context("failed to load hApps YAML config")?;
-    let core_happ = happ_file.core_app().ok_or(anyhow!(
+    let core_happ = happ_file.core_app().ok_or_else(|| {
+        anyhow!(
         "Please check that the happ config file is present. No Core apps found in configuration"
-    ))?;
+    )
+    })?;
 
     let apps = happ_to_published()?;
 
