@@ -830,17 +830,15 @@ name = "configure-holochain"
 version = "0.4.0"
 dependencies = [
  "anyhow",
- "chrono",
  "holochain_types",
  "hpos-config-core",
  "hpos_hc_connect",
- "lair_keystore_api",
  "nix 0.26.2",
  "serde",
  "serde_yaml",
  "serial_test",
- "snafu",
  "test-case",
+ "test_utils",
  "thiserror",
  "tokio",
  "tracing",
@@ -2058,15 +2056,19 @@ name = "holo_happ_manager"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "configure-holochain",
  "getrandom 0.2.10",
  "holochain_conductor_api",
  "holochain_keystore",
  "holochain_types",
+ "hpos-config-core",
  "hpos_hc_connect",
  "rmp-serde 1.1.1",
  "serde",
  "serde_json",
+ "serial_test",
  "sodoken",
+ "test_utils",
  "tokio",
  "tracing",
  "tracing-subscriber 0.3.17",
@@ -5916,6 +5918,18 @@ dependencies = [
  "serde",
  "sha-1 0.10.1",
  "test-fuzz-internal",
+]
+
+[[package]]
+name = "test_utils"
+version = "0.1.0"
+dependencies = [
+ "chrono",
+ "lair_keystore_api",
+ "nix 0.26.2",
+ "serde",
+ "serde_yaml",
+ "snafu",
 ]
 
 [[package]]

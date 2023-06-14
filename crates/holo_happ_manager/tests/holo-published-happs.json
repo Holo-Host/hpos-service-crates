@@ -1,0 +1,46 @@
+[
+    {
+        "name": "Cloud Console",
+        "special_installed_app_id": "core-app::",
+        "hosted_urls": [
+            "cloud-console.holo.host",
+            "portal-billing.holo.host"
+        ],
+        "bundle_url": "https://",
+        "logo_url": "https://",
+        "description": "happ manager",
+        "categories": [],
+        "jurisdictions": [],
+        "exclude_jurisdictions": true,
+        "hosting_prices": {
+            "cpu": "0.025",
+            "storage": "0.025",
+            "bandwidth": "0.025"
+        },
+        "login_config": {
+            "display_publisher_name": true,
+            "registration_info_url": "registration.holo.host"
+        }
+    },
+    {
+        "name": "Holofuel",
+        "hosted_urls": [
+            "holofuel.holo.host"
+        ],
+        "bundle_url": "https://",
+        "logo_url": "https://",
+        "description": "happ manager",
+        "categories": [],
+        "jurisdictions": [],
+        "exclude_jurisdictions": true,
+        "hosting_prices": {
+            "cpu": "0.025",
+            "storage": "0.025",
+            "bandwidth": "0.025"
+        },
+        "login_config": {
+            "display_publisher_name": true,
+            "registration_info_url": "registration.holo.host"
+        }
+    }
+]

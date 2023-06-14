@@ -13,7 +13,8 @@ pub struct HappInput {
     pub name: String,
     #[serde(default)]
     pub logo_url: Option<String>,
-    // pub dnas: Vec<DnaResource>,
+    #[serde(default)]
+    pub dnas: Vec<DnaResource>,
     #[serde(default)]
     pub description: String,
     #[serde(default)]
@@ -41,4 +42,11 @@ pub struct HostingPrices {
     pub cpu: String,
     pub storage: String,
     pub bandwidth: String,
+}
+
+#[derive(Debug, Serialize, Deserialize, SerializedBytes, Clone)]
+pub struct DnaResource {
+    pub hash: String, // hash of the dna, not a stored dht address
+    pub src_url: String,
+    pub nick: String,
 }
