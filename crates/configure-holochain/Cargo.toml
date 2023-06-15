@@ -1,6 +1,6 @@
 [package]
 name = "configure-holochain"
-version = "0.4.0"
+version = "0.5.0"
 authors = ["Oleksii Filonenko <oleksii.filonenko@holo.host>", "zo-el <joelulahanna@gmaail.com>"]
 edition = "2021"
 
@@ -15,7 +15,7 @@ url = "2.2"
 # observability = "0.1.3"
 holochain_types = "0.2.0"
 thiserror = "1.0"
-hpos_hc_connect = { path = "../hpos_connect_hc" }
+hpos_hc_connect = { version = "0.1.0", path = "../hpos_connect_hc" }
 
 [dependencies.hpos-config-core]
 git = "https://github.com/Holo-Host/hpos-config"
