@@ -59,6 +59,7 @@ pub struct Happ {
     pub bundle_url: Option<Url>,
     pub bundle_path: Option<PathBuf>,
     pub dnas: Option<Vec<Dna>>,
+    pub agent_bundle_override: Option<String>,
 }
 
 #[derive(Debug, Deserialize, Clone)]
@@ -188,6 +189,7 @@ mod tests {
             ui_url: None,
             ui_path: None,
             dnas: None,
+            agent_bundle_override: None,
         };
         assert_eq!(cfg.id(), String::from("elemental_chat:1:0001"));
         let cfg = Happ {
@@ -196,6 +198,7 @@ mod tests {
             ui_url: None,
             ui_path: None,
             dnas: None,
+            agent_bundle_override: None,
         };
         assert_eq!(cfg.id(), String::from("elemental_chat:1:0001"));
     }
@@ -208,6 +211,7 @@ mod tests {
             ui_url: None,
             ui_path: None,
             dnas: None,
+            agent_bundle_override: None,
         };
         assert_eq!(cfg.ui_name(), String::from("elemental_chat"));
     }
