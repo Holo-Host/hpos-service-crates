@@ -1,3 +1,4 @@
+use super::holo_config::Happ;
 use super::hpos_agent::{Admin, AuthError};
 use anyhow::{Context, Result};
 use ed25519_dalek::*;
@@ -83,13 +84,16 @@ pub async fn get_mem_proof(admin: Admin) -> Result<MembraneProof> {
         debug!("Using memproof from file");
         return Ok(m);
     }
-
-    let mem_proof_str = download_memproof(admin).await?;
+    let role = env::var("HOLOFUEL_INSTANCE_ROLE")
+        .context("Failed to read HOLOFUEL_INSTANCE_ROLE. Is it set in env?")?;
+    let payload = Registration {
+        registration_code: admin.registration_code,
+        agent_pub_key: PublicKey::from_bytes(admin.key.get_raw_32())?,
+        email: admin.email,
+        payload: RegistrationPayload { role },
+    };
+    let (mem_proof_str, mem_proof_serialized) = download_memproof(payload).await?;
     save_mem_proof_to_file(&mem_proof_str, &memproof_path)?;
-
-    let mem_proof_bytes = base64::decode(mem_proof_str)?;
-    let mem_proof_serialized = Arc::new(SerializedBytes::from(UnsafeBytes::from(mem_proof_bytes)));
-
     debug!("Using memproof downloaded from HBS server");
     Ok(mem_proof_serialized)
 }
@@ -99,15 +103,26 @@ pub async fn get_mem_proof(admin: Admin) -> Result<MembraneProof> {
 /// Currently creates memproofs only for core-app
 /// otherwise returns empty HashMap
 /// Returns HashMap<dna_name, memproof_bytes>
-pub async fn create_vec_for_happ(
-    happ_id: &str,
-    mem_proof: MembraneProof,
-) -> Result<MembraneProofs> {
+pub async fn create_vec_for_happ(happ: &Happ, mem_proof: MembraneProof) -> Result<MembraneProofs> {
+    let happ_id = happ.id();
     let mut mem_proofs_vec = HashMap::new();
     if happ_id.contains("core-app") {
         mem_proofs_vec = add_core_app(mem_proof)?;
     } else if happ_id.contains("holofuel") {
-        mem_proofs_vec = add_holofuel(mem_proof)?;
+        if let Some(agent_details) = happ.agent_override_details().await? {
+            let registration_payload = Registration {
+                registration_code: agent_details.registration_code,
+                agent_pub_key: PublicKey::from_bytes(agent_details.key.get_raw_32())?,
+                email: agent_details.email,
+                payload: RegistrationPayload {
+                    role: "holofuel".to_string(),
+                },
+            };
+            let (_, proof) = download_memproof(registration_payload).await?;
+            mem_proofs_vec = add_holofuel(proof)?;
+        } else {
+            mem_proofs_vec = add_holofuel(mem_proof)?;
+        }
     }
     Ok(mem_proofs_vec)
 }
@@ -160,26 +175,25 @@ pub fn delete_mem_proof_file() -> Result<()> {
 /// Add's a pub key to an existing registration and generates a membrane proof.
 /// If a membrane proof is already generated downloads that membrane proof.
 /// from HBS server and returns as a string
-async fn download_memproof(admin: Admin) -> Result<String> {
-    let role = env::var("HOLOFUEL_INSTANCE_ROLE")
-        .context("Failed to read HOLOFUEL_INSTANCE_ROLE. Is it set in env?")?;
-    let payload = Registration {
-        registration_code: admin.registration_code,
-        agent_pub_key: PublicKey::from_bytes(admin.key.get_raw_32())?,
-        email: admin.email,
-        payload: RegistrationPayload { role },
-    };
+async fn download_memproof(
+    registration_payload: Registration,
+) -> Result<(String, Arc<SerializedBytes>)> {
     let url = format!(
         "{}/registration/api/v1/membrane-proof",
         env::var("MEM_PROOF_SERVER_URL")
             .context("Failed to read MEM_PROOF_SERVER_URL. Is it set in env?")?
     );
-    let resp = CLIENT.post(url).json(&payload).send().await?;
+    let resp = CLIENT.post(url).json(&registration_payload).send().await?;
     match resp.error_for_status_ref() {
         Ok(_) => {
             let reg: RegistrationRequest = resp.json().await?;
             debug!("Registration completed message: {:?}", reg);
-            Ok(reg.mem_proof)
+
+            let mem_proof_bytes = base64::decode(reg.mem_proof.clone())?;
+            let mem_proof_serialized =
+                Arc::new(SerializedBytes::from(UnsafeBytes::from(mem_proof_bytes)));
+
+            Ok((reg.mem_proof, mem_proof_serialized))
         }
         Err(e) => {
             error!("Error: {:?}", e);

@@ -1,5 +1,6 @@
+use super::hpos_agent::{default_password, read_hpos_config, Admin};
 use anyhow::{Context, Result};
-use holochain_types::prelude::AppBundleSource;
+use holochain_types::prelude::{AgentPubKey, AppBundleSource};
 use holochain_types::{app::AppManifest, prelude::YamlProperties};
 use serde::Deserialize;
 use std::env;
@@ -149,6 +150,32 @@ impl Happ {
             }
         }
         Ok(source)
+    }
+    // returns pub key is agent override exists
+    pub async fn agent_override_details(&self) -> Result<Option<Admin>> {
+        if let Some(agent_bundle_override) = &self.agent_bundle_override {
+            let config = read_hpos_config(&agent_bundle_override)?;
+            let pub_key = hpos_config_seed_bundle_explorer::holoport_public_key(
+                &config,
+                Some(default_password()?),
+            )
+            .await?;
+            let key = AgentPubKey::from_raw_32(pub_key.to_bytes().to_vec());
+            return match config {
+                hpos_config_core::Config::V2 {
+                    registration_code,
+                    settings,
+                    ..
+                } => Ok(Some(Admin {
+                    key,
+                    registration_code,
+                    email: settings.admin.email,
+                })),
+                hpos_config_core::Config::V1 { .. } => Ok(None),
+            };
+        } else {
+            Ok(None)
+        }
     }
 }
 

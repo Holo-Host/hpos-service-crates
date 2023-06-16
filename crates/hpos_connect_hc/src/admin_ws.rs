@@ -1,10 +1,9 @@
 use super::holo_config::Happ;
-use super::hpos_agent::{default_password, read_hpos_config, Agent};
+use super::hpos_agent::Agent;
 use super::hpos_membrane_proof::MembraneProofs;
 use anyhow::{anyhow, Context, Result};
 use holochain_conductor_api::{AdminRequest, AdminResponse, AppStatusFilter};
 use holochain_types::app::{AppBundleSource, InstallAppPayload, InstalledAppId};
-use holochain_types::dna::AgentPubKey;
 use holochain_websocket::{connect, WebsocketConfig, WebsocketSender};
 use std::{env, sync::Arc};
 use tracing::{debug, info, instrument, trace};
@@ -83,15 +82,10 @@ impl AdminWebsocket {
         agent: Agent,
     ) -> Result<()> {
         let mut agent_key = agent.admin.key.clone();
-        if let Some(agent_bundle_override) = &happ.agent_bundle_override {
-            let config = read_hpos_config(agent_bundle_override)?;
-            let pub_key = hpos_config_seed_bundle_explorer::holoport_public_key(
-                &config,
-                Some(default_password()?),
-            )
-            .await?;
-            agent_key = AgentPubKey::from_raw_32(pub_key.to_bytes().to_vec());
-        }
+
+        if let Some(admin) = &happ.agent_override_details().await? {
+            agent_key = admin.key.clone();
+        };
 
         let payload = if let Ok(id) = env::var("DEV_UID_OVERRIDE") {
             debug!("using network_seed to install: {}", id);
