@@ -56,7 +56,7 @@ async fn run_happ_manager() {
     let config = hpos_hc_connect::holo_config::Config {
         admin_port: 4444,
         happ_port: 42233,
-        ui_store_folder: "./tmp".into(),
+        ui_store_folder: None,
         happs_file_path: happs_file_path.clone(),
         lair_url: Some(lair_config.connection_url.to_string()),
     };

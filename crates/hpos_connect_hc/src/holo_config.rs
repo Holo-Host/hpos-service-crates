@@ -19,7 +19,7 @@ pub struct Config {
     pub happ_port: u16,
     /// Path to the folder where hApp UIs will be extracted
     #[structopt(long, env)]
-    pub ui_store_folder: PathBuf,
+    pub ui_store_folder: Option<PathBuf>,
     /// Path to a YAML file containing the lists of hApps to install
     pub happs_file_path: PathBuf,
     /// URL at which lair-keystore is running

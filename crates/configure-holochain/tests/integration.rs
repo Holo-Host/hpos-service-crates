@@ -100,7 +100,7 @@ async fn run_configure_holochain(f_r_a_k: &str, r_o_m_p: &str) {
     let config = hpos_hc_connect::holo_config::Config {
         admin_port: 4444,
         happ_port: 42233,
-        ui_store_folder: "./tmp".into(),
+        ui_store_folder: Some("./tmp".into()),
         happs_file_path: happs_file_path.clone(),
         lair_url: None,
     };
