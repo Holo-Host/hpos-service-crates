@@ -28,11 +28,17 @@ pub async fn run(config: &Config) -> Result<()> {
         "Happs that are already published {:?}",
         list_of_published_happs
     );
-    for app in apps {
+    for mut app in apps {
         if !list_of_published_happs
             .iter()
             .any(|a| a.bundle_url == app.bundle_url)
         {
+            // Check if the name is "cloud console"
+            // if it does set a special_installed_app_id as the installed_app_id of the core_app
+            // This special_installed_app_id is designed for Cloud Console(formally know as Publisher Portal)
+            if app.name.contains("Cloud") {
+                app.special_installed_app_id = Some(core_happ.id())
+            }
             publish::publish_happ(&core_happ, config, app).await?;
         } else {
             debug!("already published")
