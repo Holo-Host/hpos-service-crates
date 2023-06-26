@@ -4,6 +4,18 @@
       {
         'app_id': 'core-app',
         'bundle_url': 'https://holo-host.github.io/holo-hosting-app-rsm/releases/downloads/core-app/0_4_0_alpha1/core-app.0_4_0_alpha1-skip-proof.happ',
+      },
+      {
+        'app_id': 'core-app-1',
+        'bundle_url': 'https://holo-host.github.io/holo-hosting-app-rsm/releases/downloads/core-app/0_5_0_dev_1/core-app.0_5_0_dev_1-skip-proof.happ',
+      },
+      {
+        'app_id': 'core-app-2',
+        'bundle_url': 'https://holo-host.github.io/holo-hosting-app-rsm/releases/downloads/core-app/0_4_6/core-app.0_4_6-skip-proof.happ',
+      },
+      {
+        'app_id': 'core-app-3',
+        'bundle_url': 'https://holo-host.github.io/holo-hosting-app-rsm/releases/downloads/core-app/0_5_0_alpha0/core-app.0_5_0_alpha0-skip-proof.happ',
       }
     ],
   'self_hosted_happs':
