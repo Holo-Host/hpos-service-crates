@@ -1,4 +1,3 @@
-mod setup;
 use anyhow::Context;
 use configure_holochain;
 use hpos_config_core::Config;
@@ -55,10 +54,13 @@ use test_case::test_case;
 
 async fn run_configure_holochain(f_r_a_k: &str, r_o_m_p: &str) {
     // Point HPOS_CONFIG_PATH to test config file
-    set_var("HPOS_CONFIG_PATH", "./tests/config/hp-primary-bzywj.json");
+    set_var(
+        "HPOS_CONFIG_PATH",
+        "../test_utils/config/hp-primary-bzywj.json",
+    );
 
-    let tmp_dir = setup::holochain::create_tmp_dir();
-    let log_dir = setup::holochain::create_log_dir();
+    let tmp_dir = test_utils::holochain::create_tmp_dir();
+    let log_dir = test_utils::holochain::create_log_dir();
 
     // Set HOST_PUBKEY_PATH in a writable temp location
     set_var("HOST_PUBKEY_PATH", &tmp_dir.clone().join("agent.key"));
@@ -89,17 +91,18 @@ async fn run_configure_holochain(f_r_a_k: &str, r_o_m_p: &str) {
     // spin up lair
     println!("Starting lair-keystore");
     let (_lair, lair_config) =
-        setup::lair::spawn(&tmp_dir, &log_dir, &device_bundle, None).unwrap();
+        test_utils::lair::spawn(&tmp_dir, &log_dir, &device_bundle, None).unwrap();
 
     println!("Spinning up holochain");
-    let _holochain = setup::holochain::spawn_holochain(&tmp_dir, &log_dir, lair_config);
+    let _holochain = test_utils::holochain::spawn_holochain(&tmp_dir, &log_dir, lair_config);
 
-    let happs_file_path: PathBuf = "./tests/config/config.yaml".into();
+    let happs_file_path: PathBuf = "./tests/config.yaml".into();
     let config = hpos_hc_connect::holo_config::Config {
         admin_port: 4444,
         happ_port: 42233,
-        ui_store_folder: "./tmp".into(),
+        ui_store_folder: Some("./tmp".into()),
         happs_file_path: happs_file_path.clone(),
+        lair_url: None,
     };
     println!("Test running with config: {:?}", &config);
 

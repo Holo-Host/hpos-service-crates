@@ -142,7 +142,11 @@ async fn save_pubkey(pub_key: AgentPubKey, pubkey_path: &str) -> Result<AgentPub
 pub fn get_hpos_config() -> Result<Config> {
     let config_path = env::var("HPOS_CONFIG_PATH")
         .context("Failed to read HPOS_CONFIG_PATH. Is it set in env?")?;
-    let config_json = fs::read(config_path)?;
+    read_hpos_config(&config_path)
+}
+
+pub fn read_hpos_config(path: &String) -> Result<Config> {
+    let config_json = fs::read(path)?;
     let config: Config = serde_json::from_slice(&config_json)?;
     Ok(config)
 }

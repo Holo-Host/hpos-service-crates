@@ -81,10 +81,16 @@ impl AdminWebsocket {
         membrane_proofs: MembraneProofs,
         agent: Agent,
     ) -> Result<()> {
+        let mut agent_key = agent.admin.key.clone();
+
+        if let Some(admin) = &happ.agent_override_details().await? {
+            agent_key = admin.key.clone();
+        };
+
         let payload = if let Ok(id) = env::var("DEV_UID_OVERRIDE") {
             debug!("using network_seed to install: {}", id);
             InstallAppPayload {
-                agent_key: agent.admin.key,
+                agent_key,
                 installed_app_id: Some(happ.id()),
                 source,
                 membrane_proofs,
@@ -93,7 +99,7 @@ impl AdminWebsocket {
         } else {
             debug!("using default network_seed to install");
             InstallAppPayload {
-                agent_key: agent.admin.key,
+                agent_key,
                 installed_app_id: Some(happ.id()),
                 source,
                 membrane_proofs,

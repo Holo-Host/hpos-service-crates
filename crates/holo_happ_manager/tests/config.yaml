@@ -1,0 +1,11 @@
+{
+  'core_happs':
+    [
+      {
+        'app_id': 'core-app',
+        'bundle_url': 'https://holo-host.github.io/holo-hosting-app-rsm/releases/downloads/core-app/0_4_0_alpha1/core-app.0_4_0_alpha1-skip-proof.happ',
+      }
+    ],
+  'self_hosted_happs':
+    [],
+}

@@ -3,6 +3,8 @@
 members = [
   "crates/configure-holochain",
   "crates/hpos_connect_hc",
+  "crates/holo_happ_manager",
+  "crates/test_utils"
 ]
 
 [profile.dev]

@@ -11,7 +11,7 @@ mod utils;
 
 #[instrument(err, skip(config))]
 pub async fn run(config: Config) -> Result<()> {
-    debug!("Starting...");
+    debug!("Starting configure holochain...");
     let happ_file = HappsFile::load_happ_file(&config.happs_file_path)
         .context("failed to load hApps YAML config")?;
     install_happs(&happ_file, &config).await?;
@@ -53,7 +53,7 @@ pub async fn install_happs(happ_file: &HappsFile, config: &Config) -> Result<()>
         } else {
             info!("Installing app {}", &happ.id());
             let mem_proof_vec =
-                hpos_membrane_proof::create_vec_for_happ(&happ.id(), agent.membrane_proof.clone())
+                hpos_membrane_proof::create_vec_for_happ(happ, agent.membrane_proof.clone())
                     .await?;
 
             if let Err(err) = admin_websocket
@@ -111,9 +111,10 @@ async fn install_ui(happ: &Happ, config: &Config) -> Result<()> {
                 .context("failed to download UI archive")?
         }
     };
-
-    let unpack_path = config.ui_store_folder.join(happ.ui_name());
-    extract_zip(&source_path, &unpack_path).context("failed to extract UI archive")?;
-    debug!("installed UI: {}", happ.id());
+    if let Some(ui_home) = config.ui_store_folder.clone() {
+        let unpack_path = ui_home.join(happ.ui_name());
+        extract_zip(&source_path, &unpack_path).context("failed to extract UI archive")?;
+        debug!("installed UI: {}", happ.id());
+    }
     Ok(())
 }
