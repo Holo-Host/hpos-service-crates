@@ -24,11 +24,11 @@ observability = "0.1.3"
 base64 = "0.13.0"
 reqwest = { version = "0.11", features = ["json"]}
 spinning_top = "0.2.4"
-holochain_conductor_api = "0.3.0-beta-dev.6"
-holochain_types = "0.3.0-beta-dev.6"
-holochain_websocket = "0.3.0-beta-dev.2"
-holochain_zome_types = "0.3.0-beta-dev.4"
-mr_bundle = "0.2.0"
+holochain_conductor_api = { git = "https://github.com/holochain/holochain", rev = "f0b466532a58942491eebee85eda12e409f14831"}
+holochain_types = { git = "https://github.com/holochain/holochain", rev = "f0b466532a58942491eebee85eda12e409f14831"}
+holochain_websocket = { git = "https://github.com/holochain/holochain", rev = "f0b466532a58942491eebee85eda12e409f14831"}
+holochain_zome_types = { git = "https://github.com/holochain/holochain", rev = "f0b466532a58942491eebee85eda12e409f14831"}
+mr_bundle = { git = "https://github.com/holochain/holochain", rev = "f0b466532a58942491eebee85eda12e409f14831"}
 lazy_static = "1"
 ed25519-dalek = { version = "1.0.1", features = ["serde"] }
 thiserror = "1.0"

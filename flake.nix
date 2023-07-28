@@ -6,7 +6,7 @@
 
   inputs = {
     versions.url = "github:holochain/holochain?dir=versions/0_1";
-    versions.inputs.holochain.url = "github:holochain/holochain/holochain-0.3.0-beta-dev.6";
+    versions.inputs.holochain.url = "github:holochain/holochain/f0b466532a58942491eebee85eda12e409f14831";
     versions.inputs.lair.url = "github:holochain/lair/lair_keystore-v0.2.4";
 
     holochain-flake.url = "github:holochain/holochain";
