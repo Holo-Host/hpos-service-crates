@@ -42,7 +42,7 @@ jobs:
         uses: actions-rs/toolchain@v1
         with:
           profile: minimal
-          toolchain: 1.64.0
+          toolchain: 1.70.0
           override: true
       - name: Run cargo test
         run: nix develop --command bash -c 'cargo test'
@@ -68,7 +68,7 @@ jobs:
         with:
           profile: minimal
           components: rustfmt, clippy
-          toolchain: 1.64.0
+          toolchain: 1.70.0
           override: true
 
       - name: Run cargo fmt
