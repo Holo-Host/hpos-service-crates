@@ -7,16 +7,6 @@ use tempfile::TempDir;
 use tracing::{debug, instrument};
 use url::Url;
 
-pub type HappIds = Vec<String>;
-
-#[derive(thiserror::Error, Debug)]
-pub enum AuthError {
-    #[error("Error: Invalid config version used. please upgrade to hpos-config v2")]
-    ConfigVersionError,
-    #[error("Registration Error: {}", _0)]
-    RegistrationError(String),
-}
-
 #[instrument(
     err,
     fields(
@@ -24,7 +14,7 @@ pub enum AuthError {
         unpack_path = %unpack_path.as_ref().display(),
     ),
 )]
-pub(crate) fn extract_zip<P: AsRef<Path>>(source_path: P, unpack_path: P) -> Result<()> {
+pub fn extract_zip<P: AsRef<Path>>(source_path: P, unpack_path: P) -> Result<()> {
     let _ = fs::remove_dir_all(unpack_path.as_ref());
     fs::create_dir(unpack_path.as_ref()).context("failed to create empty unpack_path")?;
 
@@ -44,7 +34,7 @@ pub(crate) fn extract_zip<P: AsRef<Path>>(source_path: P, unpack_path: P) -> Res
 }
 
 #[instrument(err, skip(url))]
-pub(crate) async fn download_file(url: &Url) -> Result<PathBuf> {
+pub async fn download_file(url: &Url) -> Result<PathBuf> {
     use isahc::config::Configurable;
     use isahc::config::RedirectPolicy;
     use isahc::prelude::*;
@@ -86,28 +76,4 @@ pub(crate) async fn download_file(url: &Url) -> Result<PathBuf> {
         path
     };
     Ok(path)
-}
-
-// Returns true if app should be kept active in holochain
-pub fn keep_app_active(installed_app_id: &str, happs_to_keep: HappIds) -> bool {
-    happs_to_keep.contains(&installed_app_id.to_string()) || installed_app_id.contains("uhCkk")
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn verify_keep_app_active() {
-        let happs_to_keep = vec!["elemental-chat:2".to_string(), "hha:1".to_string()];
-        let app_1 = "elemental-chat:1";
-        let app_2 = "elemental-chat:2";
-        let app_3 = "uhCkkcF0X1dpwHFeIPI6-7rzM6ma9IgyiqD-othxgENSkL1So1Slt::servicelogger";
-        let app_4 = "other-app";
-
-        assert_eq!(keep_app_active(app_1, happs_to_keep.clone()), false);
-        assert_eq!(keep_app_active(app_2, happs_to_keep.clone()), true); // because it is in config
-        assert_eq!(keep_app_active(app_3, happs_to_keep.clone()), true); // because it is hosted
-        assert_eq!(keep_app_active(app_4, happs_to_keep.clone()), false);
-    }
 }

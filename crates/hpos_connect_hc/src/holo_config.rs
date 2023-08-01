@@ -1,5 +1,6 @@
+use super::hpos_agent::{default_password, read_hpos_config, Admin};
 use anyhow::{Context, Result};
-use holochain_types::prelude::AppBundleSource;
+use holochain_types::prelude::{AgentPubKey, AppBundleSource};
 use holochain_types::{app::AppManifest, prelude::YamlProperties};
 use serde::Deserialize;
 use std::env;
@@ -18,9 +19,12 @@ pub struct Config {
     pub happ_port: u16,
     /// Path to the folder where hApp UIs will be extracted
     #[structopt(long, env)]
-    pub ui_store_folder: PathBuf,
+    pub ui_store_folder: Option<PathBuf>,
     /// Path to a YAML file containing the lists of hApps to install
     pub happs_file_path: PathBuf,
+    /// URL at which lair-keystore is running
+    #[structopt(long)]
+    pub lair_url: Option<String>,
 }
 
 impl Config {
@@ -56,6 +60,7 @@ pub struct Happ {
     pub bundle_url: Option<Url>,
     pub bundle_path: Option<PathBuf>,
     pub dnas: Option<Vec<Dna>>,
+    pub agent_bundle_override: Option<String>,
 }
 
 #[derive(Debug, Deserialize, Clone)]
@@ -101,7 +106,7 @@ impl Happ {
         match self.bundle_path.clone() {
             Some(path) => Ok(path),
             None => {
-                let path = crate::utils::download_file(
+                let path = super::utils::download_file(
                     self.bundle_url
                         .as_ref()
                         .context("bundle_url in happ is None")?,
@@ -146,6 +151,32 @@ impl Happ {
         }
         Ok(source)
     }
+    // returns pub key is agent override exists
+    pub async fn agent_override_details(&self) -> Result<Option<Admin>> {
+        if let Some(agent_bundle_override) = &self.agent_bundle_override {
+            let config = read_hpos_config(agent_bundle_override)?;
+            let pub_key = hpos_config_seed_bundle_explorer::holoport_public_key(
+                &config,
+                Some(default_password()?),
+            )
+            .await?;
+            let key = AgentPubKey::from_raw_32(pub_key.to_bytes().to_vec());
+            match config {
+                hpos_config_core::Config::V2 {
+                    registration_code,
+                    settings,
+                    ..
+                } => Ok(Some(Admin {
+                    key,
+                    registration_code,
+                    email: settings.admin.email,
+                })),
+                hpos_config_core::Config::V1 { .. } => Ok(None),
+            }
+        } else {
+            Ok(None)
+        }
+    }
 }
 
 /// hApps
@@ -155,6 +186,14 @@ pub struct HappsFile {
     pub core_happs: Vec<Happ>,
 }
 impl HappsFile {
+    pub fn core_app(self) -> Option<Happ> {
+        let core_app = &self
+            .core_happs
+            .into_iter()
+            .find(|x| x.id().contains("core-app"));
+        core_app.clone()
+    }
+
     #[instrument(err, fields(path = %path.as_ref().display()))]
     pub fn load_happ_file(path: impl AsRef<Path>) -> Result<HappsFile> {
         use std::fs::File;
@@ -177,6 +216,7 @@ mod tests {
             ui_url: None,
             ui_path: None,
             dnas: None,
+            agent_bundle_override: None,
         };
         assert_eq!(cfg.id(), String::from("elemental_chat:1:0001"));
         let cfg = Happ {
@@ -185,6 +225,7 @@ mod tests {
             ui_url: None,
             ui_path: None,
             dnas: None,
+            agent_bundle_override: None,
         };
         assert_eq!(cfg.id(), String::from("elemental_chat:1:0001"));
     }
@@ -197,6 +238,7 @@ mod tests {
             ui_url: None,
             ui_path: None,
             dnas: None,
+            agent_bundle_override: None,
         };
         assert_eq!(cfg.ui_name(), String::from("elemental_chat"));
     }

@@ -1,18 +1,17 @@
-mod config;
-pub use config::{Config, Happ, HappsFile, MembraneProofFile, ProofPayload};
-pub mod agent;
-mod websocket;
-use agent::Agent;
 use anyhow::{Context, Result};
+pub use hpos_hc_connect::{
+    holo_config::{Config, Happ, HappsFile, MembraneProofFile, ProofPayload},
+    utils::{download_file, extract_zip},
+};
+use hpos_hc_connect::{hpos_agent::Agent, hpos_membrane_proof};
+pub use hpos_hc_connect::{AdminWebsocket, AppWebsocket};
 use std::sync::Arc;
 use tracing::{debug, info, instrument, warn};
-pub use websocket::{AdminWebsocket, AppWebsocket};
-pub mod membrane_proof;
 mod utils;
 
 #[instrument(err, skip(config))]
 pub async fn run(config: Config) -> Result<()> {
-    debug!("Starting...");
+    debug!("Starting configure holochain...");
     let happ_file = HappsFile::load_happ_file(&config.happs_file_path)
         .context("failed to load hApps YAML config")?;
     install_happs(&happ_file, &config).await?;
@@ -53,11 +52,9 @@ pub async fn install_happs(happ_file: &HappsFile, config: &Config) -> Result<()>
             info!("App {} already installed, just downloading UI", &happ.id());
         } else {
             info!("Installing app {}", &happ.id());
-            let mem_proof_vec = crate::membrane_proof::create_vec_for_happ(
-                &happ.id(),
-                agent.membrane_proof.clone(),
-            )
-            .await?;
+            let mem_proof_vec =
+                hpos_membrane_proof::create_vec_for_happ(happ, agent.membrane_proof.clone())
+                    .await?;
 
             if let Err(err) = admin_websocket
                 .install_and_activate_happ(happ, mem_proof_vec, agent.clone())
@@ -82,7 +79,7 @@ pub async fn install_happs(happ_file: &HappsFile, config: &Config) -> Result<()>
         .await
         .context("failed to connect to holochain's app interface")?;
 
-    let happs_to_keep: utils::HappIds = happs_to_install.iter().map(|happ| happ.id()).collect();
+    let happs_to_keep: Vec<String> = happs_to_install.iter().map(|happ| happ.id()).collect();
 
     for app in &*active_happs {
         if let Some(app_info) = app_websocket.get_app_info(app.to_string()).await {
@@ -109,14 +106,15 @@ async fn install_ui(happ: &Happ, config: &Config) -> Result<()> {
                 debug!("ui_url == None, skipping UI installation for {}", happ.id());
                 return Ok(());
             }
-            utils::download_file(happ.ui_url.as_ref().unwrap())
+            download_file(happ.ui_url.as_ref().unwrap())
                 .await
                 .context("failed to download UI archive")?
         }
     };
-
-    let unpack_path = config.ui_store_folder.join(happ.ui_name());
-    utils::extract_zip(&source_path, &unpack_path).context("failed to extract UI archive")?;
-    debug!("installed UI: {}", happ.id());
+    if let Some(ui_home) = config.ui_store_folder.clone() {
+        let unpack_path = ui_home.join(happ.ui_name());
+        extract_zip(&source_path, &unpack_path).context("failed to extract UI archive")?;
+        debug!("installed UI: {}", happ.id());
+    }
     Ok(())
 }

@@ -1,3 +1,5 @@
+use super::admin_ws::AdminWebsocket;
+use super::hpos_membrane_proof::{delete_mem_proof_file, get_mem_proof};
 use anyhow::{anyhow, Context, Result};
 use holochain_conductor_api::{AdminRequest, AdminResponse};
 use holochain_types::dna::AgentPubKey;
@@ -5,10 +7,6 @@ use holochain_types::prelude::MembraneProof;
 use hpos_config_core::Config;
 use std::{env, fs, fs::File, io::prelude::*};
 use tracing::{info, instrument};
-
-use crate::membrane_proof::{delete_mem_proof_file, get_mem_proof};
-use crate::utils::AuthError;
-use crate::websocket::AdminWebsocket;
 
 #[derive(Clone)]
 pub struct Admin {
@@ -35,6 +33,14 @@ impl Agent {
             membrane_proof,
         })
     }
+}
+
+#[derive(thiserror::Error, Debug)]
+pub enum AuthError {
+    #[error("Error: Invalid config version used. please upgrade to hpos-config v2")]
+    ConfigVersionError,
+    #[error("Registration Error: {}", _0)]
+    RegistrationError(String),
 }
 
 /// Populates Admin struct with agent's pub_key and admin details
@@ -136,7 +142,11 @@ async fn save_pubkey(pub_key: AgentPubKey, pubkey_path: &str) -> Result<AgentPub
 pub fn get_hpos_config() -> Result<Config> {
     let config_path = env::var("HPOS_CONFIG_PATH")
         .context("Failed to read HPOS_CONFIG_PATH. Is it set in env?")?;
-    let config_json = fs::read(config_path)?;
+    read_hpos_config(&config_path)
+}
+
+pub fn read_hpos_config(path: &String) -> Result<Config> {
+    let config_json = fs::read(path)?;
     let config: Config = serde_json::from_slice(&config_json)?;
     Ok(config)
 }

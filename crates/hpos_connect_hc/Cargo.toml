@@ -1,0 +1,34 @@
+[package]
+name = "hpos_hc_connect"
+version = "0.1.0"
+authors = ["zo-el <joelulahanna@gmaail.com>"]
+edition = "2021"
+
+[dependencies]
+again = "0.1"
+anyhow = "1.0"
+base64 = "0.13.0"
+ed25519-dalek = { version = "1.0.1", features = ["serde"] }
+holochain_types = "0.2.0"
+holochain_conductor_api = "0.2.0"
+holochain_websocket = "0.2.0"
+lazy_static = "1"
+mr_bundle = "0.2.0"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0.60"
+serde_yaml = "0.9.21"
+structopt = "0.3.26"
+reqwest = { version = "0.11", features = ["json"]}
+tracing = "0.1.37"
+url = "2.4.0"
+isahc = "1.7.2"
+tempfile = "3.1"
+thiserror = "1.0"
+
+[dependencies.hpos-config-core]
+git = "https://github.com/Holo-Host/hpos-config"
+rev = "bfaced6044ae570bf20d4528fa9aaafcc43ddeec"
+
+[dependencies.hpos-config-seed-bundle-explorer]
+git = "https://github.com/Holo-Host/hpos-config"
+rev = "bfaced6044ae570bf20d4528fa9aaafcc43ddeec"

@@ -37,7 +37,7 @@ pub fn spawn(
     }
 
     let server_log_path = logs_dir.join("lair-keystore-server.txt");
-    let server_log = File::create(&server_log_path).unwrap();
+    let server_log = File::create(server_log_path).unwrap();
     let lair = spawn_lair_server(&lair_dir, server_log).unwrap();
 
     Ok((lair, lair_config))
@@ -48,7 +48,7 @@ fn init_lair(lair_dir: &Path, log: File) -> Result<(), InitLairError> {
     let mut lair_init = kill_on_drop(
         Command::new("lair-keystore")
             .arg("--lair-root")
-            .arg(&lair_dir)
+            .arg(lair_dir)
             .arg("init")
             .arg("--piped")
             .stdin(process::Stdio::piped())
@@ -73,7 +73,7 @@ fn import_seed(lair_dir: &Path, log: File, device_bundle: &str) -> Result<(), In
     let mut lair_init = kill_on_drop(
         Command::new("lair-keystore")
             .arg("--lair-root")
-            .arg(&lair_dir)
+            .arg(lair_dir)
             .arg("import-seed")
             .arg("host")
             .arg(device_bundle)
@@ -108,7 +108,7 @@ fn spawn_lair_server(lair_dir: &Path, log: File) -> Result<KillChildOnDrop, Spaw
     let mut lair = kill_on_drop(
         Command::new("lair-keystore")
             .arg("--lair-root")
-            .arg(&lair_dir)
+            .arg(lair_dir)
             .arg("server")
             .arg("--piped")
             .stdin(process::Stdio::piped())
@@ -132,7 +132,7 @@ fn wait_for_ready_string(child: &mut KillChildOnDrop) -> Result<(), io::Error> {
 }
 
 fn read_lair_config(path: &Path) -> Result<LairConfig, serde_yaml::Error> {
-    let file = File::open(&path).unwrap();
+    let file = File::open(path).unwrap();
     serde_yaml::from_reader(file)
 }
 
@@ -151,7 +151,7 @@ fn write_lair_config(path: PathBuf, config: &LairConfig) -> Result<(), serde_yam
     let file = std::fs::OpenOptions::new()
         .write(true)
         .truncate(true)
-        .open(&path)
+        .open(path)
         .unwrap();
     serde_yaml::to_writer(file, &config)
 }

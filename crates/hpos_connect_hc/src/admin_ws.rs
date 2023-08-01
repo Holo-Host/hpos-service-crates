@@ -1,10 +1,8 @@
-use crate::agent::Agent;
-use crate::config::Happ;
-use crate::membrane_proof::MembraneProofs;
+use super::holo_config::Happ;
+use super::hpos_agent::Agent;
+use super::hpos_membrane_proof::MembraneProofs;
 use anyhow::{anyhow, Context, Result};
-use holochain_conductor_api::{
-    AdminRequest, AdminResponse, AppInfo, AppRequest, AppResponse, AppStatusFilter, ZomeCall,
-};
+use holochain_conductor_api::{AdminRequest, AdminResponse, AppStatusFilter};
 use holochain_types::app::{AppBundleSource, InstallAppPayload, InstalledAppId};
 use holochain_websocket::{connect, WebsocketConfig, WebsocketSender};
 use std::{env, sync::Arc};
@@ -83,10 +81,16 @@ impl AdminWebsocket {
         membrane_proofs: MembraneProofs,
         agent: Agent,
     ) -> Result<()> {
+        let mut agent_key = agent.admin.key.clone();
+
+        if let Some(admin) = &happ.agent_override_details().await? {
+            agent_key = admin.key.clone();
+        };
+
         let payload = if let Ok(id) = env::var("DEV_UID_OVERRIDE") {
             debug!("using network_seed to install: {}", id);
             InstallAppPayload {
-                agent_key: agent.admin.key,
+                agent_key,
                 installed_app_id: Some(happ.id()),
                 source,
                 membrane_proofs,
@@ -95,7 +99,7 @@ impl AdminWebsocket {
         } else {
             debug!("using default network_seed to install");
             InstallAppPayload {
-                agent_key: agent.admin.key,
+                agent_key,
                 installed_app_id: Some(happ.id()),
                 source,
                 membrane_proofs,
@@ -147,60 +151,6 @@ impl AdminWebsocket {
             .context("failed to send message")?;
         match response {
             AdminResponse::Error(error) => Err(anyhow!("error: {:?}", error)),
-            _ => {
-                trace!("send successful");
-                Ok(response)
-            }
-        }
-    }
-}
-
-#[derive(Clone)]
-pub struct AppWebsocket {
-    tx: WebsocketSender,
-}
-
-impl AppWebsocket {
-    #[instrument(err)]
-    pub async fn connect(app_port: u16) -> Result<Self> {
-        let url = format!("ws://localhost:{}/", app_port);
-        let url = Url::parse(&url).context("invalid ws:// URL")?;
-        let websocket_config = Arc::new(WebsocketConfig::default());
-        let (tx, _rx) = again::retry(|| {
-            let websocket_config = Arc::clone(&websocket_config);
-            connect(url.clone().into(), websocket_config)
-        })
-        .await?;
-        Ok(Self { tx })
-    }
-
-    #[instrument(skip(self))]
-    pub async fn get_app_info(&mut self, app_id: InstalledAppId) -> Option<AppInfo> {
-        let msg = AppRequest::AppInfo {
-            installed_app_id: app_id,
-        };
-        let response = self.send(msg).await.ok()?;
-        match response {
-            AppResponse::AppInfo(app_info) => app_info,
-            _ => None,
-        }
-    }
-
-    #[instrument(skip(self))]
-    pub async fn zome_call(&mut self, msg: ZomeCall) -> Result<AppResponse> {
-        let app_request = AppRequest::CallZome(Box::new(msg));
-        self.send(app_request).await
-    }
-
-    #[instrument(skip(self))]
-    async fn send(&mut self, msg: AppRequest) -> Result<AppResponse> {
-        let response = self
-            .tx
-            .request(msg)
-            .await
-            .context("failed to send message")?;
-        match response {
-            AppResponse::Error(error) => Err(anyhow!("error: {:?}", error)),
             _ => {
                 trace!("send successful");
                 Ok(response)
