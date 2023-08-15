@@ -33,7 +33,7 @@ async fn run_happ_manager() {
     set_var("READ_ONLY_MEM_PROOF", "false");
 
     // devNet HBS server url, because given hpos-config is registered in devNet database
-    set_var("MEM_PROOF_SERVER_URL", "https://hbs.dev.holotest.net");
+    set_var("MEM_PROOF_SERVER_URL", "https://membrane-proof.dev.holotest.net");
 
     // pass to unlock the seed
     set_var("DEVICE_SEED_DEFAULT_PASSWORD", "passphrase");
