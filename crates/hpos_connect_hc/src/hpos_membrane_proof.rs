@@ -179,7 +179,7 @@ async fn download_memproof(
     registration_payload: Registration,
 ) -> Result<(String, Arc<SerializedBytes>)> {
     let url = format!(
-        "{}/registration/api/v1/membrane-proof",
+        "{}/membrane-proof",
         env::var("MEM_PROOF_SERVER_URL")
             .context("Failed to read MEM_PROOF_SERVER_URL. Is it set in env?")?
     );
