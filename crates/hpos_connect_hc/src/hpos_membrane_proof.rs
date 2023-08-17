@@ -196,6 +196,7 @@ async fn download_memproof(
             Ok((reg.mem_proof, mem_proof_serialized))
         }
         Err(e) => {
+            println!(">>>>>>>>>>>>>{:?}", e);
             error!("Error: {:?}", e);
             let err: RegistrationError = resp.json().await?;
             Err(AuthError::RegistrationError(err.to_string()).into())
