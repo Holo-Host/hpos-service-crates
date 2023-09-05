@@ -13,7 +13,7 @@ tracing = { version = "0.1", features = ["attributes"] }
 tracing-subscriber = "0.2"
 url = "2.2"
 thiserror = "1.0"
-holochain_types = "0.2.2-beta-rc.1"
+holochain_types = { workspace = true }
 hpos_hc_connect = { version = "0.1.0", path = "../hpos_connect_hc" }
 
 [dependencies.hpos-config-core]
