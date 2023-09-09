@@ -100,10 +100,12 @@ async fn run_configure_holochain(f_r_a_k: &str, r_o_m_p: &str) {
     let _holochain = test_utils::holochain::spawn_holochain(&tmp_dir, &log_dir, lair_config);
 
     let happs_file_path: PathBuf = "./tests/config.yaml".into();
+    let ui_store_folder = std::env::temp_dir();
+    println!("Temporary directory for UI: {}", ui_store_folder.display());
     let config = hpos_hc_connect::holo_config::Config {
         admin_port: 4444,
         happ_port: 42233,
-        ui_store_folder: Some("./tmp".into()),
+        ui_store_folder: Some(ui_store_folder),
         happs_file_path: happs_file_path.clone(),
         lair_url: None,
     };
