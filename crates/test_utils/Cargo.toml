@@ -6,7 +6,7 @@ edition = "2021"
 
 [dependencies]
 chrono = "0.4.22"
-lair_keystore_api = { workspace = true }
+lair_keystore_api = "0.3.0"
 serde = { version = "1.0", features = ["derive"] }
 serde_yaml = "0.9.11"
 snafu = "0.7.1"
