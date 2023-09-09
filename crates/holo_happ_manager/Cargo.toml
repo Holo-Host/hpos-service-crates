@@ -21,7 +21,7 @@ tokio = "1.28.2"
 url2 = "0.0.6"
 
 [dev-dependencies]
-configure-holochain = { version = "0.5.1", path = "../configure-holochain"}
+configure-holochain = { version = "0.5.2", path = "../configure-holochain"}
 serial_test = { version = "0.9.0", features = ["async"] }
 test_utils = { version = "0.1.0", path = "../test_utils" }
 

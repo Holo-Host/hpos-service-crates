@@ -1,19 +1,16 @@
 [package]
 name = "configure-holochain"
-version = "0.5.1"
+version = "0.5.2"
 authors = ["Oleksii Filonenko <oleksii.filonenko@holo.host>", "zo-el <joelulahanna@gmaail.com>"]
 edition = "2021"
 
 [dependencies]
 anyhow = "1.0"
 serde = { version = "1.0", features = ["derive"] }
-serde_yaml = "0.9.11"
 tokio = { version = "1", features = ["full"] }
 tracing = { version = "0.1", features = ["attributes"] }
 tracing-subscriber = "0.2"
 url = "2.2"
-thiserror = "1.0"
-holochain_types = { workspace = true }
 hpos_hc_connect = { version = "0.1.0", path = "../hpos_connect_hc" }
 
 [dependencies.hpos-config-core]
@@ -21,7 +18,7 @@ git = "https://github.com/Holo-Host/hpos-config"
 rev = "bfaced6044ae570bf20d4528fa9aaafcc43ddeec"
 
 [target.'cfg(unix)'.dependencies]
-nix = "0.26.2"
+nix = "0.27.1"
 
 [dev-dependencies]
 test-case = "2.2.2"
