@@ -95,6 +95,7 @@ impl AdminWebsocket {
                 source,
                 membrane_proofs,
                 network_seed: Some(id),
+                ignore_genesis_failure: false,
             }
         } else {
             debug!("using default network_seed to install");
@@ -104,6 +105,7 @@ impl AdminWebsocket {
                 source,
                 membrane_proofs,
                 network_seed: None,
+                ignore_genesis_failure: false,
             }
         };
 
