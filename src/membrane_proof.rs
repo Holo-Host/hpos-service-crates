@@ -176,7 +176,7 @@ async fn download_memproof(admin: Admin) -> Result<String> {
         payload: RegistrationPayload { role },
     };
     let url = format!(
-        "{}/registration/api/v1/membrane-proof",
+        "{}/membrane-proof",
         env::var("MEM_PROOF_SERVER_URL")
             .context("Failed to read MEM_PROOF_SERVER_URL. Is it set in env?")?
     );
