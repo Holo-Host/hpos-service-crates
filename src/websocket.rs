@@ -7,7 +7,7 @@ use holochain_conductor_api::{
 };
 use holochain_types::app::{AppBundleSource, InstallAppPayload, InstalledAppId};
 use holochain_websocket::{connect, WebsocketConfig, WebsocketSender};
-use std::{env, sync::Arc};
+use std::{collections::HashMap, env, sync::Arc};
 use tracing::{debug, info, instrument, trace};
 use url::Url;
 
@@ -75,12 +75,12 @@ impl AdminWebsocket {
         Ok(())
     }
 
-    #[instrument(err, skip(self, happ, source, membrane_proofs, agent))]
+    #[instrument(err, skip(self, happ, source, _membrane_proofs, agent))]
     async fn install_happ(
         &mut self,
         happ: &Happ,
         source: AppBundleSource,
-        membrane_proofs: MembraneProofs,
+        _membrane_proofs: MembraneProofs,
         agent: Agent,
     ) -> Result<()> {
         let payload = if let Ok(id) = env::var("DEV_UID_OVERRIDE") {
@@ -89,7 +89,7 @@ impl AdminWebsocket {
                 agent_key: agent.admin.key,
                 installed_app_id: Some(happ.id()),
                 source,
-                membrane_proofs,
+                membrane_proofs: HashMap::new(),
                 network_seed: Some(id),
             }
         } else {
@@ -98,7 +98,7 @@ impl AdminWebsocket {
                 agent_key: agent.admin.key,
                 installed_app_id: Some(happ.id()),
                 source,
-                membrane_proofs,
+                membrane_proofs: HashMap::new(),
                 network_seed: None,
             }
         };

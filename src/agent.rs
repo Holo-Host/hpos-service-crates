@@ -28,7 +28,8 @@ impl Agent {
     #[instrument(err, skip(admin_websocket))]
     pub async fn init(admin_websocket: AdminWebsocket) -> Result<Self> {
         let admin = populate_admin(admin_websocket).await?;
-        let membrane_proof = get_mem_proof(admin.clone()).await?;
+        let membrane_proof = MembraneProof::default();
+        // get_mem_proof(admin.clone()).await?;
 
         Ok(Self {
             admin,
