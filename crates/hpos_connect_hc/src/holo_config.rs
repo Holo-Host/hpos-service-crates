@@ -2,12 +2,50 @@ use super::hpos_agent::{default_password, read_hpos_config, Admin};
 use anyhow::{Context, Result};
 use holochain_types::prelude::{AgentPubKey, AppBundleSource};
 use holochain_types::{app::AppManifest, prelude::YamlProperties};
+use lair_keystore_api::{
+    dependencies::{serde_yaml, url::Url},
+    prelude::LairServerConfigInner,
+};
 use serde::Deserialize;
 use std::env;
 use std::path::{Path, PathBuf};
 use structopt::StructOpt;
 use tracing::{debug, instrument};
-use url::Url;
+
+pub const APP_PORT: u16 = 42233;
+// pub const ADMIN_PORT: u16 = 4444;
+
+pub fn default_core_happ_file() -> Result<String> {
+    env::var("CORE_HAPP_FILE").context("Failed to read CORE_HAPP_FILE. Is it set in env?")
+}
+
+pub fn get_lair_url() -> Result<Url> {
+    match env::var("LAIR_CONNECTION_URL") {
+        Ok(url_string) => {
+            let url = Url::parse(&url_string)?;
+            Ok(url)
+        }
+        Err(_) => {
+            let config = read_lair_config()?;
+            Ok(config.connection_url)
+        }
+    }
+}
+
+fn read_lair_config() -> Result<LairServerConfigInner> {
+    let file = std::fs::File::open(default_lair_dir()?)?;
+    let config: LairServerConfigInner = serde_yaml::from_reader(file)?;
+    Ok(config)
+}
+
+fn default_lair_dir() -> Result<String> {
+    let working_dir = env::var("HOLOCHAIN_WORKING_DIR")
+        .context("Failed to read HOLOCHAIN_WORKING_DIR. Is it set in env?")?;
+    Ok(format!(
+        "{}/lair-keystore/lair-keystore-config.yaml",
+        working_dir
+    ))
+}
 
 #[derive(Debug, Clone, StructOpt)]
 pub struct Config {
@@ -186,6 +224,13 @@ pub struct HappsFile {
     pub core_happs: Vec<Happ>,
 }
 impl HappsFile {
+    pub fn holofuel(self) -> Option<Happ> {
+        let core_app = &self
+            .core_happs
+            .into_iter()
+            .find(|x| x.id().contains("holofuel"));
+        core_app.clone()
+    }
     pub fn core_app(self) -> Option<Happ> {
         let core_app = &self
             .core_happs
@@ -196,11 +241,17 @@ impl HappsFile {
 
     #[instrument(err, fields(path = %path.as_ref().display()))]
     pub fn load_happ_file(path: impl AsRef<Path>) -> Result<HappsFile> {
-        use std::fs::File;
-        let file = File::open(path).context("failed to open file")?;
+        let file = std::fs::File::open(path).context("failed to open file")?;
         let happ_file =
             serde_yaml::from_reader(&file).context("failed to deserialize YAML as HappsFile")?;
         debug!(?happ_file);
+        Ok(happ_file)
+    }
+    // helper that reads the env var insted of a path that is passed
+    pub fn load_happ_file_from_env() -> Result<Self> {
+        let file = std::fs::File::open(default_core_happ_file()?).context("failed to open file")?;
+        let happ_file =
+            serde_yaml::from_reader(&file).context("failed to deserialize YAML as HappsFile")?;
         Ok(happ_file)
     }
 }

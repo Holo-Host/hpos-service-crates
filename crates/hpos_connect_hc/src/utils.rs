@@ -1,11 +1,23 @@
 use anyhow::{anyhow, Context, Result};
+use holochain_types::prelude::{Nonce256Bits, Timestamp};
 use std::fs;
 use std::path::Path;
 use std::path::PathBuf;
 use std::process;
+use std::time::Duration;
 use tempfile::TempDir;
 use tracing::{debug, instrument};
 use url::Url;
+
+/// generates nonce for zome calls
+pub fn fresh_nonce() -> Result<(Nonce256Bits, Timestamp)> {
+    let mut bytes = [0; 32];
+    getrandom::getrandom(&mut bytes)?;
+    let nonce = Nonce256Bits::from(bytes);
+    // Rather arbitrary but we expire nonces after 5 mins.
+    let expires: Timestamp = (Timestamp::now() + Duration::from_secs(60 * 5))?;
+    Ok((nonce, expires))
+}
 
 #[instrument(
     err,
