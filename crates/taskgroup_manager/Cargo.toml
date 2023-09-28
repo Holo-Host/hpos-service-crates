@@ -1,0 +1,15 @@
+[package]
+name = "taskgroup_manager"
+version = "0.1.0"
+authors = ["Timo <timo@holo.host>", "Lisa <lisa@holo.host>", "zo-el <joelulahanna@gmaail.com>"]
+edition = "2021"
+
+[dependencies]
+task-group = "0.2.1"
+futures = "0.3.17"
+
+[target.'cfg(unix)'.dependencies]
+nix = "0.26.2"
+
+[dev-dependencies]
+tokio = { version = "1.12.0", features = ["rt-multi-thread", "macros"] }

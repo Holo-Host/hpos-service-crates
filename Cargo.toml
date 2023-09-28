@@ -8,6 +8,8 @@ members = [
   "crates/core_app_cli",
   "crates/holofuel_cli",
   "crates/holofuel_init",
+  "crates/taskgroup_manager",
+  "crates/holochain_env_setup",
 ]
 
 [profile.dev]
