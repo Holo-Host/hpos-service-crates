@@ -899,6 +899,19 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5827cebf4670468b8772dd191856768aedcb1b0278a04f989f7766351917b9dc"
 
 [[package]]
+name = "core_app_cli"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "holochain_types",
+ "hpos_hc_connect",
+ "rmp-serde 1.1.1",
+ "serde",
+ "structopt",
+ "tokio",
+]
+
+[[package]]
 name = "corosensei"
 version = "0.1.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2074,6 +2087,19 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7f24254aa9a54b5c858eaee2f5bccdb46aaf0e486a595ed5fd8f86ba55232a70"
 
 [[package]]
+name = "hf"
+version = "0.1.1"
+dependencies = [
+ "anyhow",
+ "holochain_types",
+ "hpos_hc_connect",
+ "rmp-serde 1.1.1",
+ "serde",
+ "structopt",
+ "tokio",
+]
+
+[[package]]
 name = "holo_happ_manager"
 version = "0.1.0"
 dependencies = [
@@ -2568,6 +2594,20 @@ dependencies = [
  "subtle-encoding",
  "thiserror",
  "tracing",
+]
+
+[[package]]
+name = "holofuel_init"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "holochain_types",
+ "hpos_hc_connect",
+ "rmp-serde 1.1.1",
+ "serde",
+ "tokio",
+ "tracing",
+ "tracing-subscriber 0.2.25",
 ]
 
 [[package]]

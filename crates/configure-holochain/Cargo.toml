@@ -11,7 +11,7 @@ tokio = { version = "1", features = ["full"] }
 tracing = { version = "0.1", features = ["attributes"] }
 tracing-subscriber = "0.2"
 url = "2.2"
-hpos_hc_connect = { version = "0.1.0", path = "../hpos_connect_hc" }
+hpos_hc_connect = { path = "../hpos_connect_hc" }
 
 [dev-dependencies]
 test-case = "2.2.2"
