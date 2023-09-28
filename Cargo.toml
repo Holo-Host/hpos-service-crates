@@ -7,17 +7,6 @@ members = [
   "crates/test_utils"
 ]
 
-[workspace.dependencies]
-serde = "1.0"
-holochain_types = {version = "0.2.2", features = ["chc"]}
-holochain_conductor_api = { version = "0.2.2", features = ["chc"]}
-holochain_keystore = { version = "0.2.2" }
-holochain_websocket = { version = "0.2.2"}
-mr_bundle = { version = "0.2.2" }
-hpos-config-core = { git = "https://github.com/Holo-Host/hpos-config", rev = "bfaced6044ae570bf20d4528fa9aaafcc43ddeec" }
-hpos-config-seed-bundle-explorer ={ git = "https://github.com/Holo-Host/hpos-config", rev = "bfaced6044ae570bf20d4528fa9aaafcc43ddeec" }
-lair_keystore_api = "0.3.0"
-
 [profile.dev]
 opt-level = "z"
 
