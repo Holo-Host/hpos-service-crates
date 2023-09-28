@@ -85,22 +85,28 @@ async fn run_configure_holochain(f_r_a_k: &str, r_o_m_p: &str) {
 
     // pass to unlock the seed
     set_var("DEVICE_SEED_DEFAULT_PASSWORD", "pass");
+    set_var("HOLOCHAIN_DEFAULT_PASSWORD", "pass");
 
-    let device_bundle = match get_hpos_config().unwrap() {
-        Config::V2 { device_bundle, .. } => device_bundle,
-        _ => panic!("Unsupported Config version"),
-    };
+    // let device_bundle = match get_hpos_config().unwrap() {
+    //     Config::V2 { device_bundle, .. } => device_bundle,
+    //     _ => panic!("Unsupported Config version"),
+    // };
 
+    println!("Starting holochain env");
+    let _ = holochain_env_setup::environment::setup_environment(&tmp_dir, false, &log_dir, None)
+        .await
+        .unwrap();
+    println!("Done setting up holochain env");
     // spin up lair
-    println!("Starting lair-keystore");
-    let (_lair, lair_config, _) =
-        holochain_env_setup::lair::spawn(&tmp_dir, &log_dir, None, Some(&device_bundle))
-            .await
-            .unwrap();
+    // println!("Starting lair-keystore");
+    // let (_lair, lair_config, _) =
+    //     holochain_env_setup::lair::spawn(&tmp_dir, &log_dir, None, Some(&device_bundle))
+    //         .await
+    //         .unwrap();
 
-    println!("Spinning up holochain");
-    let _holochain =
-        holochain_env_setup::environment::spawn_holochain(&tmp_dir, &log_dir, lair_config);
+    // println!("Spinning up holochain");
+    // let _holochain =
+    //     holochain_env_setup::environment::spawn_holochain(&tmp_dir, &log_dir, lair_config);
 
     let happs_file_path: PathBuf = "./tests/config.yaml".into();
     let ui_store_folder = std::env::temp_dir();
@@ -117,9 +123,11 @@ async fn run_configure_holochain(f_r_a_k: &str, r_o_m_p: &str) {
     println!("Run configure holochain script");
     configure_holochain::run(config.clone()).await.unwrap();
 
+    println!("Second Run configure holochain script");
     // Second run should not error out
     configure_holochain::run(config.clone()).await.unwrap();
 
+    println!("Deleting mem proof");
     // Delete memproof which is an equivalent of changing DEV_UID_OVERRIDE for holoport
     // which was creating a bug https://github.com/Holo-Host/hpos-configure-holochain/issues/136
     delete_mem_proof_file().unwrap();

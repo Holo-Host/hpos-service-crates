@@ -40,6 +40,7 @@ async fn run_happ_manager() {
 
     // pass to unlock the seed
     set_var("DEVICE_SEED_DEFAULT_PASSWORD", "passphrase");
+    set_var("HOLOCHAIN_DEFAULT_PASSWORD", "passphrase");
 
     let device_bundle = match get_hpos_config().unwrap() {
         Config::V2 { device_bundle, .. } => device_bundle,
