@@ -149,7 +149,9 @@ pub async fn setup_environment(
     lair_fallback: Option<(PathBuf, u16)>,
 ) -> Result<Environment, SetupEnvironmentError> {
     trace!("Starting lair-keystore");
-    let (lair, lair_config, keystore) = lair::spawn(tmp_dir, log_dir, lair_fallback).await.unwrap();
+    let (lair, lair_config, keystore) = lair::spawn(tmp_dir, log_dir, lair_fallback, None)
+        .await
+        .unwrap();
 
     trace!("Spinning up holochain");
     let holochain = spawn_holochain(tmp_dir, log_dir, lair_config.clone());

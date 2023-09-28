@@ -17,6 +17,7 @@ pub async fn spawn(
     tmp_dir: &Path,
     logs_dir: &Path,
     fallback: Option<(PathBuf, u16)>,
+    device_bundle: Option<&str>,
 ) -> Result<(KillChildOnDrop, LairConfig, MetaLairClient), SpawnError> {
     use dotenv::dotenv;
     dotenv().ok();
@@ -32,9 +33,13 @@ pub async fn spawn(
         path: init_log_path.clone(),
     })?;
 
-    init_lair(&lair_dir, init_log).context(InitSnafu {
+    init_lair(&lair_dir, init_log.try_clone().unwrap()).context(InitSnafu {
         log_path: init_log_path,
     })?;
+
+    if let Some(bundle) = device_bundle {
+        import_seed(&lair_dir, init_log, bundle).unwrap();
+    }
 
     let lair_config_path = lair_dir.join("lair-keystore-config.yaml");
 
@@ -63,7 +68,8 @@ pub async fn spawn(
 
     let connection_url = lair_config.connection_url.clone();
 
-    let env_pw = std::env::var("HOLOCHAIN_DEFAULT_PASSWORD").expect("HOLOCHAIN_DEFAULT_PASSWORD must be set");
+    let env_pw = std::env::var("HOLOCHAIN_DEFAULT_PASSWORD")
+        .expect("HOLOCHAIN_DEFAULT_PASSWORD must be set");
     let passphrase: sodoken::BufRead = sodoken::BufRead::from(env_pw.to_string().as_bytes());
 
     let keystore = match holochain_keystore::lair_keystore::spawn_lair_keystore(
@@ -98,7 +104,7 @@ fn init_lair(lair_dir: &Path, log: File) -> Result<(), InitLairError> {
             .context(SpawnLairInitSnafu)?,
     );
 
-    write_passphrase(&mut lair_init).context(WritePassphraseToInitSnafu)?;
+    write_passphrase(&mut lair_init, None).context(WritePassphraseToInitSnafu)?;
 
     let exit_status = lair_init.wait().context(WaitProcessSnafu)?;
 
@@ -111,13 +117,50 @@ fn init_lair(lair_dir: &Path, log: File) -> Result<(), InitLairError> {
     }
 }
 
-fn write_passphrase(child: &mut KillChildOnDrop) -> Result<(), io::Error> {
-    let env_pw = std::env::var("HOLOCHAIN_DEFAULT_PASSWORD").expect("HOLOCHAIN_DEFAULT_PASSWORD must be set");
-    child
-        .stdin
-        .take()
-        .expect("child lair process was spawned with piped stdin")
-        .write_all(env_pw.to_string().as_bytes())
+fn import_seed(lair_dir: &Path, log: File, device_bundle: &str) -> Result<(), InitLairError> {
+    let log_2 = log.try_clone().unwrap();
+    let mut lair_init = kill_on_drop(
+        Command::new("lair-keystore")
+            .arg("--lair-root")
+            .arg(lair_dir)
+            .arg("import-seed")
+            .arg("host")
+            .arg(device_bundle)
+            .arg("--piped")
+            .stdin(process::Stdio::piped())
+            .stdout(log)
+            .stderr(log_2)
+            .spawn()
+            .unwrap(),
+    );
+    // Here format of a passphrase is "<lair_password>/n<seed_bundle_password>"
+    write_passphrase(&mut lair_init, Some(b"passphrase\npass")).unwrap();
+    let exit_status = lair_init.wait().unwrap();
+    if exit_status.success() {
+        Ok(())
+    } else {
+        Err(InitLairError::NonZeroExitStatus {
+            status: exit_status,
+        })
+    }
+}
+
+fn write_passphrase(child: &mut KillChildOnDrop, buf: Option<&[u8]>) -> Result<(), io::Error> {
+    if let Some(pw) = buf {
+        child
+            .stdin
+            .take()
+            .expect("child lair process was spawned with piped stdin")
+            .write_all(pw)
+    } else {
+        let env_pw = std::env::var("HOLOCHAIN_DEFAULT_PASSWORD")
+            .expect("HOLOCHAIN_DEFAULT_PASSWORD must be set");
+        child
+            .stdin
+            .take()
+            .expect("child lair process was spawned with piped stdin")
+            .write_all(env_pw.to_string().as_bytes())
+    }
 }
 
 fn spawn_lair_server(lair_dir: &Path, log: File) -> Result<KillChildOnDrop, SpawnLairServerError> {
@@ -134,7 +177,7 @@ fn spawn_lair_server(lair_dir: &Path, log: File) -> Result<KillChildOnDrop, Spaw
             .context(SpawnLairServerCommandSnafu)?,
     );
 
-    write_passphrase(&mut lair).context(WritePassphraseToServerSnafu)?;
+    write_passphrase(&mut lair, None).context(WritePassphraseToServerSnafu)?;
     wait_for_ready_string(&mut lair).context(WaitReadyStringSnafu)?;
     Ok(lair)
 }

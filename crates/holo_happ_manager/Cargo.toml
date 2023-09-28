@@ -7,7 +7,6 @@ edition = "2021"
 [dependencies]
 anyhow = "1.0"
 hpos_hc_connect = { version = "0.1.0", path = "../hpos_connect_hc" }
-
 holochain_types = {version = "0.2.2", features = ["chc"]}
 holochain_conductor_api = { version = "0.2.2", features = ["chc"]}
 holochain_keystore = { version = "0.2.2" }
@@ -25,5 +24,4 @@ hpos-config-core = { git = "https://github.com/Holo-Host/hpos-config", rev = "bf
 [dev-dependencies]
 configure-holochain = { path = "../configure-holochain"}
 serial_test = { version = "0.9.0", features = ["async"] }
-test_utils = { path = "../test_utils" }
-
+holochain_env_setup = { path = "../holochain_env_setup" }

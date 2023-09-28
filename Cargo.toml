@@ -2,14 +2,13 @@
 
 members = [
   "crates/configure-holochain",
-  "crates/hpos_connect_hc",
   "crates/holo_happ_manager",
-  "crates/test_utils",
   "crates/core_app_cli",
+  "crates/holochain_env_setup",
   "crates/holofuel_cli",
   "crates/holofuel_init",
+  "crates/hpos_connect_hc",
   "crates/taskgroup_manager",
-  "crates/holochain_env_setup",
 ]
 
 [profile.dev]
