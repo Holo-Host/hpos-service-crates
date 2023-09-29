@@ -1,0 +1,8 @@
+{
+  "external_reserve_currency": "HOT",
+  "external_account_number": "tmp-account-number",
+  "default_promise_expiry": { "secs": 2629743, "nanos": 0 },
+  "min_external_currency_tx_size": "10",
+  "max_external_currency_tx_size": "1000",
+  "note": null
+}

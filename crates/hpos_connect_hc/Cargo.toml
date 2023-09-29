@@ -26,3 +26,9 @@ holochain_websocket = { version = "0.2.2"}
 mr_bundle = { version = "0.2.2" }
 hpos-config-core = { git = "https://github.com/Holo-Host/hpos-config", rev = "bfaced6044ae570bf20d4528fa9aaafcc43ddeec" }
 hpos-config-seed-bundle-explorer ={ git = "https://github.com/Holo-Host/hpos-config", rev = "bfaced6044ae570bf20d4528fa9aaafcc43ddeec" }
+getrandom = "0.2.7"
+holochain_keystore = "0.2.2"
+holochain_client = "0.4.2"
+sodoken = "0.0.9"
+url2 = "0.0.6"
+lair_keystore_api = "0.3.0"
