@@ -2,7 +2,7 @@ pub mod get_my_apps;
 use anyhow::{anyhow, Context, Result};
 use hha::HHAAgent;
 use holochain_conductor_api::AppResponse;
-use holochain_types::prelude::{ZomeName, FunctionName, ExternIO, AgentPubKey};
+use holochain_types::prelude::{AgentPubKey, ExternIO, FunctionName, ZomeName};
 pub use hpos_hc_connect::holo_config::{Config, Happ, HappsFile};
 use serde::Serialize;
 use tracing::{debug, info};
@@ -55,8 +55,8 @@ pub fn happ_to_published() -> Result<Vec<HappInput>> {
 }
 
 fn get_core_happ(happs_file_path: &PathBuf) -> Result<Happ> {
-    let happ_file = HappsFile::load_happ_file(happs_file_path)
-    .context("failed to load hApps YAML config")?;
+    let happ_file =
+        HappsFile::load_happ_file(happs_file_path).context("failed to load hApps YAML config")?;
     let core_happ = happ_file.core_app().ok_or_else(|| {
         anyhow!(
         "Please check that the happ config file is present. No Core apps found in configuration"
@@ -65,19 +65,23 @@ fn get_core_happ(happs_file_path: &PathBuf) -> Result<Happ> {
     Ok(core_happ)
 }
 
-pub async fn update_jurisdiction_if_changed(config: &Config, hbs_jurisdiction: String) -> Result<()> {
+pub async fn update_jurisdiction_if_changed(
+    config: &Config,
+    hbs_jurisdiction: String,
+) -> Result<()> {
     let core_happ: Happ = get_core_happ(&config.happs_file_path)?;
 
     let mut agent = HHAAgent::spawn(&core_happ, config).await?;
 
     let host_pubkey = agent.pubkey();
-    
-    let response = agent.zome_call(
-        ZomeName::from("hha"),
-        FunctionName::from("get_host_jurisdiction"),
-        ExternIO::encode(host_pubkey.clone())?,
-    )
-    .await?;
+
+    let response = agent
+        .zome_call(
+            ZomeName::from("hha"),
+            FunctionName::from("get_host_jurisdiction"),
+            ExternIO::encode(host_pubkey.clone())?,
+        )
+        .await?;
 
     let hha_jurisdiction: String = match response {
         AppResponse::ZomeCalled(r) => rmp_serde::from_slice(r.as_bytes())?,
@@ -85,22 +89,22 @@ pub async fn update_jurisdiction_if_changed(config: &Config, hbs_jurisdiction: S
     };
 
     if hha_jurisdiction != hbs_jurisdiction {
-
         #[derive(Debug, Serialize)]
         pub struct SetHostJurisdictionInput {
             pub host_pubkey: AgentPubKey,
             pub jurisdiction: String,
         }
 
-        agent.zome_call(
-            ZomeName::from("hha"),
-            FunctionName::from("set_host_jurisdiction"),
-            ExternIO::encode(SetHostJurisdictionInput {
-                host_pubkey,
-                jurisdiction: hbs_jurisdiction
-            })?,
-        )
-        .await?;
+        agent
+            .zome_call(
+                ZomeName::from("hha"),
+                FunctionName::from("set_host_jurisdiction"),
+                ExternIO::encode(SetHostJurisdictionInput {
+                    host_pubkey,
+                    jurisdiction: hbs_jurisdiction,
+                })?,
+            )
+            .await?;
     }
 
     Ok(())

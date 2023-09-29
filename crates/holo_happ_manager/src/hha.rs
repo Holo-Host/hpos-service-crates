@@ -2,7 +2,7 @@ use anyhow::{anyhow, Context, Result};
 use holochain_conductor_api::{AppInfo, AppResponse, ProvisionedCell};
 use holochain_conductor_api::{CellInfo, ZomeCall};
 use holochain_keystore::MetaLairClient;
-use holochain_types::prelude::{ExternIO, FunctionName, ZomeName, AgentPubKey};
+use holochain_types::prelude::{AgentPubKey, ExternIO, FunctionName, ZomeName};
 use holochain_types::prelude::{Nonce256Bits, Timestamp, ZomeCallUnsigned};
 use hpos_hc_connect::holo_config::{Config, Happ};
 use hpos_hc_connect::AppWebsocket;

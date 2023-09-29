@@ -1,15 +1,15 @@
 use anyhow::{Context, Result};
+use holo_happ_manager;
 pub use hpos_hc_connect::{
     holo_config::{Config, Happ, HappsFile, MembraneProofFile, ProofPayload},
     utils::{download_file, extract_zip},
 };
 use hpos_hc_connect::{hpos_agent::Agent, hpos_membrane_proof};
-use holo_happ_manager;
 pub use hpos_hc_connect::{AdminWebsocket, AppWebsocket};
 use std::sync::Arc;
 use tracing::{debug, info, instrument, warn};
-mod utils;
 pub mod hpos_holochain_api;
+mod utils;
 
 #[instrument(err, skip(config))]
 pub async fn run(config: Config) -> Result<()> {
@@ -128,6 +128,6 @@ pub async fn update_host_jurisdiction_if_changed(config: &Config) -> Result<()> 
     let hbs_jurisdiction = hpos_holochain_api::get_jurisdiction()
         .await
         .context("failed to get jurisdiction from hbs")?;
-        
+
     Ok(holo_happ_manager::update_jurisdiction_if_changed(config, hbs_jurisdiction).await?)
 }
