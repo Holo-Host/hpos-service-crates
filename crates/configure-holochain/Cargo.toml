@@ -17,4 +17,5 @@ hpos_hc_connect = { path = "../hpos_connect_hc" }
 test-case = "2.2.2"
 serial_test = { version = "0.9.0", features = ["async"] }
 test_utils = { path = "../test_utils" }
+# holochain_env_setup = { path = "../holochain_env_setup" }
 hpos-config-core = { git = "https://github.com/Holo-Host/hpos-config", rev = "bfaced6044ae570bf20d4528fa9aaafcc43ddeec" }
