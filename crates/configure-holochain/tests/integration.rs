@@ -92,16 +92,14 @@ async fn run_configure_holochain(f_r_a_k: &str, r_o_m_p: &str) {
         _ => panic!("Unsupported Config version"),
     };
 
-    // spin up lair
-    println!("Starting lair-keystore");
-    let (_lair, lair_config, _) =
-        holochain_env_setup::lair::spawn(&tmp_dir, &log_dir, Some(&device_bundle), None)
-            .await
-            .unwrap();
-
-    println!("Spinning up holochain");
-    let _holochain =
-        holochain_env_setup::holochain::spawn_holochain(&tmp_dir, &log_dir, lair_config);
+    holochain_env_setup::environment::setup_environment(
+        &tmp_dir,
+        &log_dir,
+        Some(&device_bundle),
+        None,
+    )
+    .await
+    .unwrap();
 
     let happs_file_path: PathBuf = "./tests/config.yaml".into();
     let ui_store_folder = std::env::temp_dir();

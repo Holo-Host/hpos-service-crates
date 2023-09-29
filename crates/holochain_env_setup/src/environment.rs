@@ -10,12 +10,12 @@ use taskgroup_manager::kill_on_drop::KillChildOnDrop;
 
 pub async fn setup_environment(
     tmp_dir: &Path,
-    _tmp_dir_exists: bool,
     log_dir: &Path,
+    device_bundle: Option<&str>,
     lair_fallback: Option<(PathBuf, u16)>,
 ) -> Result<Environment, SetupEnvironmentError> {
     trace!("Starting lair-keystore");
-    let (lair, lair_config, keystore) = lair::spawn(tmp_dir, log_dir, None, lair_fallback)
+    let (lair, lair_config, keystore) = lair::spawn(tmp_dir, log_dir, device_bundle, lair_fallback)
         .await
         .unwrap();
 
