@@ -47,14 +47,16 @@ async fn run_happ_manager() {
         _ => panic!("Unsupported Config version"),
     };
 
-    let hc_env = holochain_env_setup::environment::setup_environment(
-        &tmp_dir,
-        &log_dir,
-        Some(&device_bundle),
-        None,
-    )
-    .await
-    .unwrap();
+    // spin up lair
+    println!("Starting lair-keystore");
+    let (_lair, lair_config, _) =
+        holochain_env_setup::lair::spawn(&tmp_dir, &log_dir, Some(&device_bundle), None)
+            .await
+            .unwrap();
+
+    println!("Spinning up holochain");
+    let _holochain =
+        holochain_env_setup::holochain::spawn_holochain(&tmp_dir, &log_dir, lair_config.clone());
 
     let happs_file_path: PathBuf = "./tests/config.yaml".into();
     let config = hpos_hc_connect::holo_config::Config {
@@ -62,7 +64,7 @@ async fn run_happ_manager() {
         happ_port: 42233,
         ui_store_folder: None,
         happs_file_path: happs_file_path.clone(),
-        lair_url: Some(hc_env.lair_config.connection_url.to_string()),
+        lair_url: Some(lair_config.connection_url.to_string()),
     };
     println!("Test running with config: {:?}", &config);
     println!("Run configure holochain script to install HHA");
