@@ -15,7 +15,7 @@
       {
         'bundle_url': 'https://github.com/Holo-Host/dummy-dna/releases/download/0.6.9/test-skip-proof.happ',
         'ui_url': 'https://github.com/holochain/elemental-chat-ui/releases/download/v0.0.1-alpha40/elemental-chat-ui.zip',
-        "agent_bundle_override" : "../test_utils/config/hp-primary-bzywj.json",
+        "agent_bundle_override" : "../holochain_env_setup/config/hp-primary-bzywj.json",
       },
     ],
 }

@@ -56,11 +56,11 @@ async fn run_configure_holochain(f_r_a_k: &str, r_o_m_p: &str) {
     // Point HPOS_CONFIG_PATH to test config file
     set_var(
         "HPOS_CONFIG_PATH",
-        "../test_utils/config/hp-primary-bzywj.json",
+        "../holochain_env_setup/config/hp-primary-bzywj.json",
     );
 
-    let tmp_dir = test_utils::holochain::create_tmp_dir();
-    let log_dir = test_utils::holochain::create_log_dir();
+    let tmp_dir = holochain_env_setup::holochain::create_tmp_dir();
+    let log_dir = holochain_env_setup::holochain::create_log_dir();
 
     // Set HOST_PUBKEY_PATH in a writable temp location
     set_var("HOST_PUBKEY_PATH", &tmp_dir.clone().join("agent.key"));
@@ -85,6 +85,7 @@ async fn run_configure_holochain(f_r_a_k: &str, r_o_m_p: &str) {
 
     // pass to unlock the seed
     set_var("DEVICE_SEED_DEFAULT_PASSWORD", "pass");
+    set_var("HOLOCHAIN_DEFAULT_PASSWORD", "passphrase");
 
     let device_bundle = match get_hpos_config().unwrap() {
         Config::V2 { device_bundle, .. } => device_bundle,
@@ -93,11 +94,14 @@ async fn run_configure_holochain(f_r_a_k: &str, r_o_m_p: &str) {
 
     // spin up lair
     println!("Starting lair-keystore");
-    let (_lair, lair_config) =
-        test_utils::lair::spawn(&tmp_dir, &log_dir, &device_bundle, None).unwrap();
+    let (_lair, lair_config, _) =
+        holochain_env_setup::lair::spawn(&tmp_dir, &log_dir, Some(&device_bundle), None)
+            .await
+            .unwrap();
 
     println!("Spinning up holochain");
-    let _holochain = test_utils::holochain::spawn_holochain(&tmp_dir, &log_dir, lair_config);
+    let _holochain =
+        holochain_env_setup::holochain::spawn_holochain(&tmp_dir, &log_dir, lair_config);
 
     let happs_file_path: PathBuf = "./tests/config.yaml".into();
     let ui_store_folder = std::env::temp_dir();

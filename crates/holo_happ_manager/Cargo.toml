@@ -25,5 +25,5 @@ hpos-config-core = { git = "https://github.com/Holo-Host/hpos-config", rev = "bf
 [dev-dependencies]
 configure-holochain = { path = "../configure-holochain"}
 serial_test = { version = "0.9.0", features = ["async"] }
-test_utils = { path = "../test_utils" }
+holochain_env_setup = { path = "../holochain_env_setup" }
 

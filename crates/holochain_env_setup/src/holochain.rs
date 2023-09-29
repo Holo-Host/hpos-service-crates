@@ -1,4 +1,3 @@
-use super::kill_on_drop::{kill_on_drop, KillChildOnDrop};
 use lair_keystore_api::prelude::LairServerConfigInner as LairConfig;
 use serde::Serialize;
 use snafu::Snafu;
@@ -8,6 +7,7 @@ use std::{
     path::{Path, PathBuf},
     process::{Command, Stdio},
 };
+use taskgroup_manager::kill_on_drop::{kill_on_drop, KillChildOnDrop};
 
 pub fn spawn_holochain(
     tmp_dir: &Path,
