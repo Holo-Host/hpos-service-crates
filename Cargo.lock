@@ -839,7 +839,7 @@ dependencies = [
  "holo_happ_manager",
  "holochain_env_setup",
  "hpos-config-core",
- "hpos_hc_connect"
+ "hpos_hc_connect",
  "serde",
  "serde_json",
  "serial_test",
