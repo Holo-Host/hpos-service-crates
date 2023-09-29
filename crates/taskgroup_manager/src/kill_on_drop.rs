@@ -1,5 +1,4 @@
 use std::{
-    convert::TryInto,
     ops::{Deref, DerefMut},
     process::Child,
 };
@@ -12,6 +11,16 @@ pub fn kill_on_drop(child: Child) -> KillChildOnDrop {
     KillChildOnDrop {
         child,
         gentle: false,
+    }
+}
+
+/// Returns a wrapper which kills the child when it goes out of scope.
+///
+/// On Unix, this uses SIGTERM instead of SIGKILL to allow the child to clean things up.
+pub fn kill_gently_on_drop(child: Child) -> KillChildOnDrop {
+    KillChildOnDrop {
+        child,
+        gentle: true,
     }
 }
 

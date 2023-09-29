@@ -40,7 +40,7 @@ impl HHAAgent {
         };
         // connect to lair
         let passphrase = sodoken::BufRead::from(
-            hpos_hc_connect::hpos_agent::default_password()?
+            hpos_hc_connect::holo_config::default_password()?
                 .as_bytes()
                 .to_vec(),
         );

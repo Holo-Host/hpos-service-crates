@@ -1,4 +1,3 @@
-use super::kill_on_drop::{kill_on_drop, KillChildOnDrop};
 use lair_keystore_api::prelude::LairServerConfigInner as LairConfig;
 use serde::Serialize;
 use snafu::Snafu;
@@ -8,6 +7,11 @@ use std::{
     path::{Path, PathBuf},
     process::{Command, Stdio},
 };
+use taskgroup_manager::kill_on_drop::{kill_on_drop, KillChildOnDrop};
+
+pub fn default_password() -> String {
+    std::env::var("HOLOCHAIN_DEFAULT_PASSWORD").unwrap()
+}
 
 pub fn spawn_holochain(
     tmp_dir: &Path,
@@ -42,7 +46,8 @@ pub fn spawn_holochain(
 
     {
         let mut holochain_input = holochain.stdin.take().unwrap();
-        holochain_input.write_all(b"passphrase\n").unwrap();
+        let passphrase = default_password();
+        holochain_input.write_all(passphrase.as_bytes()).unwrap();
     }
 
     for line in std::io::BufReader::new(holochain.stdout.as_mut().unwrap()).lines() {
@@ -57,7 +62,9 @@ pub fn spawn_holochain(
 }
 
 pub fn get_tmp_dir() -> PathBuf {
-    std::env::current_dir().unwrap().join("tmp")
+    let dir = std::env::temp_dir();
+    println!("Temporary directory: {}", dir.display());
+    dir
 }
 
 pub fn create_tmp_dir() -> PathBuf {
@@ -72,12 +79,9 @@ pub fn create_tmp_dir() -> PathBuf {
 }
 
 pub fn create_log_dir() -> PathBuf {
-    let log_dir = std::env::current_dir()
-        .unwrap()
-        .join("logs")
-        .join(chrono::Local::now().to_rfc3339());
-    std::fs::create_dir_all(&log_dir).unwrap();
-    log_dir
+    let dir = std::env::temp_dir();
+    println!("Temporary directory for logs: {}", dir.display());
+    dir
 }
 
 #[derive(Debug, Snafu)]

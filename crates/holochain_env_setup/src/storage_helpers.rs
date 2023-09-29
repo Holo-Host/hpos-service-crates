@@ -1,53 +1,13 @@
 use anyhow::{anyhow, Context, Result};
-use holochain_types::prelude::{Nonce256Bits, Timestamp};
-use std::fs;
-use std::path::Path;
+use lazy_static::*;
+use reqwest::Client;
 use std::path::PathBuf;
-use std::process;
-use std::time::Duration;
+use std::{fs, io::prelude::*};
 use tempfile::TempDir;
-use tracing::{debug, instrument};
+use tracing::debug;
 use url::Url;
 
-/// generates nonce for zome calls
-pub fn fresh_nonce() -> Result<(Nonce256Bits, Timestamp)> {
-    let mut bytes = [0; 32];
-    getrandom::getrandom(&mut bytes)?;
-    let nonce = Nonce256Bits::from(bytes);
-    // Rather arbitrary but we expire nonces after 5 mins.
-    let expires: Timestamp = (Timestamp::now() + Duration::from_secs(60 * 5))?;
-    Ok((nonce, expires))
-}
-
-#[instrument(
-    err,
-    fields(
-        source_path = %source_path.as_ref().display(),
-        unpack_path = %unpack_path.as_ref().display(),
-    ),
-)]
-pub fn extract_zip<P: AsRef<Path>>(source_path: P, unpack_path: P) -> Result<()> {
-    let _ = fs::remove_dir_all(unpack_path.as_ref());
-    fs::create_dir(unpack_path.as_ref()).context("failed to create empty unpack_path")?;
-
-    debug!("unziping file");
-
-    let output = process::Command::new("unzip")
-        .arg(source_path.as_ref().as_os_str())
-        .arg("-d")
-        .arg(unpack_path.as_ref().as_os_str())
-        .stdout(process::Stdio::piped())
-        .output()
-        .context("failed to spawn unzip command")?;
-
-    debug!("{}", String::from_utf8_lossy(&output.stdout));
-
-    Ok(())
-}
-
-#[instrument(err, skip(url))]
 pub async fn download_file(url: &Url) -> Result<PathBuf> {
-    use isahc::config::Configurable;
     use isahc::config::RedirectPolicy;
     use isahc::prelude::*;
     use isahc::HttpClient;
@@ -88,4 +48,16 @@ pub async fn download_file(url: &Url) -> Result<PathBuf> {
         path
     };
     Ok(path)
+}
+
+lazy_static! {
+    static ref CLIENT: Client = Client::new();
+}
+
+/// Saves mem-proof to a file under MEM_PROOF_PATH
+pub fn save_mem_proof_to_file(mem_proof: &str, path: &str) -> Result<()> {
+    let mut file = fs::File::create(path)?;
+    file.write_all(mem_proof.as_bytes())
+        .context(format!("Failed writing memproof to file {}", path))?;
+    Ok(())
 }
