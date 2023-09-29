@@ -11,13 +11,10 @@ tokio = { version = "1", features = ["full"] }
 tracing = { version = "0.1", features = ["attributes"] }
 tracing-subscriber = "0.2"
 url = "2.2"
-hpos_hc_connect = { version = "0.1.0", path = "../hpos_connect_hc" }
-
-[dependencies.hpos-config-core]
-git = "https://github.com/Holo-Host/hpos-config"
-rev = "bfaced6044ae570bf20d4528fa9aaafcc43ddeec"
+hpos_hc_connect = { path = "../hpos_connect_hc" }
 
 [dev-dependencies]
 test-case = "2.2.2"
 serial_test = { version = "0.9.0", features = ["async"] }
-test_utils = { path = "../test_utils" }
+holochain_env_setup = { path = "../holochain_env_setup" }
+hpos-config-core = { git = "https://github.com/Holo-Host/hpos-config", rev = "bfaced6044ae570bf20d4528fa9aaafcc43ddeec" }

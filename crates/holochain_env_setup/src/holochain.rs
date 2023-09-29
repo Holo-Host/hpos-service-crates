@@ -1,4 +1,3 @@
-use super::kill_on_drop::{kill_on_drop, KillChildOnDrop};
 use lair_keystore_api::prelude::LairServerConfigInner as LairConfig;
 use serde::Serialize;
 use snafu::Snafu;
@@ -8,6 +7,11 @@ use std::{
     path::{Path, PathBuf},
     process::{Command, Stdio},
 };
+use taskgroup_manager::kill_on_drop::{kill_on_drop, KillChildOnDrop};
+
+pub fn default_password() -> String {
+    std::env::var("HOLOCHAIN_DEFAULT_PASSWORD").unwrap()
+}
 
 pub fn spawn_holochain(
     tmp_dir: &Path,
@@ -42,7 +46,8 @@ pub fn spawn_holochain(
 
     {
         let mut holochain_input = holochain.stdin.take().unwrap();
-        holochain_input.write_all(b"passphrase\n").unwrap();
+        let passphrase = default_password();
+        holochain_input.write_all(passphrase.as_bytes()).unwrap();
     }
 
     for line in std::io::BufReader::new(holochain.stdout.as_mut().unwrap()).lines() {
