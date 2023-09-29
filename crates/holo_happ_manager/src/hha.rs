@@ -2,7 +2,7 @@ use anyhow::{anyhow, Context, Result};
 use holochain_conductor_api::{AppInfo, AppResponse, ProvisionedCell};
 use holochain_conductor_api::{CellInfo, ZomeCall};
 use holochain_keystore::MetaLairClient;
-use holochain_types::prelude::{ExternIO, FunctionName, ZomeName};
+use holochain_types::prelude::{ExternIO, FunctionName, ZomeName, AgentPubKey};
 use holochain_types::prelude::{Nonce256Bits, Timestamp, ZomeCallUnsigned};
 use hpos_hc_connect::holo_config::{Config, Happ};
 use hpos_hc_connect::AppWebsocket;
@@ -83,6 +83,9 @@ impl HHAAgent {
             ZomeCall::try_from_unsigned_zome_call(&self.keystore, zome_call_unsigned).await?;
 
         self.app_ws.zome_call(signed_zome_call).await
+    }
+    pub fn pubkey(&self) -> AgentPubKey {
+        self.cell.cell_id.agent_pubkey().to_owned()
     }
 }
 

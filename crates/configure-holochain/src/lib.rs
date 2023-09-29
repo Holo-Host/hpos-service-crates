@@ -4,10 +4,12 @@ pub use hpos_hc_connect::{
     utils::{download_file, extract_zip},
 };
 use hpos_hc_connect::{hpos_agent::Agent, hpos_membrane_proof};
+use holo_happ_manager;
 pub use hpos_hc_connect::{AdminWebsocket, AppWebsocket};
 use std::sync::Arc;
 use tracing::{debug, info, instrument, warn};
 mod utils;
+pub mod hpos_holochain_api;
 
 #[instrument(err, skip(config))]
 pub async fn run(config: Config) -> Result<()> {
@@ -15,6 +17,8 @@ pub async fn run(config: Config) -> Result<()> {
     let happ_file = HappsFile::load_happ_file(&config.happs_file_path)
         .context("failed to load hApps YAML config")?;
     install_happs(&happ_file, &config).await?;
+
+    update_host_jurisdiction_if_changed(&config).await?;
     Ok(())
 }
 
@@ -117,4 +121,13 @@ async fn install_ui(happ: &Happ, config: &Config) -> Result<()> {
         debug!("installed UI: {}", happ.id());
     }
     Ok(())
+}
+
+pub async fn update_host_jurisdiction_if_changed(config: &Config) -> Result<()> {
+    // get current jurisdiction in hbs
+    let hbs_jurisdiction = hpos_holochain_api::get_jurisdiction()
+        .await
+        .context("failed to get jurisdiction from hbs")?;
+        
+    Ok(holo_happ_manager::update_jurisdiction_if_changed(config, hbs_jurisdiction).await?)
 }

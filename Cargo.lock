@@ -836,9 +836,11 @@ name = "configure-holochain"
 version = "0.5.2"
 dependencies = [
  "anyhow",
+ "holo_happ_manager",
  "hpos-config-core",
  "hpos_hc_connect",
  "serde",
+ "serde_json",
  "serial_test",
  "test-case",
  "test_utils",
