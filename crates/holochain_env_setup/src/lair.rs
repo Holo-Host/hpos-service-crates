@@ -63,7 +63,8 @@ pub async fn spawn(
 
     let connection_url = lair_config.connection_url.clone();
 
-    let env_pw = std::env::var("HOLOCHAIN_DEFAULT_PASSWORD").expect("HOLOCHAIN_DEFAULT_PASSWORD must be set");
+    let env_pw = std::env::var("HOLOCHAIN_DEFAULT_PASSWORD")
+        .expect("HOLOCHAIN_DEFAULT_PASSWORD must be set");
     let passphrase: sodoken::BufRead = sodoken::BufRead::from(env_pw.to_string().as_bytes());
 
     let keystore = match holochain_keystore::lair_keystore::spawn_lair_keystore(
@@ -112,7 +113,8 @@ fn init_lair(lair_dir: &Path, log: File) -> Result<(), InitLairError> {
 }
 
 fn write_passphrase(child: &mut KillChildOnDrop) -> Result<(), io::Error> {
-    let env_pw = std::env::var("HOLOCHAIN_DEFAULT_PASSWORD").expect("HOLOCHAIN_DEFAULT_PASSWORD must be set");
+    let env_pw = std::env::var("HOLOCHAIN_DEFAULT_PASSWORD")
+        .expect("HOLOCHAIN_DEFAULT_PASSWORD must be set");
     child
         .stdin
         .take()
