@@ -131,7 +131,10 @@ fn import_seed(lair_dir: &Path, log: File, device_bundle: &str) -> Result<(), In
             .unwrap(),
     );
     // Here format of a passphrase is "<lair_password>/n<seed_bundle_password>"
-    write_passphrase(&mut lair_init, Some(b"passphrase\npass")).unwrap();
+    let holochain_password = std::env::var("HOLOCHAIN_DEFAULT_PASSWORD").unwrap();
+    let device_password = std::env::var("DEVICE_SEED_DEFAULT_PASSWORD").unwrap();
+    let pass = format!("{}\n{}", holochain_password, device_password);
+    write_passphrase(&mut lair_init, Some(pass.as_bytes())).unwrap();
     let exit_status = lair_init.wait().unwrap();
     if exit_status.success() {
         Ok(())

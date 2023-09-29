@@ -1,4 +1,4 @@
-use super::hpos_agent::{default_password, read_hpos_config, Admin};
+use super::hpos_agent::{read_hpos_config, Admin};
 use anyhow::{Context, Result};
 use holochain_types::prelude::{AgentPubKey, AppBundleSource};
 use holochain_types::{app::AppManifest, prelude::YamlProperties};
@@ -17,6 +17,11 @@ pub const APP_PORT: u16 = 42233;
 
 pub fn default_core_happ_file() -> Result<String> {
     env::var("CORE_HAPP_FILE").context("Failed to read CORE_HAPP_FILE. Is it set in env?")
+}
+
+pub fn default_password() -> Result<String> {
+    env::var("HOLOCHAIN_DEFAULT_PASSWORD")
+        .context("Failed to read HOLOCHAIN_DEFAULT_PASSWORD. Is it set in env?")
 }
 
 pub fn get_lair_url() -> Result<Url> {

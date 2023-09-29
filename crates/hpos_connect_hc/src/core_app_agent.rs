@@ -1,5 +1,5 @@
 use super::holo_config::{self, HappsFile, APP_PORT};
-use crate::{hpos_agent, utils::fresh_nonce};
+use crate::utils::fresh_nonce;
 use anyhow::{anyhow, Context, Result};
 use holochain_client::{AgentPubKey, AppWebsocket};
 use holochain_conductor_api::{AppInfo, CellInfo, ProvisionedCell, ZomeCall};
@@ -24,7 +24,7 @@ impl CoreAppAgent {
         //     .await
         //     .context("failed to connect to holochain's app interface")?;
         let passphrase =
-            sodoken::BufRead::from(hpos_agent::default_password()?.as_bytes().to_vec());
+            sodoken::BufRead::from(holo_config::default_password()?.as_bytes().to_vec());
         let keystore = holochain_keystore::lair_keystore::spawn_lair_keystore(
             url2::url2!("{}", holo_config::get_lair_url()?),
             passphrase,
