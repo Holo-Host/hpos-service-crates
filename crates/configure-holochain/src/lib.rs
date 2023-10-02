@@ -124,8 +124,9 @@ async fn install_ui(happ: &Happ, config: &Config) -> Result<()> {
 }
 
 pub async fn update_host_jurisdiction_if_changed(config: &Config) -> Result<()> {
-    if std::env::var("IS_INTEGRATION_TEST")? == "TRUE" { // set in ../tests/integration.rs and ../../holo_happ_manager/tests/integration.ts
-        return Ok(())
+    if std::env::var("IS_INTEGRATION_TEST")? == "TRUE" {
+        // set in ../tests/integration.rs and ../../holo_happ_manager/tests/integration.ts
+        return Ok(());
     }
 
     // get current jurisdiction in hbs
