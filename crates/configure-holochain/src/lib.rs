@@ -124,11 +124,14 @@ async fn install_ui(happ: &Happ, config: &Config) -> Result<()> {
 }
 
 pub async fn update_host_jurisdiction_if_changed(config: &Config) -> Result<()> {
-    if std::env::var("IS_INTEGRATION_TEST")? == "TRUE" {
-        // set in ../tests/integration.rs and ../../holo_happ_manager/tests/integration.ts
-        return Ok(());
+    match std::env::var("IS_INTEGRATION_TEST") {
+        Ok(is_integration_test) => if is_integration_test == "TRUE" {
+            // set in ../tests/integration.rs and ../../holo_happ_manager/tests/integration.ts
+            return Ok(());
+        },
+        Err(_) => {}, // if we failed to find the env var, we can just carry on
     }
-
+    
     // get current jurisdiction in hbs
     let hbs_jurisdiction = hpos_holochain_api::get_jurisdiction()
         .await
