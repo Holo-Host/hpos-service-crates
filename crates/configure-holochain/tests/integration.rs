@@ -115,6 +115,8 @@ async fn run_configure_holochain(f_r_a_k: &str, r_o_m_p: &str) {
     };
     println!("Test running with config: {:?}", &config);
 
+    set_var("IS_INTEGRATION_TEST", "TRUE");
+
     println!("Run configure holochain script");
     configure_holochain::run(config.clone()).await.unwrap();
 
