@@ -125,17 +125,23 @@ async fn install_ui(happ: &Happ, config: &Config) -> Result<()> {
 
 pub async fn update_host_jurisdiction_if_changed(config: &Config) -> Result<()> {
     match std::env::var("IS_INTEGRATION_TEST") {
-        Ok(is_integration_test) => if is_integration_test == "TRUE" {
-            // set in ../tests/integration.rs and ../../holo_happ_manager/tests/integration.ts
-            return Ok(());
-        },
-        Err(_) => {}, // if we failed to find the env var, we can just carry on
+        Ok(is_integration_test) => {
+            if is_integration_test == "TRUE" {
+                // set in ../tests/integration.rs and ../../holo_happ_manager/tests/integration.ts
+                return Ok(());
+            }
+        }
+        Err(_) => {} // if we failed to find the env var, we can just carry on
     }
-    
+
     // get current jurisdiction in hbs
-    let hbs_jurisdiction = hpos_holochain_api::get_jurisdiction()
-        .await
-        .context("failed to get jurisdiction from hbs")?;
+    let hbs_jurisdiction = match hpos_holochain_api::get_jurisdiction().await {
+        Ok(hbs_jurisdiction) => hbs_jurisdiction,
+        Err(e) => {
+            debug!("Failed to get jurisdiction from hbs {}", e);
+            return Ok(());
+        }
+    };
 
     holo_happ_manager::update_jurisdiction_if_changed(config, hbs_jurisdiction).await
 }
