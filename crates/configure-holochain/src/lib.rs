@@ -14,6 +14,7 @@ mod utils;
 #[instrument(err, skip(config))]
 pub async fn run(config: Config) -> Result<()> {
     debug!("Starting configure holochain...");
+
     let happ_file = HappsFile::load_happ_file(&config.happs_file_path)
         .context("failed to load hApps YAML config")?;
     install_happs(&happ_file, &config).await?;
@@ -124,6 +125,8 @@ async fn install_ui(happ: &Happ, config: &Config) -> Result<()> {
 }
 
 pub async fn update_host_jurisdiction_if_changed(config: &Config) -> Result<()> {
+    debug!("in update_host_jurisdiction_if_changed");
+
     match std::env::var("IS_INTEGRATION_TEST") {
         Ok(is_integration_test) => {
             if is_integration_test == "TRUE" {
@@ -134,6 +137,8 @@ pub async fn update_host_jurisdiction_if_changed(config: &Config) -> Result<()> 
         Err(_) => {} // if we failed to find the env var, we can just carry on
     }
 
+    debug!("not an integration test");
+
     // get current jurisdiction in hbs
     let hbs_jurisdiction = match hpos_holochain_api::get_jurisdiction().await {
         Ok(hbs_jurisdiction) => hbs_jurisdiction,
@@ -143,5 +148,11 @@ pub async fn update_host_jurisdiction_if_changed(config: &Config) -> Result<()> 
         }
     };
 
-    holo_happ_manager::update_jurisdiction_if_changed(config, hbs_jurisdiction).await
+    debug!("got jurisdiction {}", hbs_jurisdiction);
+
+    let result = holo_happ_manager::update_jurisdiction_if_changed(config, hbs_jurisdiction).await;
+
+    debug!("finished updating jurisdiction if changed with result {:?}", &result);
+
+    result
 }

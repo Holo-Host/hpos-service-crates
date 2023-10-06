@@ -69,11 +69,19 @@ pub async fn update_jurisdiction_if_changed(
     config: &Config,
     hbs_jurisdiction: String,
 ) -> Result<()> {
+    debug!("in update_jurisdiction_if_changed 1");
+
     let core_happ: Happ = get_core_happ(&config.happs_file_path)?;
+
+    debug!("in update_jurisdiction_if_changed 2 core_happ {:?}", &core_happ);
 
     let mut agent = HHAAgent::spawn(&core_happ, config).await?;
 
+    debug!("in update_jurisdiction_if_changed 3");
+
     let host_pubkey = agent.pubkey();
+
+    debug!("in update_jurisdiction_if_changed 4 host_pubkey {}", &host_pubkey);
 
     let response = agent
         .zome_call(
@@ -83,10 +91,15 @@ pub async fn update_jurisdiction_if_changed(
         )
         .await?;
 
+    debug!("in update_jurisdiction_if_changed 5 response {:?}", &response);
+
     let hha_jurisdiction: String = match response {
         AppResponse::ZomeCalled(r) => rmp_serde::from_slice(r.as_bytes())?,
         _ => return Err(anyhow!("unexpected response: {:?}", response)),
     };
+
+    debug!("in update_jurisdiction_if_changed 6 hha_jurisdiction {}", &hha_jurisdiction);
+
 
     if hha_jurisdiction != hbs_jurisdiction {
         #[derive(Debug, Serialize)]
@@ -94,6 +107,9 @@ pub async fn update_jurisdiction_if_changed(
             pub host_pubkey: AgentPubKey,
             pub jurisdiction: String,
         }
+
+        debug!("in update_jurisdiction_if_changed 7 jurisdictions didn't match {} {}", &hbs_jurisdiction, &hha_jurisdiction);
+
 
         agent
             .zome_call(
@@ -105,7 +121,12 @@ pub async fn update_jurisdiction_if_changed(
                 })?,
             )
             .await?;
+
+        debug!("in update_jurisdiction_if_changed 8 finished updating");
+
     }
+
+    debug!("in update_jurisdiction_if_changed 9 done");
 
     Ok(())
 }
