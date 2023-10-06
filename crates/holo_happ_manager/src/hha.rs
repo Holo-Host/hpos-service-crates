@@ -38,6 +38,7 @@ impl HHAAgent {
             }
             None => return Err(anyhow!("HHA is not installed")),
         };
+
         // connect to lair
         let passphrase = sodoken::BufRead::from(
             hpos_hc_connect::holo_config::default_password()?
@@ -45,16 +46,22 @@ impl HHAAgent {
                 .to_vec(),
         );
 
+        debug!("HHAAgent spawn -> got passphrase");
+
         let lair_url = config
             .lair_url
             .clone()
             .ok_or_else(|| anyhow!("Does not have lair url, please provide --lair-url"))?;
+
+        debug!("HHAAgent spawn -> cloned lair_url {}", lair_url);
 
         let keystore = holochain_keystore::lair_keystore::spawn_lair_keystore(
             url2::url2!("{}", lair_url),
             passphrase,
         )
         .await?;
+
+        debug!("HHAAgent spawn -> instantiated keystore");
 
         Ok(Self {
             app_ws,
