@@ -98,17 +98,16 @@ pub async fn update_jurisdiction_if_changed(
         _ => return Err(anyhow!("unexpected response from get_host_jurisdiction {:?}", response))
     };
 
-    debug!("in update_jurisdiction_if_changed 6 hha_jurisdiction {}", &hha_jurisdiction);
-
+    debug!("in update_jurisdiction_if_changed 6 hha_jurisdiction {:?}", &hha_jurisdiction);
     
-    if hha_jurisdiction.is)none() || hha_jurisdiction.as_ref != Some(&hbs_jurisdiction) {
+    if hha_jurisdiction.is_none() || hha_jurisdiction.as_ref() != Some(&hbs_jurisdiction) {
         #[derive(Debug, Serialize)]
         pub struct SetHostJurisdictionInput {
             pub host_pubkey: AgentPubKey,
             pub jurisdiction: String,
         }
 
-        debug!("in update_jurisdiction_if_changed 7 jurisdictions didn't match {} {}", &hbs_jurisdiction, &hha_jurisdiction);
+        debug!("in update_jurisdiction_if_changed 7 jurisdictions didn't match {:?} {:?}", &hbs_jurisdiction, &hha_jurisdiction);
 
 
         agent
