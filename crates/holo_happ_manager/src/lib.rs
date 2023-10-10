@@ -95,7 +95,7 @@ pub async fn update_jurisdiction_if_changed(
 
     let hha_jurisdiction: String = match response {
         AppResponse::ZomeCalled(r) => rmp_serde::from_slice(r.as_bytes())?,
-        _ => "UNKNOWN_HOST_JURISDICTION"
+        _ => "UNKNOWN_HOST_JURISDICTION".to_string()
     };
 
     debug!("in update_jurisdiction_if_changed 6 hha_jurisdiction {}", &hha_jurisdiction);
