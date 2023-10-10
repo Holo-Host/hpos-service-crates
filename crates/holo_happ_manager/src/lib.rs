@@ -93,15 +93,15 @@ pub async fn update_jurisdiction_if_changed(
 
     debug!("in update_jurisdiction_if_changed 5 response {:?}", &response);
 
-    let hha_jurisdiction: String = match response {
+    let hha_jurisdiction: Option<String> = match response {
         AppResponse::ZomeCalled(r) => rmp_serde::from_slice(r.as_bytes())?,
-        _ => "UNKNOWN_HOST_JURISDICTION".to_string()
+        _ => return Err(anyhow!("unexpected response from get_host_jurisdiction {:?}", response))
     };
 
     debug!("in update_jurisdiction_if_changed 6 hha_jurisdiction {}", &hha_jurisdiction);
 
-
-    if hha_jurisdiction != hbs_jurisdiction {
+    
+    if hha_jurisdiction.is)none() || hha_jurisdiction.as_ref != Some(&hbs_jurisdiction) {
         #[derive(Debug, Serialize)]
         pub struct SetHostJurisdictionInput {
             pub host_pubkey: AgentPubKey,
