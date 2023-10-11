@@ -15,7 +15,7 @@ pub async fn get_jurisdiction() -> Result<String> {
         .args(&["--url=http://localhost/holochain-api/", "hosting-criteria"])
         .output()?;
 
-    let output_str = String::from_utf8_lossy(&output.stdout).to_string();        
+    let output_str = String::from_utf8_lossy(&output.stdout).to_string();
 
     let hosting_criteria: HostingCriteria = serde_json::from_str(&output_str)?;
 

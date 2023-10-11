@@ -85,7 +85,12 @@ pub async fn update_jurisdiction_if_changed(
 
     let hha_jurisdiction: Option<String> = match response {
         AppResponse::ZomeCalled(r) => rmp_serde::from_slice(r.as_bytes())?,
-        _ => return Err(anyhow!("unexpected response from get_host_jurisdiction {:?}", response))
+        _ => {
+            return Err(anyhow!(
+                "unexpected response from get_host_jurisdiction {:?}",
+                response
+            ))
+        }
     };
 
     if hha_jurisdiction.is_none() || hha_jurisdiction.as_ref() != Some(&hbs_jurisdiction) {
@@ -94,7 +99,6 @@ pub async fn update_jurisdiction_if_changed(
             pub host_pubkey: AgentPubKey,
             pub jurisdiction: String,
         }
-
 
         agent
             .zome_call(
@@ -106,7 +110,6 @@ pub async fn update_jurisdiction_if_changed(
                 })?,
             )
             .await?;
-
     }
 
     Ok(())
