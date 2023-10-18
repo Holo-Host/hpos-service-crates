@@ -38,6 +38,7 @@ impl HHAAgent {
             }
             None => return Err(anyhow!("HHA is not installed")),
         };
+
         // connect to lair
         let passphrase = sodoken::BufRead::from(
             hpos_hc_connect::holo_config::default_password()?
