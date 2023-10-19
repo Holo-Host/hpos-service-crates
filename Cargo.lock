@@ -902,10 +902,11 @@ checksum = "5827cebf4670468b8772dd191856768aedcb1b0278a04f989f7766351917b9dc"
 
 [[package]]
 name = "core_app_cli"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "anyhow",
  "holochain_types",
+ "holofuel_types",
  "hpos_hc_connect",
  "rmp-serde 1.1.1",
  "serde",
@@ -2050,6 +2051,37 @@ dependencies = [
 ]
 
 [[package]]
+name = "hdi"
+version = "0.3.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9b12f620a0d22b7dcd534a849f0024b0b47c4343b15f1c0ec02e37f4990f6f16"
+dependencies = [
+ "hdk_derive",
+ "holo_hash",
+ "holochain_integrity_types",
+ "holochain_wasmer_guest",
+ "paste",
+ "serde",
+ "serde_bytes",
+]
+
+[[package]]
+name = "hdk_derive"
+version = "0.2.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "fc855dc170fec9ca44d2b21cba90fb961ef92acadaae0f0c7d090312a6212552"
+dependencies = [
+ "darling 0.14.4",
+ "heck 0.4.1",
+ "holochain_integrity_types",
+ "paste",
+ "proc-macro-error",
+ "proc-macro2",
+ "quote",
+ "syn 1.0.109",
+]
+
+[[package]]
 name = "heck"
 version = "0.3.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2551,6 +2583,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "holochain_wasmer_guest"
+version = "0.0.84"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "92b2026e44595cb16108464973622577936605582aa22932933a5130ad32ce42"
+dependencies = [
+ "holochain_serialized_bytes 0.0.51",
+ "holochain_wasmer_common",
+ "parking_lot 0.12.1",
+ "paste",
+ "serde",
+ "tracing",
+]
+
+[[package]]
 name = "holochain_wasmer_host"
 version = "0.0.84"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2639,6 +2685,19 @@ dependencies = [
  "tokio",
  "tracing",
  "tracing-subscriber 0.2.25",
+]
+
+[[package]]
+name = "holofuel_types"
+version = "0.5.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "176efe08825a6f66a00556e3c72bc39a3ac7d93160983c5d955357e5e0e1b173"
+dependencies = [
+ "hdi",
+ "lazy_static",
+ "regex",
+ "serde",
+ "thiserror",
 ]
 
 [[package]]
