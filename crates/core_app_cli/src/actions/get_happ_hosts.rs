@@ -26,6 +26,8 @@ pub struct HoloportDetails {
 }
 
 pub async fn get(happ_id: String) -> Result<()> {
+    println!(" >>>>>>>>>>>>> happ_id {:?} ", happ_id);
+
     let mut agent = CoreAppAgent::connect().await?;
 
     let result = agent
@@ -36,8 +38,10 @@ pub async fn get(happ_id: String) -> Result<()> {
             ExternIO::encode(happ_id.clone())?,
         )
         .await?;
+    println!(" >>>>>>>>>>>>> result {:?} ", result);
 
     let hosts: Vec<HoloportDetails> = rmp_serde::from_slice(result.as_bytes())?;
+    println!(" >>>>>>>>>>>>> hosts {:?} ", hosts);
 
     println!("===================");
     println!("All Hosts for Happ ID {} are: ", happ_id);
