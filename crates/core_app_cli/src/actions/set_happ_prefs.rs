@@ -3,11 +3,11 @@ use holochain_types::prelude::{ActionHashB64, ExternIO, FunctionName, ZomeName};
 use holofuel_types::fuel::Fuel;
 use hpos_hc_connect::{CoreAppAgent, CoreAppRoleName};
 use serde::{Deserialize, Serialize};
-use std::time::Duration;
+use std::{str::FromStr, time::Duration};
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct HappPreferences {
-    pub max_fuel_before_invoice: f64,
+    pub max_fuel_before_invoice: Fuel,
     pub price_compute: Fuel,
     pub price_storage: Fuel,
     pub price_bandwidth: Fuel,
@@ -17,10 +17,10 @@ pub struct HappPreferences {
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct SetHappPreferencesInput {
     pub happ_id: ActionHashB64,
-    pub max_fuel_before_invoice: f64, // how much holofuel to accumulate before sending invoice
-    pub price_compute: String,
-    pub price_storage: String,
-    pub price_bandwidth: String,
+    pub max_fuel_before_invoice: Fuel, // how much holofuel to accumulate before sending invoice
+    pub price_compute: Fuel,
+    pub price_storage: Fuel,
+    pub price_bandwidth: Fuel,
     pub max_time_before_invoice: Duration, // how much time to allow to pass before sending invoice even if fuel trigger not reached.
 }
 
@@ -43,16 +43,12 @@ pub async fn get(
         .parse::<u32>()
         .expect("Failed to convert `max_fuel_before_invoice` to i32.");
 
-    let max_fuel_before_invoice = max_fuel_before_invoice
-        .parse::<f64>()
-        .expect("Failed to convert `max_fuel_before_invoice` to f64.");
-
     let host_pricing_prefs = SetHappPreferencesInput {
         happ_id: ActionHashB64::from_b64_str(&happ_id)?,
-        max_fuel_before_invoice,
-        price_compute,
-        price_storage,
-        price_bandwidth,
+        max_fuel_before_invoice: Fuel::from_str(&max_fuel_before_invoice),
+        price_compute: Fuel::from_str(&price_compute),
+        price_storage: Fuel::from_str(&price_storage),
+        price_bandwidth: Fuel::from_str(&price_bandwidth),
         max_time_before_invoice: Duration::new(max_time_sec, max_time_ms),
     };
 

@@ -7,7 +7,7 @@ use std::time::Duration;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct HappPreferences {
-    pub max_fuel_before_invoice: f64,
+    pub max_fuel_before_invoice: Fuel,
     pub price_compute: Fuel,
     pub price_storage: Fuel,
     pub price_bandwidth: Fuel,
