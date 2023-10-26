@@ -45,10 +45,10 @@ pub async fn get(
 
     let host_pricing_prefs = SetHappPreferencesInput {
         happ_id: ActionHashB64::from_b64_str(&happ_id)?,
-        max_fuel_before_invoice: Fuel::from_str(&max_fuel_before_invoice),
-        price_compute: Fuel::from_str(&price_compute),
-        price_storage: Fuel::from_str(&price_storage),
-        price_bandwidth: Fuel::from_str(&price_bandwidth),
+        max_fuel_before_invoice: Fuel::from_str(&max_fuel_before_invoice)?,
+        price_compute: Fuel::from_str(&price_compute)?,
+        price_storage: Fuel::from_str(&price_storage)?,
+        price_bandwidth: Fuel::from_str(&price_bandwidth)?,
         max_time_before_invoice: Duration::new(max_time_sec, max_time_ms),
     };
 
