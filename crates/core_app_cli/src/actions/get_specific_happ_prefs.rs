@@ -30,7 +30,7 @@ pub async fn get(pref_hash: String) -> Result<()> {
             CoreAppRoleName::HHA,
             ZomeName::from("hha"),
             FunctionName::from("get_specific_happ_preferences"),
-            ExternIO::encode(rmp_serde::to_vec_named(&hash)?)?,
+            ExternIO::encode(hash)?,
         )
         .await?;
 

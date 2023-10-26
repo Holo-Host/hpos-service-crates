@@ -50,6 +50,14 @@ pub async fn get(
 
     let mut agent = CoreAppAgent::connect().await?;
 
+    max_time_before_invoice = max_time_before_invoice
+        .parse::<(String, String)>()
+        .expect("Failed to convert `max_time_before_invoice` param to string tuple.");
+    println!(
+        " >>>>>>>>>>>>> max_time_before_invoice {:?} ",
+        max_time_before_invoice
+    );
+
     let max_time_sec = max_time_before_invoice
         .0
         .parse::<u64>()
