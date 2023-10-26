@@ -22,12 +22,15 @@ pub async fn get(pref_hash: String) -> Result<()> {
     let pref_holo_hash = ActionHashB64::from_b64_str(&pref_hash)?;
     println!(" >>>>>>>>>>>>> pref_holo_hash {:?} ", pref_holo_hash);
 
+    let hash = ActionHash::from(pref_holo_hash);
+    println!(" >>>>>>>>>>>>> hash {:?} ", hash);
+
     let result = agent
         .zome_call(
             CoreAppRoleName::HHA,
             ZomeName::from("hha"),
             FunctionName::from("get_specific_happ_preferences"),
-            ExternIO::encode(ActionHash::from(pref_holo_hash))?,
+            ExternIO::encode(hash)?,
         )
         .await?;
 

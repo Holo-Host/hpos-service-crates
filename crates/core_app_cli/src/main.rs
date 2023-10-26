@@ -29,10 +29,7 @@ pub enum Opt {
     Hosts { happ_id: String },
     /// Fetch the happ preferences associated with a `pref_hash`
     #[structopt(name = "prefs")]
-    GetPreferenceByHash {
-        #[structopt(name = "hash")]
-        pref_hash: String,
-    },
+    GetPreferenceByHash { pref_hash: String },
     /// Set new happ preferences
     #[structopt(name = "set-prefs")]
     SetHappPreferences {
