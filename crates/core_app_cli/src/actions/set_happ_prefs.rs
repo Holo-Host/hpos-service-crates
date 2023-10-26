@@ -32,18 +32,34 @@ pub async fn get(
     max_fuel_before_invoice: String,
     max_time_before_invoice: (String, String),
 ) -> Result<()> {
+    println!(
+        " >>>>>>>>>>>>> in `set_happ_prefs` helper:
+        happ_id ({:?}),
+        price_compute ({:?}),
+        price_storage ({:?}),
+        price_bandwidth ({:?}),
+        max_fuel_before_invoice ({:?}),
+        max_time_before_invoice ({:?})",
+        happ_id,
+        price_compute,
+        price_storage,
+        price_bandwidth,
+        max_fuel_before_invoice,
+        max_time_before_invoice
+    );
+
     let mut agent = CoreAppAgent::connect().await?;
 
     let max_time_sec = max_time_before_invoice
         .0
         .parse::<u64>()
-        .expect("Failed to convert `max_fuel_before_invoice` to i64.");
+        .expect("Failed to convert `max_time_before_invoice` seconds to U64.");
     println!(" >>>>>>>>>>>>> max_time_sec {:?} ", max_time_sec);
 
     let max_time_ms = max_time_before_invoice
         .1
         .parse::<u32>()
-        .expect("Failed to convert `max_fuel_before_invoice` to i32.");
+        .expect("Failed to convert `max_time_before_invoice` milliseconds to U32.");
     println!(" >>>>>>>>>>>>> max_time_ms {:?} ", max_time_ms);
 
     let host_pricing_prefs = SetHappPreferencesInput {
