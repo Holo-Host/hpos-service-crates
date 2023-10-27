@@ -30,7 +30,8 @@ pub async fn get(
     price_storage: String,
     price_bandwidth: String,
     max_fuel_before_invoice: String,
-    max_time_before_invoice: (String, String),
+    max_time_before_invoice_sec: String,
+    max_time_before_invoice_ms: String,
 ) -> Result<()> {
     println!(
         " >>>>>>>>>>>>> in `set_happ_prefs` helper:
@@ -39,33 +40,25 @@ pub async fn get(
         price_storage ({:?}),
         price_bandwidth ({:?}),
         max_fuel_before_invoice ({:?}),
-        max_time_before_invoice ({:?})",
+        max_time_before_invoice_sec ({:?}),
+        max_time_before_invoice_ms ({:?})",
         happ_id,
         price_compute,
         price_storage,
         price_bandwidth,
         max_fuel_before_invoice,
-        max_time_before_invoice
+        max_time_before_invoice_sec,
+        max_time_before_invoice_ms
     );
 
     let mut agent = CoreAppAgent::connect().await?;
 
-    max_time_before_invoice = max_time_before_invoice
-        .parse::<(String, String)>()
-        .expect("Failed to convert `max_time_before_invoice` param to string tuple.");
-    println!(
-        " >>>>>>>>>>>>> max_time_before_invoice {:?} ",
-        max_time_before_invoice
-    );
-
-    let max_time_sec = max_time_before_invoice
-        .0
+    let max_time_sec = max_time_before_invoice_sec
         .parse::<u64>()
         .expect("Failed to convert `max_time_before_invoice` seconds to U64.");
     println!(" >>>>>>>>>>>>> max_time_sec {:?} ", max_time_sec);
 
-    let max_time_ms = max_time_before_invoice
-        .1
+    let max_time_ms = max_time_before_invoice_ms
         .parse::<u32>()
         .expect("Failed to convert `max_time_before_invoice` milliseconds to U32.");
     println!(" >>>>>>>>>>>>> max_time_ms {:?} ", max_time_ms);

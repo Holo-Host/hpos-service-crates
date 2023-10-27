@@ -1,11 +1,6 @@
 use anyhow::Result;
 use structopt::StructOpt;
 
-fn parse_tuple(arg: &str) -> Result<(String, String)> {
-    let tuple_as_vec: Vec<&str> = arg.trim().split(",").collect();
-    Ok((tuple_as_vec[0].to_string(), tuple_as_vec[1].to_string()))
-}
-
 #[derive(Debug, StructOpt)]
 #[structopt(name = "core-app-cli", about = "An example of StructOpt usage.")]
 pub enum Opt {
@@ -42,8 +37,10 @@ pub enum Opt {
         price_bandwidth: String,
         #[structopt(name = "max-fuel")]
         max_fuel_before_invoice: String,
-        #[structopt(name = "max-time", parse(try_from_str = parse_tuple))]
-        max_time_before_invoice: (String, String),
+        #[structopt(name = "max-time-s")]
+        max_time_before_invoice_sec: String,
+        #[structopt(name = "max-time-ms")]
+        max_time_before_invoice_ms: String,
     },
 }
 impl Opt {
@@ -65,7 +62,8 @@ impl Opt {
                 price_bandwidth,
                 price_storage,
                 max_fuel_before_invoice,
-                max_time_before_invoice,
+                max_time_before_invoice_sec,
+                max_time_before_invoice_ms,
             } => {
                 core_app_cli::set_happ_prefs::get(
                     happ_id,
@@ -73,7 +71,8 @@ impl Opt {
                     price_bandwidth,
                     price_storage,
                     max_fuel_before_invoice,
-                    max_time_before_invoice,
+                    max_time_before_invoice_sec,
+                    max_time_before_invoice_ms,
                 )
                 .await?
             }
