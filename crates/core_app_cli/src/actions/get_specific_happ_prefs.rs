@@ -15,15 +15,9 @@ pub struct HappPreferences {
 }
 
 pub async fn get(pref_hash: String) -> Result<()> {
-    println!(" >>>>>>>>>>>>> pref_hash {:?} ", pref_hash);
-
     let mut agent = CoreAppAgent::connect().await?;
-
     let pref_holo_hash = ActionHashB64::from_b64_str(&pref_hash)?;
-    println!(" >>>>>>>>>>>>> pref_holo_hash {:?} ", pref_holo_hash);
-
     let hash = ActionHash::from(pref_holo_hash);
-    println!(" >>>>>>>>>>>>> hash {:?} ", hash);
 
     let result = agent
         .zome_call(
@@ -34,10 +28,7 @@ pub async fn get(pref_hash: String) -> Result<()> {
         )
         .await?;
 
-    println!(" >>>>>>>>>>>>> result {:?} ", result);
-
     let prefs: HappPreferences = rmp_serde::from_slice(result.as_bytes())?;
-    println!(" >>>>>>>>>>>>> prefs {:?} ", prefs);
 
     println!("===================");
     println!("All Hosts for Preference Hash {} are: ", pref_hash);

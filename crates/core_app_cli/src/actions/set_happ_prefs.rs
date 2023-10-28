@@ -33,35 +33,15 @@ pub async fn get(
     max_time_before_invoice_sec: String,
     max_time_before_invoice_ms: String,
 ) -> Result<()> {
-    println!(
-        " >>>>>>>>>>>>> in `set_happ_prefs` helper:
-        happ_id ({:?}),
-        price_compute ({:?}),
-        price_storage ({:?}),
-        price_bandwidth ({:?}),
-        max_fuel_before_invoice ({:?}),
-        max_time_before_invoice_sec ({:?}),
-        max_time_before_invoice_ms ({:?})",
-        happ_id,
-        price_compute,
-        price_storage,
-        price_bandwidth,
-        max_fuel_before_invoice,
-        max_time_before_invoice_sec,
-        max_time_before_invoice_ms
-    );
-
     let mut agent = CoreAppAgent::connect().await?;
 
     let max_time_sec = max_time_before_invoice_sec
         .parse::<u64>()
         .expect("Failed to convert `max_time_before_invoice` seconds to U64.");
-    println!(" >>>>>>>>>>>>> max_time_sec {:?} ", max_time_sec);
 
     let max_time_ms = max_time_before_invoice_ms
         .parse::<u32>()
         .expect("Failed to convert `max_time_before_invoice` milliseconds to U32.");
-    println!(" >>>>>>>>>>>>> max_time_ms {:?} ", max_time_ms);
 
     let host_pricing_prefs = SetHappPreferencesInput {
         happ_id: ActionHashB64::from_b64_str(&happ_id)?,
@@ -71,10 +51,6 @@ pub async fn get(
         price_bandwidth: Fuel::from_str(&price_bandwidth)?,
         max_time_before_invoice: Duration::new(max_time_sec, max_time_ms),
     };
-    println!(
-        " >>>>>>>>>>>>> host_pricing_prefs {:?} ",
-        host_pricing_prefs
-    );
 
     let result = agent
         .zome_call(
@@ -84,10 +60,8 @@ pub async fn get(
             ExternIO::encode(host_pricing_prefs)?,
         )
         .await?;
-    println!(" >>>>>>>>>>>>> result {:?} ", result);
 
     let happ_prefs: HappPreferences = rmp_serde::from_slice(result.as_bytes())?;
-    println!(" >>>>>>>>>>>>> happ_prefs {:?} ", happ_prefs);
 
     println!("===================");
     println!("Your Published Happ Preferences are: ");
