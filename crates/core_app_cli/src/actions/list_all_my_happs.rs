@@ -3,6 +3,7 @@ use holochain_types::prelude::{
     holochain_serial, ActionHashB64, AgentPubKeyB64, ExternIO, FunctionName, SerializedBytes,
     ZomeName,
 };
+use holofuel_types::fuel::Fuel;
 use hpos_hc_connect::{CoreAppAgent, CoreAppRoleName};
 use serde::{Deserialize, Serialize};
 

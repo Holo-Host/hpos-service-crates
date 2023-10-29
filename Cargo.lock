@@ -2150,6 +2150,7 @@ dependencies = [
  "holochain_env_setup",
  "holochain_keystore",
  "holochain_types",
+ "holofuel_types",
  "hpos-config-core",
  "hpos_hc_connect",
  "rmp-serde 1.1.1",
