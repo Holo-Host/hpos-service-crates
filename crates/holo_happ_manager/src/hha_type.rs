@@ -24,7 +24,7 @@ pub struct HappInput {
     #[serde(default)]
     pub exclude_jurisdictions: bool, //
     #[serde(default)]
-    pub hosting_prices: HostingPrices,
+    pub publisher_pricing_pref: PublisherPricingPref,
     #[serde(default)]
     pub login_config: LoginConfig,
     #[serde(default)] // default Option is None
@@ -38,10 +38,10 @@ pub struct LoginConfig {
 }
 
 #[derive(Debug, Serialize, Deserialize, SerializedBytes, Clone, Default)]
-pub struct HostingPrices {
-    pub cpu: String,
-    pub storage: String,
-    pub bandwidth: String,
+pub struct PublisherPricingPref {
+    pub cpu: Fuel,
+    pub storage: Fuel,
+    pub bandwidth: Fuel,
 }
 
 #[derive(Debug, Serialize, Deserialize, SerializedBytes, Clone)]

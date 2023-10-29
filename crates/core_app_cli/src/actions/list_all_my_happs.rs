@@ -23,16 +23,16 @@ pub struct PresentedHappBundle {
     pub categories: Vec<String>,
     pub jurisdictions: Vec<String>,
     pub exclude_jurisdictions: bool,
-    pub hosting_prices: HostingPrices,
+    pub publisher_pricing_pref: PublisherPricingPref,
     pub login_config: LoginConfig,
     pub special_installed_app_id: Option<String>,
 }
 
 #[derive(Debug, Serialize, Deserialize, SerializedBytes)]
-pub struct HostingPrices {
-    pub cpu: String,
-    pub storage: String,
-    pub bandwidth: String,
+pub struct PublisherPricingPref {
+    pub cpu: Fuel,
+    pub storage: Fuel,
+    pub bandwidth: Fuel,
 }
 
 #[derive(Debug, Serialize, Deserialize, SerializedBytes)]
