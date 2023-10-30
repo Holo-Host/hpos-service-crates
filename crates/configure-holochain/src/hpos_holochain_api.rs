@@ -1,7 +1,6 @@
 use anyhow::Result;
 use serde::Deserialize;
 use std::process::{Command, Output};
-use tracing::debug;
 
 #[derive(Debug, Deserialize)]
 struct HostingCriteria {

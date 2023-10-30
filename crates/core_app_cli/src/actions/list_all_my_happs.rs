@@ -1,46 +1,6 @@
 use anyhow::Result;
-use holochain_types::prelude::{
-    holochain_serial, ActionHashB64, AgentPubKeyB64, ExternIO, FunctionName, SerializedBytes,
-    ZomeName,
-};
-use holofuel_types::fuel::Fuel;
-use hpos_hc_connect::{CoreAppAgent, CoreAppRoleName};
-use serde::{Deserialize, Serialize};
-
-#[derive(Debug, Serialize, Deserialize, SerializedBytes)]
-pub struct PresentedHappBundle {
-    pub id: ActionHashB64,
-    pub provider_pubkey: AgentPubKeyB64,
-    pub is_draft: bool,
-    pub is_paused: bool,
-    pub uid: Option<String>,
-    pub bundle_url: String,
-    pub ui_src_url: Option<String>,
-    // pub dnas: Vec<DnaResource>,
-    pub hosted_urls: Vec<String>,
-    pub name: String,
-    pub logo_url: Option<String>,
-    pub description: String,
-    pub categories: Vec<String>,
-    pub jurisdictions: Vec<String>,
-    pub exclude_jurisdictions: bool,
-    pub publisher_pricing_pref: PublisherPricingPref,
-    pub login_config: LoginConfig,
-    pub special_installed_app_id: Option<String>,
-}
-
-#[derive(Debug, Serialize, Deserialize, SerializedBytes)]
-pub struct PublisherPricingPref {
-    pub cpu: Fuel,
-    pub storage: Fuel,
-    pub bandwidth: Fuel,
-}
-
-#[derive(Debug, Serialize, Deserialize, SerializedBytes)]
-pub struct LoginConfig {
-    pub display_publisher_name: bool,
-    pub registration_info_url: Option<String>,
-}
+use holochain_types::prelude::{ExternIO, FunctionName, ZomeName};
+use hpos_hc_connect::{hha_types::PresentedHappBundle, CoreAppAgent, CoreAppRoleName};
 
 pub async fn get() -> Result<()> {
     let mut agent = CoreAppAgent::connect().await?;

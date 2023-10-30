@@ -1,29 +1,6 @@
 use anyhow::Result;
-use holochain_types::prelude::{ActionHashB64, AgentPubKeyB64, ExternIO, FunctionName, ZomeName};
-use holofuel_types::fuel::Fuel;
-use hpos_hc_connect::{CoreAppAgent, CoreAppRoleName};
-use serde::{Deserialize, Serialize};
-use std::time::Duration;
-
-#[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct HappPreferences {
-    pub max_fuel_before_invoice: Fuel,
-    pub price_compute: Fuel,
-    pub price_storage: Fuel,
-    pub price_bandwidth: Fuel,
-    pub max_time_before_invoice: Duration,
-}
-
-#[derive(Debug, Clone, Deserialize)]
-pub struct HoloportId(pub String);
-
-#[derive(Debug, Clone, Deserialize)]
-pub struct HoloportDetails {
-    pub host_pub_key: AgentPubKeyB64,
-    pub holoport_id: HoloportId,
-    pub preferences: Option<HappPreferences>,
-    pub preferences_hash: Option<ActionHashB64>,
-}
+use holochain_types::prelude::{ExternIO, FunctionName, ZomeName};
+use hpos_hc_connect::{hha_types::HoloportDetails, CoreAppAgent, CoreAppRoleName};
 
 pub async fn get(happ_id: String) -> Result<()> {
     let mut agent = CoreAppAgent::connect().await?;

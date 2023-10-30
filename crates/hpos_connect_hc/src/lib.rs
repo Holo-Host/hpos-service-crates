@@ -41,4 +41,5 @@ pub mod hpos_membrane_proof;
 pub use hf_agent::*;
 pub mod core_app_agent;
 pub use core_app_agent::*;
+pub mod hha_types;
 pub mod holofuel_types;

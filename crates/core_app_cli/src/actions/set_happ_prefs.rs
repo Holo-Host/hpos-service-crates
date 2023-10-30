@@ -1,28 +1,11 @@
 use anyhow::Result;
 use holochain_types::prelude::{ActionHashB64, ExternIO, FunctionName, ZomeName};
 use holofuel_types::fuel::Fuel;
-use hpos_hc_connect::{CoreAppAgent, CoreAppRoleName};
-use serde::{Deserialize, Serialize};
+use hpos_hc_connect::{
+    hha_types::{HappPreferences, SetHappPreferencesInput},
+    CoreAppAgent, CoreAppRoleName,
+};
 use std::{str::FromStr, time::Duration};
-
-#[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct HappPreferences {
-    pub max_fuel_before_invoice: Fuel,
-    pub price_compute: Fuel,
-    pub price_storage: Fuel,
-    pub price_bandwidth: Fuel,
-    pub max_time_before_invoice: Duration,
-}
-
-#[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct SetHappPreferencesInput {
-    pub happ_id: ActionHashB64,
-    pub max_fuel_before_invoice: Fuel, // how much holofuel to accumulate before sending invoice
-    pub price_compute: Fuel,
-    pub price_storage: Fuel,
-    pub price_bandwidth: Fuel,
-    pub max_time_before_invoice: Duration, // how much time to allow to pass before sending invoice even if fuel trigger not reached.
-}
 
 pub async fn get(
     happ_id: String,

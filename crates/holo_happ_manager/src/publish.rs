@@ -1,10 +1,12 @@
 use super::hha::HHAAgent;
-use super::hha_type::HappInput;
 use anyhow::{anyhow, Result};
 use holochain_conductor_api::AppResponse;
 use holochain_types::prelude::ActionHashB64;
 use holochain_types::prelude::{ExternIO, FunctionName, ZomeName};
-use hpos_hc_connect::holo_config::{Config, Happ};
+use hpos_hc_connect::{
+    hha_types::HappInput,
+    holo_config::{Config, Happ},
+};
 use serde::Deserialize;
 use tracing::debug;
 

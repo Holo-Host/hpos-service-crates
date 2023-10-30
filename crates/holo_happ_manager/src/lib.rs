@@ -3,11 +3,12 @@ use anyhow::{anyhow, Context, Result};
 use hha::HHAAgent;
 use holochain_conductor_api::AppResponse;
 use holochain_types::prelude::{AgentPubKey, ExternIO, FunctionName, ZomeName};
-pub use hpos_hc_connect::holo_config::{Config, Happ, HappsFile};
+pub use hpos_hc_connect::{
+    hha_types::HappInput,
+    holo_config::{Config, Happ, HappsFile},
+};
 use serde::Serialize;
 use tracing::{debug, info};
-mod hha_type;
-use hha_type::HappInput;
 mod publish;
 use std::{env, fs, path::PathBuf};
 pub mod hha;

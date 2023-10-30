@@ -1,17 +1,12 @@
 use super::hha::HHAAgent;
 use anyhow::{anyhow, Result};
 use holochain_conductor_api::AppResponse;
-use holochain_types::prelude::ActionHashB64;
 use holochain_types::prelude::{ExternIO, FunctionName, ZomeName};
-use hpos_hc_connect::holo_config::{Config, Happ};
-use serde::Deserialize;
+use hpos_hc_connect::{
+    hha_types::PresentedHappBundle,
+    holo_config::{Config, Happ},
+};
 use tracing::debug;
-
-#[derive(Deserialize, Debug, Clone)]
-pub struct PresentedHappBundle {
-    pub id: ActionHashB64,
-    pub bundle_url: String,
-}
 
 pub async fn published(core_happ: &Happ, config: &Config) -> Result<Vec<PresentedHappBundle>> {
     let mut agent = HHAAgent::spawn(core_happ, config).await?;
