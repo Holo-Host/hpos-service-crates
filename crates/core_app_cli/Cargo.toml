@@ -1,6 +1,6 @@
 [package]
 name = "core_app_cli"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
 authors = ["zo-el <joelulahanna@gmail.com>"]
 
@@ -12,3 +12,4 @@ serde = { version = "1.0", features = ["derive"] }
 structopt = "0.3.0"
 rmp-serde = "1.1.1"
 tokio = { version = "1.11", features = [ "full" ] }
+holofuel_types = "0.5.0"
