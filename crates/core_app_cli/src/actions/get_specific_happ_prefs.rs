@@ -4,7 +4,8 @@ use hpos_hc_connect::{hha_types::HappPreferences, CoreAppAgent, CoreAppRoleName}
 
 pub async fn get(pref_hash: String) -> Result<()> {
     let mut agent = CoreAppAgent::connect().await?;
-    let pref_holo_hash = ActionHashB64::from_b64_str(&pref_hash)?;
+    let pref_holo_hash = ActionHashB64::from_b64_str(&pref_hash)
+        .expect("Failed to serialize string into ActionHashB4");
     let hash = ActionHash::from(pref_holo_hash);
 
     let result = agent
@@ -15,6 +16,8 @@ pub async fn get(pref_hash: String) -> Result<()> {
             ExternIO::encode(hash)?,
         )
         .await?;
+
+    println!("ZOME CALL RESULT: {:?}", result);
 
     let prefs: HappPreferences = rmp_serde::from_slice(result.as_bytes())?;
 
