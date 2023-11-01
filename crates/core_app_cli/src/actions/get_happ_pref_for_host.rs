@@ -1,3 +1,5 @@
+// NB: This endpoint is used by the nightly tests.  Any change to it's input or output should also be updated there.
+
 use anyhow::Result;
 use holochain_types::prelude::{ExternIO, FunctionName, ZomeName};
 use hpos_hc_connect::{hha_types::HoloportDetails, CoreAppAgent, CoreAppRoleName};
