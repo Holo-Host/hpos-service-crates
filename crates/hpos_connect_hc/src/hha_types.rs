@@ -4,6 +4,12 @@ use serde::{Deserialize, Serialize};
 use std::time::Duration;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct HappAndHost {
+    pub happ_id: ActionHashB64,
+    pub holoport_id: String,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct HappPreferences {
     pub max_fuel_before_invoice: Fuel,
     pub price_compute: Fuel,
@@ -32,6 +38,7 @@ pub struct HoloportDetails {
     pub preferences: Option<HappPreferences>,
     pub preferences_hash: Option<ActionHashB64>,
 }
+
 #[derive(Debug, Serialize, Deserialize, SerializedBytes)]
 pub struct PresentedHappBundle {
     pub id: ActionHashB64,
