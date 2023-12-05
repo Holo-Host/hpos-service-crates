@@ -12,7 +12,7 @@ tokio = { version = "1", features = ["full"] }
 tracing = { version = "0.1", features = ["attributes"] }
 tracing-subscriber = "0.2"
 url = "2.2"
-holo_happ_manager = { version = "0.1.0", path = "../holo_happ_manager" }
+holo_happ_manager = { path = "../holo_happ_manager" }
 hpos_hc_connect = { path = "../hpos_connect_hc" }
 
 [dependencies.hpos-config-core]

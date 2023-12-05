@@ -1,16 +1,15 @@
 [package]
 name = "holo_happ_manager"
-version = "0.1.0"
+version = "0.2.0"
 authors = ["zo-el <joelulahanna@gmaail.com>"]
 edition = "2021"
 
 [dependencies]
 anyhow = "1.0"
 hpos_hc_connect = { version = "0.1.0", path = "../hpos_connect_hc" }
-
-holochain_types = {version = "0.2.2", features = ["chc"]}
-holochain_conductor_api = { version = "0.2.2", features = ["chc"]}
-holochain_keystore = { version = "0.2.2" }
+holochain_types = {version = "0.2.3", features = ["chc"]}
+holochain_conductor_api = { version = "0.2.3", features = ["chc"]}
+holochain_keystore = { version = "0.2.3" }
 getrandom = "0.2.1"
 serde = "1.0"
 serde_json = "1.0.96"
@@ -21,7 +20,7 @@ tracing-subscriber = "0.3.17"
 tokio = "1.28.2"
 url2 = "0.0.6"
 hpos-config-core = { git = "https://github.com/Holo-Host/hpos-config", rev = "bfaced6044ae570bf20d4528fa9aaafcc43ddeec" }
-holofuel_types = "0.5.0"
+holofuel_types = "0.5.4"
 
 [dev-dependencies]
 configure-holochain = { path = "../configure-holochain"}
