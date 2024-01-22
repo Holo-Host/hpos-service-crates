@@ -22,12 +22,15 @@ pub enum Opt {
     /// List all hosts for a happ by `happ_id``
     #[structopt(name = "hosts")]
     Hosts { happ_id: String },
-    /// Fetch the happ preferences associated with a `pref_hash`
+    /// Enable hosting for a specific happ
+    #[structopt(name = "enable-happ")]
+    EnableHappForHost { happ_id: String, host_id: String },
+    /// Fetch the happ preferences associated with a happ preference hash
     #[structopt(name = "prefs")]
     GetPreferenceByHash { pref_hash: String },
-    /// Fetch the happ preferences for a specific host for a specific happ
+    /// Fetch the happ preference hash for a specific host for a specific happ
     #[structopt(name = "host-prefs")]
-    GetHappPrefForHost { happ_id: String, host_id: String },
+    GetHappPrefHashForHost { happ_id: String, host_id: String },
     /// Set new happ preferences
     #[structopt(name = "set-prefs")]
     SetHappPreferences {
@@ -59,7 +62,10 @@ impl Opt {
             Opt::GetPreferenceByHash { pref_hash } => {
                 core_app_cli::get_specific_happ_prefs::get(pref_hash).await?
             }
-            Opt::GetHappPrefForHost { happ_id, host_id } => {
+            Opt::EnableHappForHost { happ_id, host_id } => {
+                core_app_cli::enable_happ_for_host::get(happ_id, host_id).await?
+            }
+            Opt::GetHappPrefHashForHost { happ_id, host_id } => {
                 core_app_cli::get_happ_pref_for_host::get(happ_id, host_id).await?
             }
             Opt::SetHappPreferences {

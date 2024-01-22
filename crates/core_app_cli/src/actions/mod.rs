@@ -1,3 +1,4 @@
+pub mod enable_happ_for_host;
 pub mod get_happ_hosts;
 pub mod get_happ_pref_for_host;
 pub mod get_specific_happ_prefs;
