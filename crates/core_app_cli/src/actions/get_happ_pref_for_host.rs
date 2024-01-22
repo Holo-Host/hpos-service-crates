@@ -22,6 +22,7 @@ pub async fn get(happ_id: String, host_id: String) -> Result<()> {
 
     if let Some(d) = found {
         if let Some(p) = d.preferences_hash {
+           // Please do not change this print and if you do see that the nightly tests that depend on this print are updated as well
             println!("===================");
             println!("Happ Preference Hash: {:#?}", p);
             println!("===================");
