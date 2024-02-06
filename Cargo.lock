@@ -2336,9 +2336,9 @@ dependencies = [
 
 [[package]]
 name = "holochain_client"
-version = "0.4.6-rc.0"
+version = "0.4.7-rc.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2d806ae14af6af926d18bebc98fc7b56269a030b9622b39879cd231c537014b7"
+checksum = "219f2d539de85ad9a59337d3c480a752885fa1e1b0c196b919396cc97d2bc018"
 dependencies = [
  "again",
  "anyhow",
@@ -2386,7 +2386,7 @@ dependencies = [
  "dotenv",
  "holochain_keystore",
  "isahc",
- "lair_keystore_api 0.3.0",
+ "lair_keystore_api",
  "lazy_static",
  "log",
  "one_err",
@@ -2899,7 +2899,7 @@ dependencies = [
  "hpos-config-core",
  "hpos-config-seed-bundle-explorer",
  "isahc",
- "lair_keystore_api 0.3.0",
+ "lair_keystore_api",
  "lazy_static",
  "mr_bundle",
  "reqwest",
@@ -3471,7 +3471,7 @@ dependencies = [
  "kitsune_p2p_block",
  "kitsune_p2p_dht",
  "kitsune_p2p_dht_arc",
- "lair_keystore_api 0.4.2",
+ "lair_keystore_api",
  "lru 0.8.1",
  "nanoid 0.3.0",
  "once_cell",
@@ -3508,7 +3508,7 @@ version = "0.4.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c7e973eb3f86bb833b87c15f389758b4ddd1b98c8bc0cf9e7c8138e01dd7bea6"
 dependencies = [
- "lair_keystore_api 0.4.2",
+ "lair_keystore_api",
  "pretty_assertions 1.4.0",
  "rpassword",
  "rusqlite",
@@ -3516,33 +3516,6 @@ dependencies = [
  "structopt",
  "sysinfo 0.28.4",
  "tracing-subscriber 0.3.18",
-]
-
-[[package]]
-name = "lair_keystore_api"
-version = "0.3.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5829f25d0eab6309ae4307aa645f123a64e568a41ec17c358dcbd65dec207e10"
-dependencies = [
- "base64 0.13.1",
- "dunce",
- "hc_seed_bundle 0.1.7",
- "lru 0.10.1",
- "nanoid 0.4.0",
- "once_cell",
- "parking_lot 0.12.1",
- "rcgen 0.10.0",
- "serde",
- "serde_json",
- "serde_yaml",
- "time",
- "tokio",
- "toml 0.5.11",
- "toml 0.7.8",
- "tracing",
- "url",
- "winapi",
- "zeroize",
 ]
 
 [[package]]
@@ -7038,7 +7011,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9324b127b0b0d63a723c4fd2d09b9d5491686878b02b1ccfbe61b898b045845c"
 dependencies = [
  "futures",
- "lair_keystore_api 0.4.2",
+ "lair_keystore_api",
  "once_cell",
  "parking_lot 0.12.1",
  "rand 0.8.5",
