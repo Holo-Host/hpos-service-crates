@@ -1,10 +1,12 @@
 use anyhow::{Context, Result};
 use holo_happ_manager;
 pub use hpos_hc_connect::{
+    chc::ChcCredentials,
     holo_config::{Config, Happ, HappsFile, MembraneProofFile, ProofPayload},
+    hpos_agent::Agent,
+    hpos_membrane_proof,
     utils::{download_file, extract_zip},
 };
-use hpos_hc_connect::{hpos_agent::Agent, hpos_membrane_proof};
 pub use hpos_hc_connect::{AdminWebsocket, AppWebsocket};
 use std::sync::Arc;
 use tracing::{debug, info, instrument, warn};
@@ -26,6 +28,22 @@ pub async fn run(config: Config) -> Result<()> {
 /// based on the config file provided this installs the core apps on the holoport
 /// It manages getting the mem-proofs and properties that are expected to be used on the holoport
 pub async fn install_happs(happ_file: &HappsFile, config: &Config) -> Result<()> {
+    // NB: We require the CHC url in case we need to graft from the CHC.
+    let chc_string = config.chc_url.ok_or(Err("Missing CHC URL."))?;
+
+    // NB: We require the Lair Keystore url in case we need to graft from the CHC.
+    let lair_url = config.lair_url.ok_or(Err("Missing Lair Keystore URL."))?;
+
+    let keystore = holochain_keystore::lair_keystore::spawn_lair_keystore(
+        url2::url2!("{}", config.lair_url),
+        passphrase,
+    )
+    .await?;
+
+    let mut app_websocket = AppWebsocket::connect(config.happ_port)
+        .await
+        .context("failed to connect to holochain's app interface")?;
+
     let mut admin_websocket = AdminWebsocket::connect(config.admin_port)
         .await
         .context("failed to connect to holochain's admin interface")?;
@@ -62,7 +80,16 @@ pub async fn install_happs(happ_file: &HappsFile, config: &Config) -> Result<()>
                     .await?;
 
             if let Err(err) = admin_websocket
-                .install_and_activate_happ(happ, mem_proof_vec, agent.clone())
+                .install_and_activate_happ(
+                    happ,
+                    mem_proof_vec,
+                    agent.clone(),
+                    Some(ChcCredentials {
+                        app_websocket: &app_websocket,
+                        keystore: &keystore,
+                        chc_url: chc_string,
+                    }),
+                )
                 .await
             {
                 if err.to_string().contains("AppAlreadyInstalled") {
@@ -76,14 +103,9 @@ pub async fn install_happs(happ_file: &HappsFile, config: &Config) -> Result<()>
         install_ui(happ, config).await?
     }
 
-    // Clean-up part of the script
     // This clean up will remove any old app that were installed by the old config file
     // This will also include removing happs that were installed with the old UID
     // This will leave old servicelogger instances and old hosted happs. (That should be cleaned by the holo-auto-installer service)
-    let mut app_websocket = AppWebsocket::connect(config.happ_port)
-        .await
-        .context("failed to connect to holochain's app interface")?;
-
     let happs_to_keep: Vec<String> = happs_to_install.iter().map(|happ| happ.id()).collect();
 
     for app in &*active_happs {

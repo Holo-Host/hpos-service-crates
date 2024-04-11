@@ -30,6 +30,7 @@
 //! ```
 
 pub mod admin_ws;
+pub mod chc;
 pub mod holo_config;
 pub mod utils;
 pub use admin_ws::AdminWebsocket;
