@@ -68,6 +68,8 @@ pub struct Config {
     /// URL at which lair-keystore is running
     #[structopt(long)]
     pub lair_url: Option<String>,
+    #[structopt(long)]
+    pub chc_url: Option<String>,
 }
 
 impl Config {
