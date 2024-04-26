@@ -1627,7 +1627,7 @@ dependencies = [
  "rmpv",
  "serde",
  "serde_bytes",
- "sodoken 0.0.11",
+ "sodoken",
 ]
 
 [[package]]
@@ -1735,7 +1735,7 @@ dependencies = [
  "serde",
  "serde_json",
  "serial_test 0.9.0",
- "sodoken 0.0.9",
+ "sodoken",
  "tokio",
  "tracing",
  "tracing-subscriber 0.3.18",
@@ -1832,7 +1832,7 @@ dependencies = [
  "serde",
  "serde_yaml",
  "snafu",
- "sodoken 0.0.11",
+ "sodoken",
  "taskgroup_manager",
  "tempfile",
  "tracing",
@@ -1881,7 +1881,7 @@ dependencies = [
  "serde",
  "serde_bytes",
  "shrinkwraprs",
- "sodoken 0.0.11",
+ "sodoken",
  "thiserror",
  "tokio",
  "tracing",
@@ -2068,7 +2068,7 @@ dependencies = [
  "futures",
  "once_cell",
  "rpassword",
- "sodoken 0.0.11",
+ "sodoken",
  "tokio",
  "tracing",
 ]
@@ -2213,7 +2213,7 @@ dependencies = [
  "one_err",
  "rmp-serde 1.1.2",
  "serde_json",
- "sodoken 0.0.11",
+ "sodoken",
  "thiserror",
 ]
 
@@ -2242,7 +2242,7 @@ dependencies = [
  "serde",
  "serde_json",
  "serde_yaml",
- "sodoken 0.0.11",
+ "sodoken",
  "structopt",
  "tempfile",
  "thiserror",
@@ -4636,21 +4636,6 @@ checksum = "7b5fac59a5cb5dd637972e5fca70daf0523c9067fcdc4842f053dae04a18f8e9"
 dependencies = [
  "libc",
  "windows-sys 0.48.0",
-]
-
-[[package]]
-name = "sodoken"
-version = "0.0.9"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4ebd7d30290221181652f7a08112f5e7871e3deffde718dfa621025aa0e9c290"
-dependencies = [
- "libc",
- "libsodium-sys-stable",
- "num_cpus",
- "once_cell",
- "one_err",
- "parking_lot 0.12.1",
- "tokio",
 ]
 
 [[package]]
