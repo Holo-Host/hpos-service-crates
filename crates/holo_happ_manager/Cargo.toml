@@ -8,11 +8,11 @@ edition = "2021"
 anyhow = "1.0"
 hpos_hc_connect = { version = "0.1.0", path = "../hpos_connect_hc" }
 
-holochain_types = {version = "0.2.6", features = ["chc"]}
-holochain_conductor_api = { version = "0.2.6", features = ["chc"]}
-holochain_keystore = { version = "0.2.6" }
+holochain_types = { workspace = true }
+holochain_conductor_api = { workspace = true }
+holochain_keystore = { workspace = true }
 getrandom = "0.2.1"
-serde = "1.0"
+serde = { workspace = true }
 serde_json = "1.0.96"
 sodoken = "0.0.9"
 rmp-serde = "1.1.1"
@@ -20,8 +20,8 @@ tracing = "0.1.37"
 tracing-subscriber = "0.3.17"
 tokio = "1.28.2"
 url2 = "0.0.6"
-hpos-config-core = { git = "https://github.com/Holo-Host/hpos-config", rev = "bfaced6044ae570bf20d4528fa9aaafcc43ddeec" }
-holofuel_types = "0.5.5"
+hpos-config-core = { workspace = true }
+holofuel_types = { workspace = true }
 
 [dev-dependencies]
 configure-holochain = { path = "../configure-holochain"}

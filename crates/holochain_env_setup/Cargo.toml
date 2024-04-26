@@ -9,16 +9,16 @@ anyhow = "1.0"
 one_err = "0.0.8"
 url = "2.2"
 log = "0.4.17"
-holochain_keystore = "0.2.6"
-lair_keystore_api = "0.4.2"
+holochain_keystore = { workspace = true }
+lair_keystore_api = { workspace = true }
 lazy_static = "1"
 isahc = "1.7.2"
 snafu = "0.7.4"
-serde = "1.0"
+serde = { workspace = true }
 serde_yaml = "0.9"
 dotenv = "0.15.0"
 tempfile = "3.1"
-sodoken = "0.0.9"
+sodoken = { workspace = true }
 reqwest = { version = "0.11.14", features = ["json"] }
 tracing = { version = "0.1", features = ["attributes"] }
 taskgroup_manager = { path = "../taskgroup_manager" }
