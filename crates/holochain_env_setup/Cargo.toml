@@ -19,6 +19,6 @@ serde_yaml = "0.9"
 dotenv = "0.15.0"
 tempfile = "3.1"
 sodoken = { workspace = true }
-reqwest = { version = "0.11.14", features = ["json"] }
+reqwest = { workspace = true }
 tracing = { version = "0.1", features = ["attributes"] }
 taskgroup_manager = { path = "../taskgroup_manager" }

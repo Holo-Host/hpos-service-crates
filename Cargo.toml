@@ -25,6 +25,7 @@ holofuel_types = "0.5.7"
 sodoken = "0.0.11"
 serde = "1.0.193" # { version = "1.0.193", features = ["derive"] }
 mr_bundle = { version = "0.3.0-beta-dev.10" }
+reqwest = { version = "0.12.4", features = ["json"]}
 
 [profile.dev]
 opt-level = "z"
