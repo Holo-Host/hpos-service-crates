@@ -1,5 +1,4 @@
 use anyhow::{Context, Result};
-use holo_happ_manager;
 pub use hpos_hc_connect::{
     holo_config::{Config, Happ, HappsFile, MembraneProofFile, ProofPayload},
     utils::{download_file, extract_zip},
@@ -125,14 +124,11 @@ async fn install_ui(happ: &Happ, config: &Config) -> Result<()> {
 }
 
 pub async fn update_host_jurisdiction_if_changed(config: &Config) -> Result<()> {
-    match std::env::var("IS_INTEGRATION_TEST") {
-        Ok(is_integration_test) => {
-            if is_integration_test == "TRUE" {
-                // set in ../tests/integration.rs and ../../holo_happ_manager/tests/integration.ts
-                return Ok(());
-            }
+    if let Ok(is_integration_test) = std::env::var("IS_INTEGRATION_TEST") {
+        if is_integration_test == "TRUE" {
+            // set in ../tests/integration.rs and ../../holo_happ_manager/tests/integration.ts
+            return Ok(());
         }
-        Err(_) => {} // if we failed to find the env var, we can just carry on
     }
 
     // get current jurisdiction in hbs

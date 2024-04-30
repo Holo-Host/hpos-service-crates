@@ -1,10 +1,12 @@
 use anyhow::{anyhow, Context, Result};
 use holochain_conductor_api::{AppInfo, AppRequest, AppResponse, ZomeCall};
 use holochain_types::app::InstalledAppId;
-use holochain_websocket::{connect, WebsocketConfig, WebsocketSender};
-use std::sync::Arc;
+use holochain_websocket::{connect, ConnectRequest, WebsocketConfig, WebsocketSender};
+use std::{
+    net::{IpAddr, Ipv4Addr, SocketAddr},
+    sync::Arc,
+};
 use tracing::{instrument, trace};
-use url::Url;
 
 #[derive(Clone)]
 pub struct AppWebsocket {
@@ -14,12 +16,11 @@ pub struct AppWebsocket {
 impl AppWebsocket {
     #[instrument(err)]
     pub async fn connect(app_port: u16) -> Result<Self> {
-        let url = format!("ws://localhost:{}/", app_port);
-        let url = Url::parse(&url).context("invalid ws:// URL")?;
-        let websocket_config = Arc::new(WebsocketConfig::default());
+        let socket = SocketAddr::new(IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1)), app_port);
+        let websocket_config = Arc::new(WebsocketConfig::LISTENER_DEFAULT);
         let (tx, _rx) = again::retry(|| {
             let websocket_config = Arc::clone(&websocket_config);
-            connect(url.clone().into(), websocket_config)
+            connect(websocket_config, ConnectRequest::new(socket))
         })
         .await?;
         Ok(Self { tx })

@@ -21,7 +21,7 @@ holochain_types = "0.3.0-beta-dev.42"
 holochain_conductor_api = "=0.3.0-beta-dev.44"
 lair_keystore_api = "=0.4.4"
 holochain_websocket = "0.3.0-beta-dev.21"
-holofuel_types = "0.5.7"
+holofuel_types = "0.5.8"
 sodoken = "0.0.11"
 serde = "1.0.193" # { version = "1.0.193", features = ["derive"] }
 mr_bundle = { version = "0.3.0-beta-dev.10" }

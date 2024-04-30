@@ -3,11 +3,17 @@ use super::hpos_agent::Agent;
 use super::hpos_membrane_proof::MembraneProofs;
 use anyhow::{anyhow, Context, Result};
 use holochain_conductor_api::{AdminRequest, AdminResponse, AppStatusFilter};
-use holochain_types::app::{AppBundleSource, InstallAppPayload, InstalledAppId};
-use holochain_websocket::{connect, WebsocketConfig, WebsocketSender};
-use std::{env, sync::Arc};
+use holochain_types::{
+    app::{AppBundleSource, InstallAppPayload, InstalledAppId},
+    websocket::AllowedOrigins,
+};
+use holochain_websocket::{connect, ConnectRequest, WebsocketConfig, WebsocketSender};
+use std::{
+    env,
+    net::{IpAddr, Ipv4Addr, SocketAddr},
+    sync::Arc,
+};
 use tracing::{debug, info, instrument, trace};
-use url::Url;
 
 #[derive(Clone)]
 pub struct AdminWebsocket {
@@ -18,12 +24,11 @@ impl AdminWebsocket {
     /// Initializes websocket connection to holochain's admin interface
     #[instrument(err)]
     pub async fn connect(admin_port: u16) -> Result<Self> {
-        let url = format!("ws://localhost:{}/", admin_port);
-        let url = Url::parse(&url).context("invalid ws:// URL")?;
-        let websocket_config = Arc::new(WebsocketConfig::default());
+        let socket = SocketAddr::new(IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1)), admin_port);
+        let websocket_config = Arc::new(WebsocketConfig::LISTENER_DEFAULT);
         let (tx, _rx) = again::retry(|| {
             let websocket_config = Arc::clone(&websocket_config);
-            connect(url.clone().into(), websocket_config)
+            connect(websocket_config, ConnectRequest::new(socket))
         })
         .await?;
 
@@ -34,6 +39,7 @@ impl AdminWebsocket {
         info!(port = ?happ_port, "starting app interface");
         let msg = AdminRequest::AttachAppInterface {
             port: Some(happ_port),
+            allowed_origins: AllowedOrigins::Any,
         };
         self.send(msg).await
     }
@@ -95,7 +101,6 @@ impl AdminWebsocket {
                 source,
                 membrane_proofs,
                 network_seed: Some(id),
-                ignore_genesis_failure: false,
             }
         } else {
             debug!("using default network_seed to install");
@@ -105,7 +110,6 @@ impl AdminWebsocket {
                 source,
                 membrane_proofs,
                 network_seed: None,
-                ignore_genesis_failure: false,
             }
         };
 

@@ -1632,9 +1632,9 @@ dependencies = [
 
 [[package]]
 name = "hdi"
-version = "0.4.0-beta-dev.31"
+version = "0.4.0-beta-dev.36"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ea34cd9ed5566b38e36933684887ca86662bbac8c3aae635116919a0bda4a125"
+checksum = "f825dde020258d4af03ea8c0d899d8000ccac86da32f2233ce7abf4629639378"
 dependencies = [
  "getrandom 0.2.12",
  "hdk_derive",
@@ -2163,9 +2163,9 @@ dependencies = [
 
 [[package]]
 name = "holofuel_types"
-version = "0.5.7"
+version = "0.5.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "56203aba7ed7aeaa00e08b802d1a6c0c0a1f9ca55eea7870700d4c31ba258ae2"
+checksum = "7dba4fb6aba211bb5076a1499b5b4887bece9b38362b88bf687a1b95384bf0b2"
 dependencies = [
  "hdi",
  "lazy_static",
