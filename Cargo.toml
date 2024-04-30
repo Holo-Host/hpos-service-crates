@@ -17,7 +17,7 @@ hpos-config-seed-bundle-explorer ={ git = "https://github.com/Holo-Host/hpos-con
 ed25519-dalek = "2.1.1"
 holochain_client = "=0.5.0-dev.31"
 holochain_keystore = "0.3.0-beta-dev.36"
-holochain_types = "0.3.0-beta-dev.42"
+holochain_types = { version = "0.3.0-beta-dev.42", features = ["chc"] }
 holochain_conductor_api = "=0.3.0-beta-dev.44"
 lair_keystore_api = "=0.4.4"
 holochain_websocket = "0.3.0-beta-dev.21"
