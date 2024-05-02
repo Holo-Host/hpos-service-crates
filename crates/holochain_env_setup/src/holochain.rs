@@ -3,11 +3,12 @@ use serde::Serialize;
 use snafu::Snafu;
 use std::{
     fs::File,
-    io::{self, BufRead, Write},
+    io::{BufRead, Write},
     path::{Path, PathBuf},
     process::{Command, Stdio},
 };
 use taskgroup_manager::kill_on_drop::{kill_on_drop, KillChildOnDrop};
+use tempfile::TempDir;
 
 pub fn default_password() -> String {
     std::env::var("HOLOCHAIN_DEFAULT_PASSWORD").unwrap()
@@ -61,27 +62,12 @@ pub fn spawn_holochain(
     holochain
 }
 
-pub fn get_tmp_dir() -> PathBuf {
-    let dir = std::env::temp_dir();
-    println!("Temporary directory: {}", dir.display());
-    dir
-}
-
 pub fn create_tmp_dir() -> PathBuf {
-    let tmp_dir = get_tmp_dir();
-    match std::fs::remove_dir_all(&tmp_dir) {
-        Ok(()) => {}
-        Err(e) if e.kind() == io::ErrorKind::NotFound => {}
-        Err(e) => panic!("failed to remove tmp/ directory recursively: {}", e),
-    }
-    std::fs::create_dir_all(&tmp_dir).unwrap();
-    tmp_dir
+    TempDir::new().unwrap().into_path()
 }
 
 pub fn create_log_dir() -> PathBuf {
-    let dir = std::env::temp_dir();
-    println!("Temporary directory for logs: {}", dir.display());
-    dir
+    TempDir::new().unwrap().into_path()
 }
 
 #[derive(Debug, Snafu)]
