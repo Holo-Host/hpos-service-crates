@@ -7,6 +7,7 @@ use std::fs;
 use std::path::Path;
 use std::path::PathBuf;
 use std::process;
+use std::sync::Arc;
 use std::time::Duration;
 use tempfile::TempDir;
 use tracing::{debug, instrument};
@@ -99,6 +100,7 @@ pub struct WsPollRecv(tokio::task::JoinHandle<()>);
 
 impl Drop for WsPollRecv {
     fn drop(&mut self) {
+        tracing::info!("Poll dropping");
         self.0.abort();
     }
 }
@@ -128,7 +130,7 @@ impl WsPollRecv {
     {
         Self(tokio::task::spawn(async move {
             while rx.recv::<D>().await.is_ok() {}
-        }))
+        }).into())
     }
 }
 

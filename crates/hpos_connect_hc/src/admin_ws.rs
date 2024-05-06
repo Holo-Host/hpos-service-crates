@@ -19,6 +19,7 @@ use tracing::{debug, info, instrument, trace};
 #[derive(Clone)]
 pub struct AdminWebsocket {
     tx: WebsocketSender,
+    rx: Arc<WsPollRecv>,
 }
 
 impl AdminWebsocket {
@@ -33,9 +34,9 @@ impl AdminWebsocket {
         })
         .await?;
 
-        let _rx = WsPollRecv::new::<AdminResponse>(rx);
+        let rx = WsPollRecv::new::<AdminResponse>(rx).into();
 
-        Ok(Self { tx })
+        Ok(Self { tx, rx })
     }
 
     pub async fn attach_app_interface(&mut self, happ_port: u16) -> Result<AdminResponse> {
