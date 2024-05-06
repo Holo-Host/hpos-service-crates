@@ -1,11 +1,12 @@
+use crate::utils::WsPollRecv;
+
 use super::holo_config::Happ;
 use super::hpos_agent::Agent;
 use super::hpos_membrane_proof::MembraneProofs;
 use anyhow::{anyhow, Context, Result};
 use holochain_conductor_api::{AdminRequest, AdminResponse, AppStatusFilter};
 use holochain_types::{
-    app::{AppBundleSource, InstallAppPayload, InstalledAppId},
-    websocket::AllowedOrigins,
+    app::{AppBundleSource, InstallAppPayload, InstalledAppId}, websocket::AllowedOrigins
 };
 use holochain_websocket::{connect, ConnectRequest, WebsocketConfig, WebsocketSender};
 use std::{
@@ -26,11 +27,13 @@ impl AdminWebsocket {
     pub async fn connect(admin_port: u16) -> Result<Self> {
         let socket = SocketAddr::new(IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1)), admin_port);
         let websocket_config = Arc::new(WebsocketConfig::LISTENER_DEFAULT);
-        let (tx, _rx) = again::retry(|| {
+        let (tx, rx) = again::retry(|| {
             let websocket_config = Arc::clone(&websocket_config);
             connect(websocket_config, ConnectRequest::new(socket))
         })
         .await?;
+
+        let _rx = WsPollRecv::new::<AdminResponse>(rx);
 
         Ok(Self { tx })
     }
