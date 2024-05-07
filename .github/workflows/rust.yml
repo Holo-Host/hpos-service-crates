@@ -82,4 +82,4 @@ jobs:
           toolchain: 1.70.0
           override: true
       - name: Run cargo test
-        run: nix develop --command bash -c 'cargo test'
+        run: nix develop --command bash -c 'RUST_LOG=trace cargo test -- --nocapture'
