@@ -3,6 +3,7 @@ use serde::Deserialize;
 use std::process::{Command, Output};
 
 #[derive(Debug, Deserialize)]
+#[allow(dead_code)]
 struct HostingCriteria {
     id: String,
     jurisdiction: String,

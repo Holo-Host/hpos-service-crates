@@ -24,6 +24,7 @@ pub fn kill_gently_on_drop(child: Child) -> KillChildOnDrop {
     }
 }
 
+#[derive(Debug)]
 pub struct KillChildOnDrop {
     child: Child,
     gentle: bool,

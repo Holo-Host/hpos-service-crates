@@ -1,3 +1,4 @@
+use crate::utils::WsPollRecv;
 use anyhow::{anyhow, Context, Result};
 use holochain_conductor_api::{AppInfo, AppRequest, AppResponse, ZomeCall};
 use holochain_types::app::InstalledAppId;
@@ -8,9 +9,11 @@ use std::{
 };
 use tracing::{instrument, trace};
 
+#[allow(dead_code)]
 #[derive(Clone)]
 pub struct AppWebsocket {
     tx: WebsocketSender,
+    rx: Arc<WsPollRecv>,
 }
 
 impl AppWebsocket {
@@ -18,12 +21,13 @@ impl AppWebsocket {
     pub async fn connect(app_port: u16) -> Result<Self> {
         let socket = SocketAddr::new(IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1)), app_port);
         let websocket_config = Arc::new(WebsocketConfig::LISTENER_DEFAULT);
-        let (tx, _rx) = again::retry(|| {
+        let (tx, rx) = again::retry(|| {
             let websocket_config = Arc::clone(&websocket_config);
             connect(websocket_config, ConnectRequest::new(socket))
         })
         .await?;
-        Ok(Self { tx })
+        let rx = WsPollRecv::new::<AppResponse>(rx).into();
+        Ok(Self { tx, rx })
     }
 
     #[instrument(skip(self))]
