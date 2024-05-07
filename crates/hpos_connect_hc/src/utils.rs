@@ -1,13 +1,12 @@
 use anyhow::{anyhow, Context, Result};
-use holochain_types::prelude::{SerializedBytes, SerializedBytesError};
 use holochain_types::prelude::{Nonce256Bits, Timestamp};
+use holochain_types::prelude::{SerializedBytes, SerializedBytesError};
 use holochain_websocket::WebsocketReceiver;
 use lair_keystore_api::dependencies::tokio;
 use std::fs;
 use std::path::Path;
 use std::path::PathBuf;
 use std::process;
-use std::sync::Arc;
 use std::time::Duration;
 use tempfile::TempDir;
 use tracing::{debug, instrument};
@@ -130,7 +129,6 @@ impl WsPollRecv {
     {
         Self(tokio::task::spawn(async move {
             while rx.recv::<D>().await.is_ok() {}
-        }).into())
+        }))
     }
 }
-

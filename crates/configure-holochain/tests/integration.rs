@@ -8,8 +8,6 @@ use std::env::set_var;
 use std::path::PathBuf;
 use test_case::test_case;
 
-use tracing_subscriber::EnvFilter;
-
 /// Integration test for configure-holochain binary
 /// The purpose of this integration test is to show that binary does what it's
 /// supposed to do in 3 different environments:
@@ -42,21 +40,25 @@ use tracing_subscriber::EnvFilter;
 
 /// Testing scenario for holoport running on alphaNet
 /// FORCE_RANDOM_AGENT_KEY="", READ_ONLY_MEM_PROOF="false"
-// #[test_case("", "false" ; "holoport on alpha net")]
+#[test_case("", "false" ; "holoport on alpha net")]
 /// Testing scenario for holoport running on devNet
 /// FORCE_RANDOM_AGENT_KEY="1", READ_ONLY_MEM_PROOF="false"
 #[test_case("1", "false" ; "holoport on dev net")]
 
 /// Testing scenario for server with read only access to core-app
 /// FORCE_RANDOM_AGENT_KEY="", READ_ONLY_MEM_PROOF="true"
-// #[test_case("", "true" ; "server with read only memproof")]
+#[test_case("", "true" ; "server with read only memproof")]
 #[serial]
 #[tokio::test]
 /// Tests cannot run in parallel because they are all accessing same /tmp dir
 
 async fn run_configure_holochain(f_r_a_k: &str, r_o_m_p: &str) {
-    let filter = EnvFilter::from_default_env().add_directive("again=trace".parse().unwrap());
-    tracing_subscriber::fmt().with_env_filter(filter).init();
+    // Uncomment those lines if you need logging
+    // but this will work only for one test case ran at the time
+    // because tracing subscribes here sets a global subscriber for each test
+    // use tracing_subscriber::EnvFilter;
+    // let filter = EnvFilter::from_default_env().add_directive("again=trace".parse().unwrap());
+    // tracing_subscriber::fmt().with_env_filter(filter).init();
 
     // Point HPOS_CONFIG_PATH to test config file
     set_var(

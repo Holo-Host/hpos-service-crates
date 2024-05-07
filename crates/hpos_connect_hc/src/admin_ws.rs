@@ -6,7 +6,8 @@ use super::hpos_membrane_proof::MembraneProofs;
 use anyhow::{anyhow, Context, Result};
 use holochain_conductor_api::{AdminRequest, AdminResponse, AppStatusFilter};
 use holochain_types::{
-    app::{AppBundleSource, InstallAppPayload, InstalledAppId}, websocket::AllowedOrigins
+    app::{AppBundleSource, InstallAppPayload, InstalledAppId},
+    websocket::AllowedOrigins,
 };
 use holochain_websocket::{connect, ConnectRequest, WebsocketConfig, WebsocketSender};
 use std::{
@@ -16,6 +17,7 @@ use std::{
 };
 use tracing::{debug, info, instrument, trace};
 
+#[allow(dead_code)]
 #[derive(Clone)]
 pub struct AdminWebsocket {
     tx: WebsocketSender,

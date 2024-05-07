@@ -1,3 +1,4 @@
+use crate::utils::WsPollRecv;
 use anyhow::{anyhow, Context, Result};
 use holochain_conductor_api::{AppInfo, AppRequest, AppResponse, ZomeCall};
 use holochain_types::app::InstalledAppId;
@@ -7,8 +8,8 @@ use std::{
     sync::Arc,
 };
 use tracing::{instrument, trace};
-use crate::utils::WsPollRecv;
 
+#[allow(dead_code)]
 #[derive(Clone)]
 pub struct AppWebsocket {
     tx: WebsocketSender,
