@@ -3,10 +3,7 @@ use anyhow::{anyhow, Context, Result};
 use holochain_conductor_api::{AppInfo, AppRequest, AppResponse, ZomeCall};
 use holochain_types::app::InstalledAppId;
 use holochain_websocket::{connect, ConnectRequest, WebsocketConfig, WebsocketSender};
-use std::{
-    net::{IpAddr, Ipv4Addr, SocketAddr},
-    sync::Arc,
-};
+use std::{net::ToSocketAddrs, sync::Arc};
 use tracing::{instrument, trace};
 
 #[allow(dead_code)]
@@ -19,11 +16,15 @@ pub struct AppWebsocket {
 impl AppWebsocket {
     #[instrument(err)]
     pub async fn connect(app_port: u16) -> Result<Self> {
-        let socket = SocketAddr::new(IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1)), app_port);
-        let websocket_config = Arc::new(WebsocketConfig::LISTENER_DEFAULT);
+        let socket_addr = format!("localhost:{app_port}");
+        let addr = socket_addr
+            .to_socket_addrs()?
+            .next()
+            .expect("invalid websocket address");
+        let websocket_config = Arc::new(WebsocketConfig::CLIENT_DEFAULT);
         let (tx, rx) = again::retry(|| {
             let websocket_config = Arc::clone(&websocket_config);
-            connect(websocket_config, ConnectRequest::new(socket))
+            connect(websocket_config, ConnectRequest::new(addr))
         })
         .await?;
         let rx = WsPollRecv::new::<AppResponse>(rx).into();
