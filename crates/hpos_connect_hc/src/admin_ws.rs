@@ -46,6 +46,7 @@ impl AdminWebsocket {
         let msg = AdminRequest::AttachAppInterface {
             port: Some(happ_port),
             allowed_origins: AllowedOrigins::Any,
+            installed_app_id: None,
         };
         self.send(msg).await
     }
