@@ -10,11 +10,7 @@ use holochain_types::{
     websocket::AllowedOrigins,
 };
 use holochain_websocket::{connect, ConnectRequest, WebsocketConfig, WebsocketSender};
-use std::{
-    env,
-    net::{IpAddr, Ipv4Addr, SocketAddr},
-    sync::Arc,
-};
+use std::{env, net::ToSocketAddrs, sync::Arc};
 use tracing::{debug, info, instrument, trace};
 
 #[allow(dead_code)]
@@ -28,11 +24,15 @@ impl AdminWebsocket {
     /// Initializes websocket connection to holochain's admin interface
     #[instrument(err)]
     pub async fn connect(admin_port: u16) -> Result<Self> {
-        let socket = SocketAddr::new(IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1)), admin_port);
-        let websocket_config = Arc::new(WebsocketConfig::LISTENER_DEFAULT);
+        let socket_addr = format!("localhost:{admin_port}");
+        let addr = socket_addr
+            .to_socket_addrs()?
+            .next()
+            .expect("invalid websocket address");
+        let websocket_config = Arc::new(WebsocketConfig::CLIENT_DEFAULT);
         let (tx, rx) = again::retry(|| {
             let websocket_config = Arc::clone(&websocket_config);
-            connect(websocket_config, ConnectRequest::new(socket))
+            connect(websocket_config, ConnectRequest::new(addr))
         })
         .await?;
 
