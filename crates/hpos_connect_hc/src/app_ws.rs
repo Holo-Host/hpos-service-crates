@@ -1,7 +1,7 @@
 use crate::utils::WsPollRecv;
 use anyhow::{anyhow, Context, Result};
+use holochain_client::{AppAuthenticationRequest, AppAuthenticationToken};
 use holochain_conductor_api::{AppInfo, AppRequest, AppResponse, ZomeCall};
-use holochain_types::app::InstalledAppId;
 use holochain_websocket::{connect, ConnectRequest, WebsocketConfig, WebsocketSender};
 use std::{net::ToSocketAddrs, sync::Arc};
 use tracing::{instrument, trace};
@@ -15,12 +15,12 @@ pub struct AppWebsocket {
 
 impl AppWebsocket {
     #[instrument(err)]
-    pub async fn connect(app_port: u16) -> Result<Self> {
+    pub async fn connect(app_port: u16, token: AppAuthenticationToken) -> Result<Self> {
         let socket_addr = format!("localhost:{app_port}");
         let addr = socket_addr
             .to_socket_addrs()?
             .next()
-            .expect("invalid websocket address");
+            .context("invalid websocket address")?;
         let websocket_config = Arc::new(WebsocketConfig::CLIENT_DEFAULT);
         let (tx, rx) = again::retry(|| {
             let websocket_config = Arc::clone(&websocket_config);
@@ -28,14 +28,18 @@ impl AppWebsocket {
         })
         .await?;
         let rx = WsPollRecv::new::<AppResponse>(rx).into();
+
+        // Websocket connection needs authentication via token previously obtained from Admin Interface
+        tx.authenticate(AppAuthenticationRequest { token })
+            .await
+            .map_err(|err| anyhow!("Failed to send authentication: {err:?}"));
+
         Ok(Self { tx, rx })
     }
 
     #[instrument(skip(self))]
-    pub async fn get_app_info(&mut self, app_id: InstalledAppId) -> Option<AppInfo> {
-        let msg = AppRequest::AppInfo {
-            installed_app_id: app_id,
-        };
+    pub async fn get_app_info(&mut self) -> Option<AppInfo> {
+        let msg = AppRequest::AppInfo;
         let response = self.send(msg).await.ok()?;
         match response {
             AppResponse::AppInfo(app_info) => app_info,

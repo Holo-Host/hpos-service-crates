@@ -55,7 +55,7 @@ impl HolofuelAgent {
     pub async fn get_cell(&mut self) -> Result<(ProvisionedCell, AgentPubKey)> {
         match self
             .app_websocket
-            .app_info(self.holofuel_id.clone())
+            .app_info()
             .await
             .map_err(|err| anyhow!("{:?}", err))?
         {

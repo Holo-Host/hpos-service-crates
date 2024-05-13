@@ -4,7 +4,10 @@ use super::holo_config::Happ;
 use super::hpos_agent::Agent;
 use super::hpos_membrane_proof::MembraneProofs;
 use anyhow::{anyhow, Context, Result};
-use holochain_conductor_api::{AdminRequest, AdminResponse, AppStatusFilter};
+use holochain_conductor_api::{
+    AdminRequest, AdminResponse, AppAuthenticationToken, AppAuthenticationTokenIssued,
+    AppStatusFilter, IssueAppAuthenticationTokenPayload,
+};
 use holochain_types::{
     app::{AppBundleSource, InstallAppPayload, InstalledAppId},
     websocket::AllowedOrigins,
@@ -49,6 +52,24 @@ impl AdminWebsocket {
             installed_app_id: None,
         };
         self.send(msg).await
+    }
+
+    pub async fn issue_app_auth_token(&mut self, app_id: String) -> Result<AppAuthenticationToken> {
+        debug!("issuing app authentication token for app {:?}", app_id);
+        let msg = AdminRequest::IssueAppAuthenticationToken(IssueAppAuthenticationTokenPayload {
+            installed_app_id: app_id,
+            expiry_seconds: 30,
+            single_use: true,
+        });
+        let response = self.send(msg).await?;
+
+        match response {
+            AdminResponse::AppAuthenticationTokenIssued(AppAuthenticationTokenIssued {
+                token,
+                expires_at: _,
+            }) => Ok(token),
+            _ => Err(anyhow!("Error while issuing authentication token")),
+        }
     }
 
     pub async fn list_app(
