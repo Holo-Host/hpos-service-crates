@@ -33,9 +33,7 @@ impl CoreAppAgent {
         let app_file = HappsFile::load_happ_file_from_env()?;
         let core_app = app_file.core_app().unwrap();
 
-        let token = admin_websocket
-            .issue_app_auth_token(core_app.id())
-            .await?;
+        let token = admin_websocket.issue_app_auth_token(core_app.id()).await?;
 
         let app_websocket = AppWebsocket::connect(APP_PORT, token)
             .await

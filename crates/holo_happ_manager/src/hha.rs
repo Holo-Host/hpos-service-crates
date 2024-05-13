@@ -23,9 +23,7 @@ impl HHAAgent {
             .await
             .context("failed to connect to holochain's app interface")?;
 
-        let token = admin_websocket
-            .issue_app_auth_token(core_happ.id())
-            .await?;
+        let token = admin_websocket.issue_app_auth_token(core_happ.id()).await?;
 
         let mut app_ws = AppWebsocket::connect(42233, token)
             .await
