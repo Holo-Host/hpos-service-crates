@@ -107,21 +107,6 @@ impl Drop for WsPollRecv {
 impl WsPollRecv {
     /// Create a new [WsPollRecv] that will poll the given [WebsocketReceiver] for messages.
     /// The type of the messages being received must be specified. For example
-    ///
-    /// ```no_run
-    /// # #[tokio::main]
-    /// # async fn main() -> anyhow::Result<()>
-    /// # {
-    ///
-    /// use holochain::sweettest::{websocket_client_by_port, WsPollRecv};
-    /// use holochain_conductor_api::AdminResponse;
-    ///
-    /// let (tx, rx) = websocket_client_by_port(3000).await?;
-    /// let _rx = WsPollRecv::new::<AdminResponse>(rx);
-    ///
-    /// # Ok(())
-    /// # }
-    /// ```
     pub fn new<D>(mut rx: WebsocketReceiver) -> Self
     where
         D: std::fmt::Debug,

@@ -1,4 +1,4 @@
-use super::holo_config::{self, HappsFile, ADMIN_PORT, APP_PORT};
+use super::holo_config::{self, HappsFile, ADMIN_PORT};
 use crate::{utils::fresh_nonce, AdminWebsocket, AppWebsocket};
 use anyhow::{anyhow, Context, Result};
 use holochain_conductor_api::{AppInfo, AppResponse, CellInfo, ProvisionedCell, ZomeCall};
@@ -18,9 +18,16 @@ pub struct CoreAppAgent {
 impl CoreAppAgent {
     /// connects to a holofuel agent that is running on a hpos server
     pub async fn connect() -> Result<Self> {
+        const CORE_APP_PORT: u16 = 42234;
+
         let mut admin_websocket = AdminWebsocket::connect(ADMIN_PORT)
             .await
             .context("failed to connect to holochain's app interface")?;
+
+        admin_websocket
+            .attach_app_interface(CORE_APP_PORT)
+            .await
+            .context("failed to start app interface for core app")?;
 
         let passphrase =
             sodoken::BufRead::from(holo_config::default_password()?.as_bytes().to_vec());
@@ -35,7 +42,7 @@ impl CoreAppAgent {
 
         let token = admin_websocket.issue_app_auth_token(core_app.id()).await?;
 
-        let app_websocket = AppWebsocket::connect(APP_PORT, token)
+        let app_websocket = AppWebsocket::connect(CORE_APP_PORT, token)
             .await
             .context("failed to connect to holochain's app interface")?;
 

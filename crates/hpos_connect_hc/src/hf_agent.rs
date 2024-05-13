@@ -1,4 +1,4 @@
-use super::holo_config::{self, HappsFile, APP_PORT};
+use super::holo_config::{self, HappsFile};
 use crate::{holo_config::ADMIN_PORT, utils::fresh_nonce};
 use crate::{AdminWebsocket, AppWebsocket};
 use anyhow::{anyhow, Context, Result};
@@ -21,9 +21,17 @@ impl HolofuelAgent {
     /// crate will read app_id from data passed in environmental variables CORE_HAPP_FILE and DEV_UID_OVERRIDE
     /// so that it connects to a default holofuel instance on HPOS
     pub async fn connect() -> Result<Self> {
+        const HF_APP_PORT: u16 = 42235;
+
         let mut admin_websocket = AdminWebsocket::connect(ADMIN_PORT)
             .await
             .context("failed to connect to holochain's app interface")?;
+
+        admin_websocket
+            .attach_app_interface(HF_APP_PORT)
+            .await
+            .context("failed to start app interface for core app")?;
+
         let passphrase =
             sodoken::BufRead::from(holo_config::default_password()?.as_bytes().to_vec());
         let keystore = holochain_keystore::lair_keystore::spawn_lair_keystore(
@@ -46,7 +54,7 @@ impl HolofuelAgent {
             .issue_app_auth_token(holofuel_id.clone())
             .await?;
 
-        let app_websocket = AppWebsocket::connect(APP_PORT, token)
+        let app_websocket = AppWebsocket::connect(HF_APP_PORT, token)
             .await
             .context("failed to connect to holochain's app interface")?;
 
