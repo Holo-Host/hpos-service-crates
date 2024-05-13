@@ -1100,7 +1100,6 @@ checksum = "4a3daa8e81a3963a60642bcc1f90a670680bd4a77535faa384e9d1c79d620871"
 dependencies = [
  "curve25519-dalek",
  "ed25519",
- "rand_core 0.6.4",
  "serde",
  "sha2",
  "signature",
@@ -1187,18 +1186,6 @@ checksum = "a258e46cdc063eb8519c00b9fc845fc47bcfca4130e2f08e88665ceda8474245"
 dependencies = [
  "libc",
  "windows-sys 0.52.0",
-]
-
-[[package]]
-name = "event-emitter-rs"
-version = "0.1.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7dccdd0a59457ba353cc44c26d431ca5089f2cf93035c780a1b3f2814a017ebd"
-dependencies = [
- "bincode",
- "lazy_static",
- "serde",
- "uuid 0.8.2",
 ]
 
 [[package]]
@@ -1739,31 +1726,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "holochain_client"
-version = "0.6.0-dev.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6534537c38234f642e753f7e187ff999298eed41008d33b83005bf5a48c3cbc1"
-dependencies = [
- "again",
- "anyhow",
- "async-trait",
- "ed25519-dalek",
- "event-emitter-rs",
- "holo_hash",
- "holochain_conductor_api",
- "holochain_nonce",
- "holochain_serialized_bytes",
- "holochain_types",
- "holochain_websocket",
- "holochain_zome_types",
- "lair_keystore_api",
- "parking_lot 0.12.1",
- "rand 0.8.5",
- "serde",
- "tokio",
-]
-
-[[package]]
 name = "holochain_conductor_api"
 version = "0.4.0-dev.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2196,7 +2158,6 @@ dependencies = [
  "base64 0.13.1",
  "ed25519-dalek",
  "getrandom 0.2.12",
- "holochain_client",
  "holochain_conductor_api",
  "holochain_keystore",
  "holochain_types",
@@ -3927,7 +3888,7 @@ dependencies = [
  "rkyv_derive",
  "seahash",
  "tinyvec",
- "uuid 1.7.0",
+ "uuid",
 ]
 
 [[package]]
@@ -5489,15 +5450,6 @@ name = "utf8parse"
 version = "0.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "711b9620af191e0cdc7468a8d14e709c3dcdb115b36f838e601583af800a370a"
-
-[[package]]
-name = "uuid"
-version = "0.8.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bc5cf98d8186244414c848017f0e2676b3fcb46807f6668a97dfe67359a3c4b7"
-dependencies = [
- "getrandom 0.2.12",
-]
 
 [[package]]
 name = "uuid"

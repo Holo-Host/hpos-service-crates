@@ -22,7 +22,7 @@ impl HHAAgent {
             .await
             .context("failed to connect to holochain's app interface")?;
         debug!("get app info for {}", core_happ.id());
-        let cell = match app_ws.get_app_info(core_happ.id()).await {
+        let cell = match app_ws.get_app_info().await {
             Some(AppInfo {
                 // This works on the assumption that the core happs has HHA in the first position of the vec
                 cell_info,

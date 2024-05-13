@@ -84,7 +84,7 @@ impl CoreAppAgent {
         zome_name: ZomeName,
         fn_name: FunctionName,
         payload: ExternIO,
-    ) -> Result<AppResponse> {
+    ) -> Result<ExternIO> {
         let (cell, agent_pubkey) = self.get_cell(role_name).await?;
         let (nonce, expires_at) = fresh_nonce()?;
         let zome_call_unsigned = ZomeCallUnsigned {
@@ -100,12 +100,14 @@ impl CoreAppAgent {
         let signed_zome_call =
             ZomeCall::try_from_unsigned_zome_call(&self.keystore, zome_call_unsigned).await?;
 
-        let response = self
+        match self
             .app_websocket
             .zome_call(signed_zome_call)
             .await
-            .map_err(|err| anyhow!("{:?}", err))?;
-        Ok(response)
+            .map_err(|err| anyhow!("{:?}", err))? {
+                AppResponse::ZomeCalled(bytes) => Ok(*bytes),
+                _ => Err(anyhow!("")),
+            }
     }
 }
 

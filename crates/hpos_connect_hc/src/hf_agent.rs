@@ -1,10 +1,10 @@
 use super::holo_config::{self, HappsFile, APP_PORT};
-use crate::utils::fresh_nonce;
+use crate::{holo_config::ADMIN_PORT, utils::fresh_nonce};
+use crate::{AdminWebsocket, AppWebsocket};
 use anyhow::{anyhow, Context, Result};
-use holochain_client::{AgentPubKey, AppWebsocket};
-use holochain_conductor_api::{AppInfo, CellInfo, ProvisionedCell, ZomeCall};
+use holochain_conductor_api::{AppInfo, AppResponse, CellInfo, ProvisionedCell, ZomeCall};
 use holochain_keystore::{AgentPubKeyExt, MetaLairClient};
-use holochain_types::prelude::{ExternIO, FunctionName, Signature, ZomeCallUnsigned, ZomeName};
+use holochain_types::prelude::{AgentPubKey,ExternIO, FunctionName, Signature, ZomeCallUnsigned, ZomeName};
 use std::sync::Arc;
 
 pub struct HolofuelAgent {
@@ -19,12 +19,9 @@ impl HolofuelAgent {
     /// crate will read app_id from data passed in environmental variables CORE_HAPP_FILE and DEV_UID_OVERRIDE
     /// so that it connects to a default holofuel instance on HPOS
     pub async fn connect() -> Result<Self> {
-        let app_websocket = AppWebsocket::connect(format!("ws://localhost:{}/", APP_PORT))
+        let mut admin_websocket = AdminWebsocket::connect(ADMIN_PORT)
             .await
             .context("failed to connect to holochain's app interface")?;
-        // let admin_websocket = AdminWebsocket::connect(format!("ws://localhost:{}/", ADMIN_PORT))
-        //     .await
-        //     .context("failed to connect to holochain's app interface")?;
         let passphrase =
             sodoken::BufRead::from(holo_config::default_password()?.as_bytes().to_vec());
         let keystore = holochain_keystore::lair_keystore::spawn_lair_keystore(
@@ -43,6 +40,14 @@ impl HolofuelAgent {
             holofuel_id = holofuel.id();
         }
 
+        let token = admin_websocket
+            .issue_app_auth_token(holofuel_id.clone())
+            .await?;
+
+        let app_websocket = AppWebsocket::connect(APP_PORT, token)
+            .await
+            .context("failed to connect to holochain's app interface")?;
+
         Ok(Self {
             app_websocket,
             // admin_websocket,
@@ -55,9 +60,8 @@ impl HolofuelAgent {
     pub async fn get_cell(&mut self) -> Result<(ProvisionedCell, AgentPubKey)> {
         match self
             .app_websocket
-            .app_info()
+            .get_app_info()
             .await
-            .map_err(|err| anyhow!("{:?}", err))?
         {
             Some(AppInfo {
                 // This works on the assumption that the core apps has HHA in the first position of the vec
@@ -106,11 +110,13 @@ impl HolofuelAgent {
         let signed_zome_call =
             ZomeCall::try_from_unsigned_zome_call(&self.keystore, zome_call_unsigned).await?;
 
-        let response = self
+        match self
             .app_websocket
-            .call_zome(signed_zome_call)
+            .zome_call(signed_zome_call)
             .await
-            .map_err(|err| anyhow!("{:?}", err))?;
-        Ok(response)
+            .map_err(|err| anyhow!("{:?}", err))? {
+                AppResponse::ZomeCalled(bytes) => Ok(*bytes),
+                _ => Err(anyhow!("")),
+            }
     }
 }

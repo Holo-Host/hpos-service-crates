@@ -28,7 +28,6 @@ hpos-config-core = { workspace = true }
 hpos-config-seed-bundle-explorer = { workspace = true }
 lair_keystore_api = { workspace = true }
 getrandom = "0.2.7"
-holochain_client = { workspace = true }
 holochain_keystore = { workspace = true }
 sodoken = { workspace = true }
 url2 = "0.0.6"
