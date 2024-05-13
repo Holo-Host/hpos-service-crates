@@ -4,7 +4,9 @@ use crate::{AdminWebsocket, AppWebsocket};
 use anyhow::{anyhow, Context, Result};
 use holochain_conductor_api::{AppInfo, AppResponse, CellInfo, ProvisionedCell, ZomeCall};
 use holochain_keystore::{AgentPubKeyExt, MetaLairClient};
-use holochain_types::prelude::{AgentPubKey,ExternIO, FunctionName, Signature, ZomeCallUnsigned, ZomeName};
+use holochain_types::prelude::{
+    AgentPubKey, ExternIO, FunctionName, Signature, ZomeCallUnsigned, ZomeName,
+};
 use std::sync::Arc;
 
 pub struct HolofuelAgent {
@@ -58,11 +60,7 @@ impl HolofuelAgent {
 
     /// get cell details of the holofuel agent
     pub async fn get_cell(&mut self) -> Result<(ProvisionedCell, AgentPubKey)> {
-        match self
-            .app_websocket
-            .get_app_info()
-            .await
-        {
+        match self.app_websocket.get_app_info().await {
             Some(AppInfo {
                 // This works on the assumption that the core apps has HHA in the first position of the vec
                 cell_info,
@@ -114,9 +112,10 @@ impl HolofuelAgent {
             .app_websocket
             .zome_call(signed_zome_call)
             .await
-            .map_err(|err| anyhow!("{:?}", err))? {
-                AppResponse::ZomeCalled(bytes) => Ok(*bytes),
-                _ => Err(anyhow!("")),
-            }
+            .map_err(|err| anyhow!("{:?}", err))?
+        {
+            AppResponse::ZomeCalled(bytes) => Ok(*bytes),
+            _ => Err(anyhow!("")),
+        }
     }
 }

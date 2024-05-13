@@ -34,7 +34,7 @@ impl CoreAppAgent {
         let core_app = app_file.core_app().unwrap();
 
         let token = admin_websocket
-            .issue_app_auth_token(core_app.id().into())
+            .issue_app_auth_token(core_app.id())
             .await?;
 
         let app_websocket = AppWebsocket::connect(APP_PORT, token)
@@ -104,10 +104,11 @@ impl CoreAppAgent {
             .app_websocket
             .zome_call(signed_zome_call)
             .await
-            .map_err(|err| anyhow!("{:?}", err))? {
-                AppResponse::ZomeCalled(bytes) => Ok(*bytes),
-                _ => Err(anyhow!("")),
-            }
+            .map_err(|err| anyhow!("{:?}", err))?
+        {
+            AppResponse::ZomeCalled(bytes) => Ok(*bytes),
+            _ => Err(anyhow!("")),
+        }
     }
 }
 

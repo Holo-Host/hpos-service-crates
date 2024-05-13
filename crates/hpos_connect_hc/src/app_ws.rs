@@ -1,6 +1,8 @@
 use crate::utils::WsPollRecv;
 use anyhow::{anyhow, Context, Result};
-use holochain_conductor_api::{AppAuthenticationRequest, AppAuthenticationToken, AppInfo, AppRequest, AppResponse, ZomeCall};
+use holochain_conductor_api::{
+    AppAuthenticationRequest, AppAuthenticationToken, AppInfo, AppRequest, AppResponse, ZomeCall,
+};
 use holochain_websocket::{connect, ConnectRequest, WebsocketConfig, WebsocketSender};
 use std::{net::ToSocketAddrs, sync::Arc};
 use tracing::{instrument, trace};
@@ -31,7 +33,7 @@ impl AppWebsocket {
         // Websocket connection needs authentication via token previously obtained from Admin Interface
         tx.authenticate(AppAuthenticationRequest { token })
             .await
-            .map_err(|err| anyhow!("Failed to send authentication: {err:?}"));
+            .map_err(|err| anyhow!("Failed to send authentication: {err:?}"))?;
 
         Ok(Self { tx, rx })
     }
