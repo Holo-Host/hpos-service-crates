@@ -1,5 +1,8 @@
 use anyhow::{anyhow, Context, Result};
 use holochain_types::prelude::{Nonce256Bits, Timestamp};
+use holochain_types::prelude::{SerializedBytes, SerializedBytesError};
+use holochain_websocket::WebsocketReceiver;
+use lair_keystore_api::dependencies::tokio;
 use std::fs;
 use std::path::Path;
 use std::path::PathBuf;
@@ -88,4 +91,29 @@ pub async fn download_file(url: &Url) -> Result<PathBuf> {
         path
     };
     Ok(path)
+}
+
+/// You do not need to do anything with this type. While it is held it will keep polling a websocket
+/// receiver.
+pub struct WsPollRecv(tokio::task::JoinHandle<()>);
+
+impl Drop for WsPollRecv {
+    fn drop(&mut self) {
+        tracing::info!("Poll dropping");
+        self.0.abort();
+    }
+}
+
+impl WsPollRecv {
+    /// Create a new [WsPollRecv] that will poll the given [WebsocketReceiver] for messages.
+    /// The type of the messages being received must be specified. For example
+    pub fn new<D>(mut rx: WebsocketReceiver) -> Self
+    where
+        D: std::fmt::Debug,
+        SerializedBytes: TryInto<D, Error = SerializedBytesError>,
+    {
+        Self(tokio::task::spawn(async move {
+            while rx.recv::<D>().await.is_ok() {}
+        }))
+    }
 }

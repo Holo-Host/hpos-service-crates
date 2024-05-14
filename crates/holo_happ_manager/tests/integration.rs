@@ -8,6 +8,11 @@ async fn run_happ_manager() {
     use std::env::set_var;
     use std::path::PathBuf;
 
+    // Uncomment those lines if you need logging
+    // use tracing_subscriber::EnvFilter;
+    // let filter = EnvFilter::from_default_env().add_directive("again=trace".parse().unwrap());
+    // tracing_subscriber::fmt().with_env_filter(filter).init();
+
     // Point HPOS_CONFIG_PATH to test config file
     set_var(
         "HPOS_CONFIG_PATH",

@@ -30,7 +30,7 @@ impl fmt::Display for RegistrationError {
 struct Registration {
     registration_code: String,
     #[serde(serialize_with = "serialize_holochain_agent_pub_key")]
-    agent_pub_key: PublicKey,
+    agent_pub_key: VerifyingKey,
     email: String,
     payload: RegistrationPayload,
 }
@@ -52,7 +52,7 @@ lazy_static! {
 }
 
 fn serialize_holochain_agent_pub_key<S>(
-    public_key: &PublicKey,
+    public_key: &VerifyingKey,
     serializer: S,
 ) -> Result<S::Ok, S::Error>
 where
@@ -88,7 +88,7 @@ pub async fn get_mem_proof(admin: Admin) -> Result<MembraneProof> {
         .context("Failed to read HOLOFUEL_INSTANCE_ROLE. Is it set in env?")?;
     let payload = Registration {
         registration_code: admin.registration_code,
-        agent_pub_key: PublicKey::from_bytes(admin.key.get_raw_32())?,
+        agent_pub_key: VerifyingKey::from_bytes(admin.key.get_raw_32()[0..32].try_into()?)?,
         email: admin.email,
         payload: RegistrationPayload { role },
     };
@@ -112,7 +112,9 @@ pub async fn create_vec_for_happ(happ: &Happ, mem_proof: MembraneProof) -> Resul
         if let Some(agent_details) = happ.agent_override_details().await? {
             let registration_payload = Registration {
                 registration_code: agent_details.registration_code,
-                agent_pub_key: PublicKey::from_bytes(agent_details.key.get_raw_32())?,
+                agent_pub_key: VerifyingKey::from_bytes(
+                    agent_details.key.get_raw_32()[0..32].try_into()?,
+                )?,
                 email: agent_details.email,
                 payload: RegistrationPayload {
                     role: "holofuel".to_string(),

@@ -3,11 +3,11 @@
     [
       {
         'app_id': 'core-app',
-        'bundle_url': 'https://holo-host.github.io/holo-hosting-app-rsm/releases/downloads/core-app/0_5_18/core-app.0_5_18-skip-proof.happ',
+        'bundle_url': 'https://holo-host.github.io/holo-hosting-app-rsm/releases/downloads/core-app/0_6_1/core-app.0_6_1-skip-proof.happ',
       },
       {
         'app_id': 'servicelogger',
-        'bundle_url': 'https://holo-host.github.io/servicelogger-rsm/releases/downloads/0_4_18/servicelogger.0_4_18.happ',
+        'bundle_url': 'https://holo-host.github.io/servicelogger-rsm/releases/downloads/0_5_1/servicelogger.0_5_1.happ',
       },
     ],
   'self_hosted_happs':

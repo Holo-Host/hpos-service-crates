@@ -4,8 +4,8 @@ use holochain_conductor_api::{CellInfo, ZomeCall};
 use holochain_keystore::MetaLairClient;
 use holochain_types::prelude::{AgentPubKey, ExternIO, FunctionName, ZomeName};
 use holochain_types::prelude::{Nonce256Bits, Timestamp, ZomeCallUnsigned};
-use hpos_hc_connect::holo_config::{Config, Happ};
-use hpos_hc_connect::AppWebsocket;
+use hpos_hc_connect::holo_config::{Config, Happ, ADMIN_PORT};
+use hpos_hc_connect::{AdminWebsocket, AppWebsocket};
 use std::time::Duration;
 use tracing::debug;
 
@@ -18,11 +18,18 @@ pub struct HHAAgent {
 impl HHAAgent {
     pub async fn spawn(core_happ: &Happ, config: &Config) -> Result<Self> {
         debug!("get_all_enabled_hosted_happs");
-        let mut app_ws = AppWebsocket::connect(42233)
+
+        let mut admin_websocket = AdminWebsocket::connect(ADMIN_PORT)
+            .await
+            .context("failed to connect to holochain's app interface")?;
+
+        let token = admin_websocket.issue_app_auth_token(core_happ.id()).await?;
+
+        let mut app_ws = AppWebsocket::connect(42233, token)
             .await
             .context("failed to connect to holochain's app interface")?;
         debug!("get app info for {}", core_happ.id());
-        let cell = match app_ws.get_app_info(core_happ.id()).await {
+        let cell = match app_ws.get_app_info().await {
             Some(AppInfo {
                 // This works on the assumption that the core happs has HHA in the first position of the vec
                 cell_info,
