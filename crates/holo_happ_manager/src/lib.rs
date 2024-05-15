@@ -97,7 +97,7 @@ pub async fn update_jurisdiction_if_changed(
     if hha_jurisdiction.is_none() || hha_jurisdiction.as_ref() != Some(&hbs_jurisdiction) {
         #[derive(Debug, Serialize)]
         pub struct SetHostJurisdictionInput {
-            pub host_pubkey: AgentPubKey,
+            pub pubkey: AgentPubKey,
             pub jurisdiction: String,
         }
 
@@ -106,7 +106,7 @@ pub async fn update_jurisdiction_if_changed(
                 ZomeName::from("hha"),
                 FunctionName::from("set_host_jurisdiction"),
                 ExternIO::encode(SetHostJurisdictionInput {
-                    host_pubkey,
+                    pubkey: host_pubkey,
                     jurisdiction: hbs_jurisdiction,
                 })?,
             )
