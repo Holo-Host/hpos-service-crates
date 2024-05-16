@@ -44,14 +44,19 @@ impl AdminWebsocket {
         Ok(Self { tx, rx })
     }
 
-    pub async fn attach_app_interface(&mut self, happ_port: u16) -> Result<AdminResponse> {
+    /// Attach an interface for app calls. If a port numer is None conductor will choose an available port
+    /// Returns attached port number
+    pub async fn attach_app_interface(&mut self, happ_port: Option<u16>) -> Result<u16> {
         info!(port = ?happ_port, "starting app interface");
         let msg = AdminRequest::AttachAppInterface {
-            port: Some(happ_port),
+            port: happ_port,
             allowed_origins: AllowedOrigins::Any,
             installed_app_id: None,
         };
-        self.send(msg).await
+        match self.send(msg).await? {
+            AdminResponse::AppInterfaceAttached { port } => Ok(port),
+            _ => Err(anyhow!("Failed to attach app interface")),
+        }
     }
 
     pub async fn issue_app_auth_token(&mut self, app_id: String) -> Result<AppAuthenticationToken> {
