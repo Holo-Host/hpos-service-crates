@@ -6,9 +6,9 @@ use holochain_types::prelude::{AgentPubKey, ExternIO, FunctionName, ZomeName};
 use holochain_types::prelude::{Nonce256Bits, Timestamp, ZomeCallUnsigned};
 use hpos_hc_connect::holo_config::{Config, Happ, ADMIN_PORT};
 use hpos_hc_connect::{AdminWebsocket, AppWebsocket};
+use serde::{de::DeserializeOwned, Serialize};
 use std::time::Duration;
 use tracing::{debug, trace};
-use serde::{Serialize, de::DeserializeOwned};
 
 pub struct Cells {
     pub core_app: ProvisionedCell,
@@ -57,10 +57,7 @@ impl HHAAgent {
                         _ => return Err(anyhow!("holofuel cell not found")),
                     };
                 trace!("got holofuel cell {:?}", holofuel);
-                Cells{
-                    core_app,
-                    holofuel
-                }
+                Cells { core_app, holofuel }
             }
             None => return Err(anyhow!("HHA is not installed")),
         };
@@ -114,18 +111,18 @@ impl HHAAgent {
         let signed_zome_call =
             ZomeCall::try_from_unsigned_zome_call(&self.keystore, zome_call_unsigned).await?;
 
-            let response = self.app_ws.zome_call(signed_zome_call).await?;
+        let response = self.app_ws.zome_call(signed_zome_call).await?;
 
-            match response {
-                // This is the happs list that is returned from the hha DNA
-                // https://github.com/Holo-Host/holo-hosting-app-rsm/blob/develop/zomes/hha/src/lib.rs#L54
-                // return Vec of happ_list.happ_id
-                AppResponse::ZomeCalled(r) => {
-                    let response: R = rmp_serde::from_slice(r.as_bytes())?;
-                    Ok(response)
-                }
-                _ => Err(anyhow!("unexpected response: {:?}", response)),
+        match response {
+            // This is the happs list that is returned from the hha DNA
+            // https://github.com/Holo-Host/holo-hosting-app-rsm/blob/develop/zomes/hha/src/lib.rs#L54
+            // return Vec of happ_list.happ_id
+            AppResponse::ZomeCalled(r) => {
+                let response: R = rmp_serde::from_slice(r.as_bytes())?;
+                Ok(response)
             }
+            _ => Err(anyhow!("unexpected response: {:?}", response)),
+        }
     }
     pub fn pubkey(&self) -> AgentPubKey {
         self.cells.core_app.cell_id.agent_pubkey().to_owned()
