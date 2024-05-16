@@ -8,6 +8,7 @@ use hpos_hc_connect::holo_config::{Config, Happ, ADMIN_PORT};
 use hpos_hc_connect::{AdminWebsocket, AppWebsocket};
 use std::time::Duration;
 use tracing::debug;
+use serde::{Serialize, de::DeserializeOwned};
 
 pub struct HHAAgent {
     app_ws: AppWebsocket,
@@ -23,9 +24,11 @@ impl HHAAgent {
             .await
             .context("failed to connect to holochain's app interface")?;
 
+        let port = admin_websocket.attach_app_interface(None).await?;
+
         let token = admin_websocket.issue_app_auth_token(core_happ.id()).await?;
 
-        let mut app_ws = AppWebsocket::connect(42233, token)
+        let mut app_ws = AppWebsocket::connect(port, token)
             .await
             .context("failed to connect to holochain's app interface")?;
         debug!("get app info for {}", core_happ.id());
@@ -70,18 +73,22 @@ impl HHAAgent {
             cell,
         })
     }
-    pub async fn zome_call(
+    pub async fn zome_call<T, R>(
         &mut self,
         zome_name: ZomeName,
         fn_name: FunctionName,
-        payload: ExternIO,
-    ) -> Result<AppResponse> {
+        payload: T,
+    ) -> Result<R>
+    where
+        T: Serialize + std::fmt::Debug,
+        R: DeserializeOwned,
+    {
         let (nonce, expires_at) = fresh_nonce()?;
         let zome_call_unsigned = ZomeCallUnsigned {
             cell_id: self.cell.cell_id.clone(),
             zome_name,
             fn_name,
-            payload,
+            payload: ExternIO::encode(payload)?,
             cap_secret: None,
             provenance: self.cell.cell_id.agent_pubkey().clone(),
             nonce,
@@ -90,7 +97,18 @@ impl HHAAgent {
         let signed_zome_call =
             ZomeCall::try_from_unsigned_zome_call(&self.keystore, zome_call_unsigned).await?;
 
-        self.app_ws.zome_call(signed_zome_call).await
+            let response = self.app_ws.zome_call(signed_zome_call).await?;
+
+            match response {
+                // This is the happs list that is returned from the hha DNA
+                // https://github.com/Holo-Host/holo-hosting-app-rsm/blob/develop/zomes/hha/src/lib.rs#L54
+                // return Vec of happ_list.happ_id
+                AppResponse::ZomeCalled(r) => {
+                    let response: R = rmp_serde::from_slice(r.as_bytes())?;
+                    Ok(response)
+                }
+                _ => Err(anyhow!("unexpected response: {:?}", response)),
+            }
     }
     pub fn pubkey(&self) -> AgentPubKey {
         self.cell.cell_id.agent_pubkey().to_owned()
