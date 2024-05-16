@@ -183,6 +183,22 @@ impl AdminWebsocket {
         self.send(msg).await
     }
 
+    #[instrument(skip(self), err)]
+    pub async fn enable_app(&mut self, installed_app_id: &str) -> Result<AdminResponse> {
+        let msg = AdminRequest::EnableApp {
+            installed_app_id: installed_app_id.to_string(),
+        };
+        self.send(msg).await
+    }
+
+    #[instrument(skip(self), err)]
+    pub async fn disable_app(&mut self, installed_app_id: &str) -> Result<AdminResponse> {
+        let msg = AdminRequest::DisableApp {
+            installed_app_id: installed_app_id.to_string(),
+        };
+        self.send(msg).await
+    }
+
     #[instrument(skip(self))]
     pub async fn send(&mut self, msg: AdminRequest) -> Result<AdminResponse> {
         let response = self
