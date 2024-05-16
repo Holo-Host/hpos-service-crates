@@ -7,13 +7,18 @@ use holochain_types::prelude::{Nonce256Bits, Timestamp, ZomeCallUnsigned};
 use hpos_hc_connect::holo_config::{Config, Happ, ADMIN_PORT};
 use hpos_hc_connect::{AdminWebsocket, AppWebsocket};
 use std::time::Duration;
-use tracing::debug;
+use tracing::{debug, trace};
 use serde::{Serialize, de::DeserializeOwned};
+
+pub struct Cells {
+    pub core_app: ProvisionedCell,
+    pub holofuel: ProvisionedCell,
+}
 
 pub struct HHAAgent {
     app_ws: AppWebsocket,
     keystore: MetaLairClient,
-    cell: ProvisionedCell,
+    pub cells: Cells,
 }
 
 impl HHAAgent {
@@ -32,19 +37,30 @@ impl HHAAgent {
             .await
             .context("failed to connect to holochain's app interface")?;
         debug!("get app info for {}", core_happ.id());
-        let cell = match app_ws.get_app_info().await {
+        let cells = match app_ws.get_app_info().await {
             Some(AppInfo {
                 // This works on the assumption that the core happs has HHA in the first position of the vec
                 cell_info,
                 ..
             }) => {
-                debug!("got app info");
-                let cell = match &cell_info.get("core-app").unwrap()[0] {
-                    CellInfo::Provisioned(c) => c.clone(),
-                    _ => return Err(anyhow!("core-app cell not found")),
-                };
-                debug!("got cell {:?}", cell);
-                cell
+                trace!("got app info");
+
+                let core_app: holochain_conductor_api::ProvisionedCell =
+                    match &cell_info.get("core-app").unwrap()[0] {
+                        CellInfo::Provisioned(c) => c.clone(),
+                        _ => return Err(anyhow!("core-app cell not found")),
+                    };
+                trace!("got core happ cell {:?}", core_app);
+                let holofuel: holochain_conductor_api::ProvisionedCell =
+                    match &cell_info.get("holofuel").unwrap()[0] {
+                        CellInfo::Provisioned(c) => c.clone(),
+                        _ => return Err(anyhow!("holofuel cell not found")),
+                    };
+                trace!("got holofuel cell {:?}", holofuel);
+                Cells{
+                    core_app,
+                    holofuel
+                }
             }
             None => return Err(anyhow!("HHA is not installed")),
         };
@@ -70,11 +86,12 @@ impl HHAAgent {
         Ok(Self {
             app_ws,
             keystore,
-            cell,
+            cells,
         })
     }
     pub async fn zome_call<T, R>(
         &mut self,
+        cell: ProvisionedCell,
         zome_name: ZomeName,
         fn_name: FunctionName,
         payload: T,
@@ -85,12 +102,12 @@ impl HHAAgent {
     {
         let (nonce, expires_at) = fresh_nonce()?;
         let zome_call_unsigned = ZomeCallUnsigned {
-            cell_id: self.cell.cell_id.clone(),
+            cell_id: cell.cell_id.clone(),
             zome_name,
             fn_name,
             payload: ExternIO::encode(payload)?,
             cap_secret: None,
-            provenance: self.cell.cell_id.agent_pubkey().clone(),
+            provenance: cell.cell_id.agent_pubkey().clone(),
             nonce,
             expires_at,
         };
@@ -111,7 +128,7 @@ impl HHAAgent {
             }
     }
     pub fn pubkey(&self) -> AgentPubKey {
-        self.cell.cell_id.agent_pubkey().to_owned()
+        self.cells.core_app.cell_id.agent_pubkey().to_owned()
     }
 }
 

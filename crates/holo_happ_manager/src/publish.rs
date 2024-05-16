@@ -24,6 +24,7 @@ pub async fn publish_happ(
     let mut agent = HHAAgent::spawn(core_happ, config).await?;
     let response = agent
         .zome_call(
+            agent.cells.core_app.clone(),
             ZomeName::from("hha"),
             FunctionName::from("register_happ"),
             ExternIO::encode(happ)?,

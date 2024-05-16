@@ -78,6 +78,7 @@ pub async fn update_jurisdiction_if_changed(
 
     let response = agent
         .zome_call(
+            agent.cells.core_app.clone(),
             ZomeName::from("hha"),
             FunctionName::from("get_host_jurisdiction"),
             ExternIO::encode(host_pubkey.clone())?,
@@ -103,6 +104,7 @@ pub async fn update_jurisdiction_if_changed(
 
         agent
             .zome_call(
+                agent.cells.core_app.clone(),
                 ZomeName::from("hha"),
                 FunctionName::from("set_host_jurisdiction"),
                 ExternIO::encode(SetHostJurisdictionInput {

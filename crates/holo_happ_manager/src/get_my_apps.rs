@@ -12,6 +12,7 @@ pub async fn published(core_happ: &Happ, config: &Config) -> Result<Vec<Presente
     let mut agent = HHAAgent::spawn(core_happ, config).await?;
     let response = agent
         .zome_call(
+            agent.cells.core_app.clone(),
             ZomeName::from("hha"),
             FunctionName::from("get_my_happs"),
             ExternIO::encode(())?,
