@@ -114,9 +114,6 @@ impl HHAAgent {
         let response = self.app_ws.zome_call(signed_zome_call).await?;
 
         match response {
-            // This is the happs list that is returned from the hha DNA
-            // https://github.com/Holo-Host/holo-hosting-app-rsm/blob/develop/zomes/hha/src/lib.rs#L54
-            // return Vec of happ_list.happ_id
             AppResponse::ZomeCalled(r) => {
                 let response: R = rmp_serde::from_slice(r.as_bytes())?;
                 Ok(response)
