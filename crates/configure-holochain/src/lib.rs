@@ -29,8 +29,11 @@ pub async fn install_happs(happ_file: &HappsFile, config: &Config) -> Result<()>
         .await
         .context("failed to connect to holochain's admin interface")?;
 
-    if let Err(error) = admin_websocket.attach_app_interface(config.happ_port).await {
-        warn!(port = ?config.happ_port, ?error, "failed to start app interface, maybe it's already up?");
+    if let Err(error) = admin_websocket
+        .attach_app_interface(Some(config.happ_port))
+        .await
+    {
+        warn!(port = ?config.happ_port, ?error, "failed to start app interface for hosted happs, maybe it's already up?");
     }
 
     let agent = Agent::init(admin_websocket.clone()).await?;

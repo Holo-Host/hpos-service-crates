@@ -1,8 +1,7 @@
 pub mod get_my_apps;
 use anyhow::{anyhow, Context, Result};
 use hha::HHAAgent;
-use holochain_conductor_api::AppResponse;
-use holochain_types::prelude::{AgentPubKey, ExternIO, FunctionName, ZomeName};
+use holochain_types::prelude::{AgentPubKey, FunctionName, ZomeName};
 pub use hpos_hc_connect::{
     hha_types::HappInput,
     holo_config::{Config, Happ, HappsFile},
@@ -76,23 +75,14 @@ pub async fn update_jurisdiction_if_changed(
 
     let host_pubkey = agent.pubkey();
 
-    let response = agent
+    let hha_jurisdiction: Option<String> = agent
         .zome_call(
+            agent.cells.core_app.clone(),
             ZomeName::from("hha"),
             FunctionName::from("get_host_jurisdiction"),
-            ExternIO::encode(host_pubkey.clone())?,
+            host_pubkey.clone(),
         )
         .await?;
-
-    let hha_jurisdiction: Option<String> = match response {
-        AppResponse::ZomeCalled(r) => rmp_serde::from_slice(r.as_bytes())?,
-        _ => {
-            return Err(anyhow!(
-                "unexpected response from get_host_jurisdiction {:?}",
-                response
-            ))
-        }
-    };
 
     if hha_jurisdiction.is_none() || hha_jurisdiction.as_ref() != Some(&hbs_jurisdiction) {
         #[derive(Debug, Serialize)]
@@ -103,12 +93,13 @@ pub async fn update_jurisdiction_if_changed(
 
         agent
             .zome_call(
+                agent.cells.core_app.clone(),
                 ZomeName::from("hha"),
                 FunctionName::from("set_host_jurisdiction"),
-                ExternIO::encode(SetHostJurisdictionInput {
+                SetHostJurisdictionInput {
                     pubkey: host_pubkey,
                     jurisdiction: hbs_jurisdiction,
-                })?,
+                },
             )
             .await?;
     }
