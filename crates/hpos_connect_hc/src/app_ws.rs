@@ -59,7 +59,7 @@ impl AppWebsocket {
 
     pub async fn zome_call_typed<T, R>(
         &mut self,
-        keystore: MetaLairClient,
+        keystore: &MetaLairClient,
         cell: CellId,
         zome_name: ZomeName,
         fn_name: FunctionName,
@@ -81,7 +81,7 @@ impl AppWebsocket {
             expires_at,
         };
         let signed_zome_call =
-            ZomeCall::try_from_unsigned_zome_call(&keystore, zome_call_unsigned).await?;
+            ZomeCall::try_from_unsigned_zome_call(keystore, zome_call_unsigned).await?;
 
         let response = self.zome_call(signed_zome_call).await?;
 
