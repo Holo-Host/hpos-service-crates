@@ -2199,6 +2199,7 @@ dependencies = [
  "lazy_static",
  "mr_bundle",
  "reqwest",
+ "rmp-serde 1.1.2",
  "serde",
  "serde_json",
  "serde_yaml",
