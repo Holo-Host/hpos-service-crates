@@ -1,11 +1,10 @@
 use crate::utils::{fresh_nonce, WsPollRecv};
 use anyhow::{anyhow, Context, Result};
 use holochain_conductor_api::{
-    AppAuthenticationRequest, AppAuthenticationToken, AppInfo, AppRequest, AppResponse,
-    ProvisionedCell, ZomeCall,
+    AppAuthenticationRequest, AppAuthenticationToken, AppInfo, AppRequest, AppResponse, ZomeCall,
 };
 use holochain_keystore::MetaLairClient;
-use holochain_types::prelude::{ExternIO, FunctionName, ZomeCallUnsigned, ZomeName};
+use holochain_types::prelude::{CellId, ExternIO, FunctionName, ZomeCallUnsigned, ZomeName};
 use holochain_websocket::{connect, ConnectRequest, WebsocketConfig, WebsocketSender};
 use serde::{de::DeserializeOwned, Serialize};
 use std::{net::ToSocketAddrs, sync::Arc};
@@ -61,7 +60,7 @@ impl AppWebsocket {
     pub async fn zome_call_typed<T, R>(
         &mut self,
         keystore: MetaLairClient,
-        cell: ProvisionedCell,
+        cell: CellId,
         zome_name: ZomeName,
         fn_name: FunctionName,
         payload: T,
@@ -72,12 +71,12 @@ impl AppWebsocket {
     {
         let (nonce, expires_at) = fresh_nonce()?;
         let zome_call_unsigned = ZomeCallUnsigned {
-            cell_id: cell.cell_id.clone(),
+            cell_id: cell.clone(),
             zome_name,
             fn_name,
             payload: ExternIO::encode(payload)?,
             cap_secret: None,
-            provenance: cell.cell_id.agent_pubkey().clone(),
+            provenance: cell.agent_pubkey().clone(),
             nonce,
             expires_at,
         };
