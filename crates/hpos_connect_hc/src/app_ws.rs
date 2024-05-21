@@ -60,7 +60,7 @@ impl AppWebsocket {
     pub async fn zome_call_typed<T, R>(
         &mut self,
         keystore: &MetaLairClient,
-        cell: CellId,
+        cell: &CellId,
         zome_name: ZomeName,
         fn_name: FunctionName,
         payload: T,
