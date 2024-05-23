@@ -1,15 +1,13 @@
-pub mod get_my_apps;
 use anyhow::{anyhow, Context, Result};
 use hha::HHAAgent;
-use holochain_types::prelude::{AgentPubKey, FunctionName, ZomeName};
 pub use hpos_hc_connect::{
     hha_types::HappInput,
     holo_config::{Config, Happ, HappsFile},
 };
-use serde::Serialize;
-use tracing::{debug, info};
-mod publish;
+use hpos_hc_connect::{holo_config::ADMIN_PORT, AdminWebsocket};
 use std::{env, fs, path::PathBuf};
+use tracing::{debug, info};
+
 pub mod hha;
 
 pub async fn run(config: &Config) -> Result<()> {
@@ -17,11 +15,18 @@ pub async fn run(config: &Config) -> Result<()> {
 
     let core_happ: Happ = get_core_happ(&config.happs_file_path)?;
 
+    let mut admin_ws = AdminWebsocket::connect(ADMIN_PORT)
+        .await
+        .context("failed to connect to holochain's app interface")?;
+
+    let mut agent = HHAAgent::spawn(&core_happ, config, &mut admin_ws).await?;
+
     let apps = happ_to_published()?;
 
     println!("Happs to be published {:?}", apps);
 
-    let list_of_published_happs = get_my_apps::published(&core_happ, config).await?;
+    let list_of_published_happs = agent.get_my_happs().await?;
+
     println!(
         "Happs that are already published {:?}",
         list_of_published_happs
@@ -37,7 +42,7 @@ pub async fn run(config: &Config) -> Result<()> {
             if app.name.contains("Cloud") {
                 app.special_installed_app_id = Some(core_happ.id())
             }
-            publish::publish_happ(&core_happ, config, app).await?;
+            agent.publish_happ(app).await?;
         } else {
             debug!("already published")
         }
@@ -63,46 +68,4 @@ fn get_core_happ(happs_file_path: &PathBuf) -> Result<Happ> {
     )
     })?;
     Ok(core_happ)
-}
-
-pub async fn update_jurisdiction_if_changed(
-    config: &Config,
-    hbs_jurisdiction: String,
-) -> Result<()> {
-    let core_happ: Happ = get_core_happ(&config.happs_file_path)?;
-
-    let mut agent = HHAAgent::spawn(&core_happ, config).await?;
-
-    let host_pubkey = agent.pubkey();
-
-    let hha_jurisdiction: Option<String> = agent
-        .zome_call(
-            agent.cells.core_app.clone(),
-            ZomeName::from("hha"),
-            FunctionName::from("get_host_jurisdiction"),
-            host_pubkey.clone(),
-        )
-        .await?;
-
-    if hha_jurisdiction.is_none() || hha_jurisdiction.as_ref() != Some(&hbs_jurisdiction) {
-        #[derive(Debug, Serialize)]
-        pub struct SetHostJurisdictionInput {
-            pub pubkey: AgentPubKey,
-            pub jurisdiction: String,
-        }
-
-        agent
-            .zome_call(
-                agent.cells.core_app.clone(),
-                ZomeName::from("hha"),
-                FunctionName::from("set_host_jurisdiction"),
-                SetHostJurisdictionInput {
-                    pubkey: host_pubkey,
-                    jurisdiction: hbs_jurisdiction,
-                },
-            )
-            .await?;
-    }
-
-    Ok(())
 }

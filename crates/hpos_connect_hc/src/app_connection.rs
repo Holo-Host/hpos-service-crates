@@ -1,6 +1,6 @@
 use crate::{
+    admin_ws::AdminWebsocket,
     utils::{fresh_nonce, WsPollRecv},
-    AdminWebsocket,
 };
 use anyhow::{anyhow, Context, Result};
 use holochain_conductor_api::{
@@ -24,6 +24,7 @@ pub struct AppWebsocket {
     rx: Arc<WsPollRecv>,
 }
 
+#[derive(Clone)]
 pub struct AppConnection {
     ws: AppWebsocket,
     keystore: MetaLairClient,
@@ -181,5 +182,36 @@ impl AppConnection {
                 Ok(response)
             }
         }
+    }
+}
+
+// TODO: move to consts
+pub enum CoreAppRoleName {
+    HHA,
+    Holofuel,
+}
+
+impl Into<RoleName> for CoreAppRoleName {
+    fn into(self) -> RoleName {
+        match self {
+            CoreAppRoleName::HHA => "core-app".into(),
+            CoreAppRoleName::Holofuel => "holofuel".into(),
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use holochain_types::prelude::RoleName;
+
+    use super::CoreAppRoleName;
+
+    #[test]
+    fn core_app_role_name_to_role_name() {
+        let hha: RoleName = CoreAppRoleName::HHA.into();
+        let hf: RoleName = CoreAppRoleName::Holofuel.into();
+
+        assert_eq!(hha, "core-app");
+        assert_eq!(hf, "holofuel");
     }
 }

@@ -30,17 +30,12 @@
 //! ```
 
 pub mod admin_ws;
-pub mod holo_config;
-pub mod utils;
-pub use admin_ws::AdminWebsocket;
-pub mod app_ws;
-pub use app_ws::AppWebsocket;
-pub mod hf_agent;
-pub mod hpos_agent;
-pub mod hpos_membrane_proof;
-pub use hf_agent::*;
-pub mod core_app_agent;
-pub use core_app_agent::*;
 pub mod app_connection;
 pub mod hha_types;
+pub mod holo_config;
 pub mod holofuel_types;
+pub mod hpos_agent;
+pub mod hpos_membrane_proof;
+pub mod utils;
+pub use admin_ws::AdminWebsocket;
+pub use app_connection::AppConnection;

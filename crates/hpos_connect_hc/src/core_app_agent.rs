@@ -121,11 +121,12 @@ pub enum CoreAppRoleName {
     HHA,
     Holofuel,
 }
-impl CoreAppRoleName {
-    fn id(&self) -> &str {
+
+impl Into<RoleName> for CoreAppRoleName {
+    fn into(self) -> RoleName {
         match self {
-            CoreAppRoleName::HHA => "core-app",
-            CoreAppRoleName::Holofuel => "holofuel",
+            CoreAppRoleName::HHA => "core-app".into(),
+            CoreAppRoleName::Holofuel => "holofuel".into(),
         }
     }
 }
