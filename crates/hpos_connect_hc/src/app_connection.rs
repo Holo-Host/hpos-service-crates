@@ -110,12 +110,16 @@ impl AppConnection {
         }
     }
 
+    /// Raw zome call function taking holochain_conductor_api::app_interface::ZomeCall as an argument
+    /// and returning AppResponse without checking an outcomeor deserializing
     #[instrument(skip(self))]
     pub async fn zome_call(&mut self, msg: ZomeCall) -> Result<AppResponse> {
         let app_request = AppRequest::CallZome(Box::new(msg));
         self.send(app_request).await
     }
 
+    /// Make a zome call to holochain's cell defined by `role_name`.
+    /// Returns typed deserialized response.
     pub async fn zome_call_typed<T, R>(
         &mut self,
         role_name: RoleName,
@@ -154,6 +158,14 @@ impl AppConnection {
         }
     }
 
+    /// Sign byte payload with holofuel agent's private key
+    /// Currently it is commented out, because I do not know what agent key shall i use
+    // pub async fn sign_raw(&mut self, data: Arc<[u8]>) -> Result<Signature> {
+    //     let (_, agent_pubkey) = self.cell().await?;
+    //     Ok(agent_pubkey.sign_raw(&self.keystore, data).await?)
+    // }
+
+    /// Low level internal websocket function
     #[instrument(skip(self))]
     async fn send(&mut self, msg: AppRequest) -> Result<AppResponse> {
         let response = self

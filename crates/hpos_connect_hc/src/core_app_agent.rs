@@ -115,6 +115,8 @@ impl CoreAppAgent {
     }
 }
 
+
+// TODO: move to consts
 pub enum CoreAppRoleName {
     HHA,
     Holofuel,
