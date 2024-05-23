@@ -23,19 +23,17 @@ pub struct HHAAgent {
 
 impl HHAAgent {
     pub async fn spawn(core_happ: &Happ, config: &Config) -> Result<Self> {
-        debug!("get_all_enabled_hosted_happs");
-
         let mut admin_websocket = AdminWebsocket::connect(ADMIN_PORT)
             .await
             .context("failed to connect to holochain's app interface")?;
 
         let port = admin_websocket.attach_app_interface(None).await?;
-
         let token = admin_websocket.issue_app_auth_token(core_happ.id()).await?;
 
         let mut app_ws = AppWebsocket::connect(port, token)
             .await
             .context("failed to connect to holochain's app interface")?;
+
         debug!("get app info for {}", core_happ.id());
         let cells = match app_ws.get_app_info().await {
             Some(AppInfo {
@@ -86,6 +84,7 @@ impl HHAAgent {
             cells,
         })
     }
+
     pub async fn zome_call<T, R>(
         &mut self,
         cell: ProvisionedCell,
@@ -121,6 +120,7 @@ impl HHAAgent {
             _ => Err(anyhow!("unexpected response: {:?}", response)),
         }
     }
+
     pub fn pubkey(&self) -> AgentPubKey {
         self.cells.core_app.cell_id.agent_pubkey().to_owned()
     }
