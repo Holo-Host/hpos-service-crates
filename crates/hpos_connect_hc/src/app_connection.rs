@@ -1,0 +1,173 @@
+use crate::{
+    utils::{fresh_nonce, WsPollRecv},
+    AdminWebsocket,
+};
+use anyhow::{anyhow, Context, Result};
+use holochain_conductor_api::{
+    AppAuthenticationRequest, AppInfo, AppRequest, AppResponse, CellInfo, ZomeCall,
+};
+use holochain_keystore::MetaLairClient;
+use holochain_types::prelude::{
+    CellId, ExternIO, FunctionName, RoleName, ZomeCallUnsigned, ZomeName,
+};
+use holochain_websocket::{connect, ConnectRequest, WebsocketConfig, WebsocketSender};
+use serde::{de::DeserializeOwned, Serialize};
+use std::{collections::HashMap, net::ToSocketAddrs, sync::Arc};
+use tracing::{instrument, trace};
+
+type CellInfoMap = HashMap<RoleName, Vec<CellInfo>>;
+
+#[allow(dead_code)]
+#[derive(Clone)]
+pub struct AppWebsocket {
+    tx: WebsocketSender,
+    rx: Arc<WsPollRecv>,
+}
+
+pub struct AppConnection {
+    ws: AppWebsocket,
+    keystore: MetaLairClient,
+    cell_info: Option<CellInfoMap>,
+    app_id: String,
+}
+
+impl AppConnection {
+    pub async fn connect(
+        admin_ws: &mut AdminWebsocket,
+        keystore: MetaLairClient,
+        app_id: String,
+    ) -> Result<Self> {
+        let app_port = admin_ws
+            .attach_app_interface(None)
+            .await
+            .context("failed to start app interface for core app")?;
+
+        let token = admin_ws.issue_app_auth_token(app_id.clone()).await?;
+
+        let socket_addr = format!("localhost:{app_port}");
+        let addr = socket_addr
+            .to_socket_addrs()?
+            .next()
+            .context("invalid websocket address")?;
+        let websocket_config = Arc::new(WebsocketConfig::CLIENT_DEFAULT);
+        let (tx, rx) = again::retry(|| {
+            let websocket_config = Arc::clone(&websocket_config);
+            connect(websocket_config, ConnectRequest::new(addr))
+        })
+        .await?;
+        let rx = WsPollRecv::new::<AppResponse>(rx).into();
+
+        // Websocket connection needs authentication via token previously obtained from Admin Interface
+        tx.authenticate(AppAuthenticationRequest { token })
+            .await
+            .map_err(|err| anyhow!("Failed to send authentication: {err:?}"))?;
+
+        Ok(Self {
+            ws: AppWebsocket { tx, rx },
+            keystore,
+            cell_info: None, // cell info is populated lazily
+            app_id,
+        })
+    }
+
+    /// Return app info for a connected app
+    /// Returns an error if there is no app info
+    #[instrument(skip(self))]
+    pub async fn app_info(&mut self) -> Result<AppInfo> {
+        let msg = AppRequest::AppInfo;
+        let response = self.send(msg).await?;
+        trace!(
+            "app_info response for app_id{}: {:?}",
+            self.app_id,
+            response
+        );
+        match response {
+            AppResponse::AppInfo(Some(app_info)) => Ok(app_info),
+            _ => Err(anyhow!("No AppInfo available for {}", self.app_id)),
+        }
+    }
+
+    /// Return cell_info for a connected app
+    /// Cell_info is evaluated lazily
+    pub async fn cell_info(&mut self) -> Result<CellInfoMap> {
+        if let Some(c) = self.cell_info.clone() {
+            return Ok(c);
+        }
+
+        Ok(self.app_info().await?.cell_info)
+    }
+
+    /// Returns a cell for a given RoleName in a connected app
+    pub async fn cell(&mut self, role_name: RoleName) -> Result<CellId> {
+        match &self
+            .cell_info()
+            .await?
+            .get(&role_name)
+            .ok_or(anyhow!("unable to find cell for RoleName {}!", &role_name))?[0]
+        {
+            CellInfo::Provisioned(c) => Ok(c.cell_id.clone()),
+            _ => return Err(anyhow!("unable to find cell for RoleName {}", &role_name)),
+        }
+    }
+
+    #[instrument(skip(self))]
+    pub async fn zome_call(&mut self, msg: ZomeCall) -> Result<AppResponse> {
+        let app_request = AppRequest::CallZome(Box::new(msg));
+        self.send(app_request).await
+    }
+
+    pub async fn zome_call_typed<T, R>(
+        &mut self,
+        role_name: RoleName,
+        zome_name: ZomeName,
+        fn_name: FunctionName,
+        payload: T,
+    ) -> Result<R>
+    where
+        T: Serialize + std::fmt::Debug,
+        R: DeserializeOwned,
+    {
+        let (nonce, expires_at) = fresh_nonce()?;
+        let cell = self.cell(role_name).await?;
+
+        let zome_call_unsigned = ZomeCallUnsigned {
+            cell_id: cell.clone(),
+            zome_name,
+            fn_name,
+            payload: ExternIO::encode(payload)?,
+            cap_secret: None,
+            provenance: cell.agent_pubkey().clone(),
+            nonce,
+            expires_at,
+        };
+        let signed_zome_call =
+            ZomeCall::try_from_unsigned_zome_call(&self.keystore, zome_call_unsigned).await?;
+
+        let response = self.zome_call(signed_zome_call).await?;
+
+        match response {
+            AppResponse::ZomeCalled(r) => {
+                let response: R = rmp_serde::from_slice(r.as_bytes())?;
+                Ok(response)
+            }
+            _ => Err(anyhow!("unexpected ZomeCallresponse: {:?}", response)),
+        }
+    }
+
+    #[instrument(skip(self))]
+    async fn send(&mut self, msg: AppRequest) -> Result<AppResponse> {
+        let response = self
+            .ws
+            .tx
+            .request(msg)
+            .await
+            .context("failed to send message")?;
+        match response {
+            AppResponse::Error(error) => Err(anyhow!("error: {:?}", error)),
+            _ => {
+                trace!("send successful");
+                Ok(response)
+            }
+        }
+    }
+}
