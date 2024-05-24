@@ -107,7 +107,7 @@ impl AppConnection {
             .ok_or(anyhow!("unable to find cell for RoleName {}!", &role_name))?[0]
         {
             CellInfo::Provisioned(c) => Ok(c.cell_id.clone()),
-            _ => return Err(anyhow!("unable to find cell for RoleName {}", &role_name)),
+            _ => Err(anyhow!("unable to find cell for RoleName {}", &role_name)),
         }
     }
 
@@ -197,9 +197,9 @@ pub enum CoreAppRoleName {
     Holofuel,
 }
 
-impl Into<RoleName> for CoreAppRoleName {
-    fn into(self) -> RoleName {
-        match self {
+impl From<CoreAppRoleName> for RoleName {
+    fn from(val: CoreAppRoleName) -> Self {
+        match val {
             CoreAppRoleName::HHA => "core-app".into(),
             CoreAppRoleName::Holofuel => "holofuel".into(),
         }

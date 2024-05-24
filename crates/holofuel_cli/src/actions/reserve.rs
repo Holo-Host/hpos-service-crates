@@ -1,6 +1,10 @@
 use anyhow::Result;
 use holochain_types::prelude::{FunctionName, ZomeName};
-use hpos_hc_connect::{app_connection::CoreAppRoleName, hf_agent::HfAgent, holofuel_types::{Reserve, ReserveSalePrice}};
+use hpos_hc_connect::{
+    app_connection::CoreAppRoleName,
+    hf_agent::HfAgent,
+    holofuel_types::{Reserve, ReserveSalePrice},
+};
 
 pub async fn get_setting() -> Result<()> {
     let mut agent = HfAgent::spawn(None).await?;
