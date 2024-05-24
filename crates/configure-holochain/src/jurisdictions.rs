@@ -1,5 +1,10 @@
 use anyhow::Result;
-use serde::Deserialize;
+use holochain_types::{
+    dna::AgentPubKey,
+    prelude::{FunctionName, ZomeName},
+};
+use hpos_hc_connect::{app_connection::CoreAppRoleName, hha::HHAAgent, holo_config::Config};
+use serde::{Deserialize, Serialize};
 use std::process::{Command, Output};
 
 #[derive(Debug, Deserialize)]
@@ -26,11 +31,14 @@ pub async fn update_jurisdiction_if_changed(
     config: &Config,
     hbs_jurisdiction: String,
 ) -> Result<()> {
-    let host_pubkey = agent.pubkey();
+    let mut agent = HHAAgent::spawn(Some(config)).await?;
+
+    let host_pubkey = agent.pubkey().await?;
 
     let hha_jurisdiction: Option<String> = agent
-        .zome_call(
-            agent.cells.core_app.clone(),
+        .app
+        .zome_call_typed(
+            CoreAppRoleName::HHA.into(),
             ZomeName::from("hha"),
             FunctionName::from("get_host_jurisdiction"),
             host_pubkey.clone(),
@@ -44,9 +52,10 @@ pub async fn update_jurisdiction_if_changed(
             pub jurisdiction: String,
         }
 
-        agent
-            .zome_call(
-                agent.cells.core_app.clone(),
+        let _: () = agent
+            .app
+            .zome_call_typed(
+                CoreAppRoleName::HHA.into(),
                 ZomeName::from("hha"),
                 FunctionName::from("set_host_jurisdiction"),
                 SetHostJurisdictionInput {

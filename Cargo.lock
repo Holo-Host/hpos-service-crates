@@ -593,6 +593,7 @@ dependencies = [
  "anyhow",
  "holo_happ_manager",
  "holochain_env_setup",
+ "holochain_types",
  "hpos-config-core",
  "hpos_hc_connect",
  "serde",
