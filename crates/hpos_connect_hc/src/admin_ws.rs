@@ -5,8 +5,7 @@ use super::hpos_agent::Agent;
 use super::hpos_membrane_proof::MembraneProofs;
 use anyhow::{anyhow, Context, Result};
 use holochain_conductor_api::{
-    AdminRequest, AdminResponse, AppAuthenticationToken, AppAuthenticationTokenIssued,
-    AppStatusFilter, IssueAppAuthenticationTokenPayload,
+    AdminRequest, AdminResponse, AppAuthenticationToken, AppAuthenticationTokenIssued, AppInfo, AppStatusFilter, IssueAppAuthenticationTokenPayload
 };
 use holochain_types::{
     app::{AppBundleSource, InstallAppPayload, InstalledAppId},
@@ -197,6 +196,18 @@ impl AdminWebsocket {
             installed_app_id: installed_app_id.to_string(),
         };
         self.send(msg).await
+    }
+
+    #[instrument(skip(self), err)]
+    pub async fn list_apps(
+        &mut self,
+        status_filter: Option<AppStatusFilter>,
+    ) -> Result<Vec<AppInfo>> {
+        let response = self.send(AdminRequest::ListApps { status_filter }).await?;
+        match response {
+            AdminResponse::AppsListed(apps_infos) => Ok(apps_infos),
+            _ => unreachable!("Unexpected response {:?}", response),
+        }
     }
 
     #[instrument(skip(self))]
