@@ -37,5 +37,6 @@ pub mod holofuel_types;
 pub mod hpos_agent;
 pub mod hpos_membrane_proof;
 pub mod utils;
+pub mod hha;
 pub use admin_ws::AdminWebsocket;
 pub use app_connection::AppConnection;

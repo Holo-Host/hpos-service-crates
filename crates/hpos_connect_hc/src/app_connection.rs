@@ -119,6 +119,12 @@ impl AppConnection {
         self.send(app_request).await
     }
 
+    /// Return app id
+    #[instrument(skip(self))]
+    pub fn id(&self) -> String {
+        self.app_id.clone()
+    }
+
     /// Make a zome call to holochain's cell defined by `role_name`.
     /// Returns typed deserialized response.
     pub async fn zome_call_typed<T, R>(

@@ -15,7 +15,7 @@ pub struct CoreAppAgent {
     core_app_id: String,
 }
 
-impl CoreAppAgent {
+impl CoreAppAgent { // -> HHAAgent(None)
     /// connects to a holofuel agent that is running on a hpos server
     pub async fn connect() -> Result<Self> {
         let mut admin_websocket = AdminWebsocket::connect(ADMIN_PORT)

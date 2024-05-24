@@ -1,18 +1,11 @@
 use anyhow::{anyhow, Context, Result};
-use holochain_conductor_api::{AppInfo, AppResponse, ProvisionedCell};
-use holochain_conductor_api::{CellInfo, ZomeCall};
-use holochain_keystore::MetaLairClient;
-use holochain_types::dna::ActionHashB64;
-use holochain_types::prelude::{AgentPubKey, ExternIO, FunctionName, ZomeName};
-use holochain_types::prelude::{Nonce256Bits, Timestamp, ZomeCallUnsigned};
-use hpos_hc_connect::app_connection::CoreAppRoleName;
-use hpos_hc_connect::hha_types::HappInput;
-use hpos_hc_connect::holo_config::{Config, Happ, ADMIN_PORT};
-use hpos_hc_connect::{AdminWebsocket, AppConnection};
+use holochain_types::dna::{ActionHashB64, AgentPubKey};
+use holochain_types::prelude::{FunctionName, ZomeName};
+use crate::app_connection::CoreAppRoleName;
+use crate::hha_types::HappInput;
+use crate::holo_config::{default_password, get_lair_url, Config, HappsFile, ADMIN_PORT};
+use crate::{AdminWebsocket, AppConnection};
 use serde::Deserialize;
-use serde::{de::DeserializeOwned, Serialize};
-use std::time::Duration;
-use tracing::{debug, trace};
 
 #[derive(Deserialize, Debug, Clone)]
 pub struct PresentedHappBundle {
@@ -20,35 +13,38 @@ pub struct PresentedHappBundle {
     pub bundle_url: String,
 }
 
+/// Struct giving access to local instance of HHA on HPOS
+/// `config` of type `holo_config::Config` represents CLI params and can be passed
+/// to describe local running environment
 pub struct HHAAgent {
     pub app: AppConnection,
 }
 
 impl HHAAgent {
-    pub async fn spawn(
-        core_happ: &Happ,
-        config: &Config,
-        admin_ws: &mut AdminWebsocket,
-    ) -> Result<Self> {
+    pub async fn spawn(config: Option<&Config>) -> Result<Self> {
+        let mut admin_ws = AdminWebsocket::connect(ADMIN_PORT)
+            .await
+            .context("failed to connect to holochain's app interface")?;
+
+        let app_file = HappsFile::load_happ_file_from_env(config)?;
+        let core_app = app_file
+            .core_app()
+            .ok_or(anyhow!("There's no core-app defined in a happs file"))?;
+
         // connect to lair
         let passphrase = sodoken::BufRead::from(
-            hpos_hc_connect::holo_config::default_password()?
+            default_password()?
                 .as_bytes()
                 .to_vec(),
         );
 
-        let lair_url = config
-            .lair_url
-            .clone()
-            .ok_or_else(|| anyhow!("Does not have lair url, please provide --lair-url"))?;
-
         let keystore = holochain_keystore::lair_keystore::spawn_lair_keystore(
-            url2::url2!("{}", lair_url),
+            url2::url2!("{}", get_lair_url(config)?),
             passphrase,
         )
         .await?;
 
-        let app = AppConnection::connect(admin_ws, keystore, core_happ.id())
+        let app = AppConnection::connect(&mut admin_ws, keystore, core_app.id())
             .await
             .context("failed to connect to holochain's app interface")?;
 
@@ -85,5 +81,9 @@ impl HHAAgent {
                 happ,
             )
             .await
+    }
+
+    pub fn id(&self) -> String {
+        self.app.id()
     }
 }
