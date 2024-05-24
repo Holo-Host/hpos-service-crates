@@ -8,8 +8,8 @@ pub async fn get() -> Result<()> {
     let profile: Profile = agent
         .app
         .zome_call_typed(
-            CoreAppRoleName::HHA.into(),
-            ZomeName::from("hha"),
+            CoreAppRoleName::Holofuel.into(),
+            ZomeName::from("profile"),
             FunctionName::from("get_my_profile"),
             (),
         )

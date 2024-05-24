@@ -1,5 +1,5 @@
 use anyhow::Result;
-use holochain_types::prelude::{ExternIO, FunctionName, ZomeName};
+use holochain_types::prelude::{FunctionName, ZomeName};
 use hpos_hc_connect::{
     app_connection::CoreAppRoleName,
     hha::HHAAgent,

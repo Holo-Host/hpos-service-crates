@@ -10,8 +10,8 @@ pub async fn get() -> Result<()> {
     let ledger: Ledger = agent
         .app
         .zome_call_typed(
-            CoreAppRoleName::HHA.into(),
-            ZomeName::from("hha"),
+            CoreAppRoleName::Holofuel.into(),
+            ZomeName::from("transactor"),
             FunctionName::from("get_ledger"),
             (),
         )
