@@ -1,10 +1,10 @@
-use anyhow::{anyhow, Context, Result};
-use holochain_types::dna::{ActionHashB64, AgentPubKey};
-use holochain_types::prelude::{FunctionName, ZomeName};
 use crate::app_connection::CoreAppRoleName;
 use crate::hha_types::HappInput;
 use crate::holo_config::{default_password, get_lair_url, Config, HappsFile, ADMIN_PORT};
 use crate::{AdminWebsocket, AppConnection};
+use anyhow::{anyhow, Context, Result};
+use holochain_types::dna::{ActionHashB64, AgentPubKey};
+use holochain_types::prelude::{FunctionName, ZomeName};
 use serde::Deserialize;
 
 #[derive(Deserialize, Debug, Clone)]
@@ -32,11 +32,7 @@ impl HHAAgent {
             .ok_or(anyhow!("There's no core-app defined in a happs file"))?;
 
         // connect to lair
-        let passphrase = sodoken::BufRead::from(
-            default_password()?
-                .as_bytes()
-                .to_vec(),
-        );
+        let passphrase = sodoken::BufRead::from(default_password()?.as_bytes().to_vec());
 
         let keystore = holochain_keystore::lair_keystore::spawn_lair_keystore(
             url2::url2!("{}", get_lair_url(config)?),

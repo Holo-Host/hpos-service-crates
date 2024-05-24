@@ -31,12 +31,12 @@
 
 pub mod admin_ws;
 pub mod app_connection;
+pub mod hha;
 pub mod hha_types;
 pub mod holo_config;
 pub mod holofuel_types;
 pub mod hpos_agent;
 pub mod hpos_membrane_proof;
 pub mod utils;
-pub mod hha;
 pub use admin_ws::AdminWebsocket;
 pub use app_connection::AppConnection;

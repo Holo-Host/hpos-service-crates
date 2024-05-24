@@ -1,20 +1,21 @@
 use anyhow::Result;
-use holochain_types::prelude::{ExternIO, FunctionName, ZomeName};
+use holochain_types::prelude::{FunctionName, ZomeName};
+use hpos_hc_connect::app_connection::CoreAppRoleName;
+use hpos_hc_connect::hha::HHAAgent;
 use hpos_hc_connect::holofuel_types::Ledger;
-use hpos_hc_connect::{CoreAppAgent, CoreAppRoleName};
 
 pub async fn get() -> Result<()> {
-    let mut agent = CoreAppAgent::connect().await?;
-    let result = agent
-        .zome_call(
-            CoreAppRoleName::Holofuel,
-            ZomeName::from("transactor"),
+    let mut agent = HHAAgent::spawn(None).await?;
+
+    let ledger: Ledger = agent
+        .app
+        .zome_call_typed(
+            CoreAppRoleName::HHA.into(),
+            ZomeName::from("hha"),
             FunctionName::from("get_ledger"),
-            ExternIO::encode(())?,
+            (),
         )
         .await?;
-
-    let ledger: Ledger = rmp_serde::from_slice(result.as_bytes())?;
 
     println!("===================");
     println!("Your Ledger is: ");
