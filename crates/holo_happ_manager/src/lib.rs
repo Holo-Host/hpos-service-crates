@@ -1,7 +1,7 @@
 use std::{env, fs};
 
 use anyhow::{Context, Result};
-use hpos_hc_connect::hha::HHAAgent;
+use hpos_hc_connect::hha_agent::HHAAgent;
 pub use hpos_hc_connect::{
     hha_types::HappInput,
     holo_config::{Config, Happ, HappsFile},

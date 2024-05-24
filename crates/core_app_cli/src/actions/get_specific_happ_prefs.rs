@@ -1,6 +1,8 @@
 use anyhow::Result;
 use holochain_types::prelude::{ActionHash, ActionHashB64, FunctionName, ZomeName};
-use hpos_hc_connect::{app_connection::CoreAppRoleName, hha::HHAAgent, hha_types::HappPreferences};
+use hpos_hc_connect::{
+    app_connection::CoreAppRoleName, hha_agent::HHAAgent, hha_types::HappPreferences,
+};
 
 pub async fn get(pref_hash: String) -> Result<()> {
     let mut agent = HHAAgent::spawn(None).await?;

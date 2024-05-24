@@ -1,7 +1,7 @@
 use anyhow::Result;
 use holochain_types::prelude::{FunctionName, ZomeName};
 use hpos_hc_connect::app_connection::CoreAppRoleName;
-use hpos_hc_connect::hha::HHAAgent;
+use hpos_hc_connect::hha_agent::HHAAgent;
 use hpos_hc_connect::holofuel_types::Ledger;
 
 pub async fn get() -> Result<()> {

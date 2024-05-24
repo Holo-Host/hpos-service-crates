@@ -2,7 +2,7 @@ use anyhow::Result;
 use holochain_types::prelude::{FunctionName, ZomeName};
 use hpos_hc_connect::{
     app_connection::CoreAppRoleName,
-    hha::HHAAgent,
+    hha_agent::HHAAgent,
     holofuel_types::{Actionable, Pending, Transaction},
 };
 

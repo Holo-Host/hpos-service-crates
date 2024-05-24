@@ -31,7 +31,8 @@
 
 pub mod admin_ws;
 pub mod app_connection;
-pub mod hha;
+pub mod hf_agent;
+pub mod hha_agent;
 pub mod hha_types;
 pub mod holo_config;
 pub mod holofuel_types;

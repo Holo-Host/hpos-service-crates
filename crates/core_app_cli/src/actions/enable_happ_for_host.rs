@@ -2,7 +2,7 @@ use anyhow::Result;
 use holochain_types::prelude::ActionHashB64;
 use holochain_types::prelude::{FunctionName, ZomeName};
 use hpos_hc_connect::app_connection::CoreAppRoleName;
-use hpos_hc_connect::hha::HHAAgent;
+use hpos_hc_connect::hha_agent::HHAAgent;
 use hpos_hc_connect::hha_types::HappAndHost;
 
 pub async fn get(happ_id: String, host_id: String) -> Result<()> {

@@ -3,7 +3,7 @@ use holochain_types::{
     dna::AgentPubKey,
     prelude::{FunctionName, ZomeName},
 };
-use hpos_hc_connect::{app_connection::CoreAppRoleName, hha::HHAAgent, holo_config::Config};
+use hpos_hc_connect::{app_connection::CoreAppRoleName, hha_agent::HHAAgent, holo_config::Config};
 use serde::{Deserialize, Serialize};
 use std::process::{Command, Output};
 

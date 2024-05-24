@@ -3,7 +3,7 @@ use holochain_types::prelude::{ActionHashB64, FunctionName, ZomeName};
 use holofuel_types::fuel::Fuel;
 use hpos_hc_connect::{
     app_connection::CoreAppRoleName,
-    hha::HHAAgent,
+    hha_agent::HHAAgent,
     hha_types::{HappPreferences, SetHappPreferencesInput},
 };
 use std::{str::FromStr, time::Duration};

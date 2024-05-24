@@ -4,7 +4,7 @@ use holochain_types::prelude::{
     holochain_serial, EntryHashB64, FunctionName, SerializedBytes, ZomeName,
 };
 use hpos_hc_connect::app_connection::CoreAppRoleName;
-use hpos_hc_connect::hha::HHAAgent;
+use hpos_hc_connect::hha_agent::HHAAgent;
 use hpos_hc_connect::holofuel_types::Pending;
 use serde::{Deserialize, Serialize};
 
