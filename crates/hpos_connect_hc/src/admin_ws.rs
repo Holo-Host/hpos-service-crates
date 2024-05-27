@@ -141,7 +141,7 @@ impl AdminWebsocket {
     }
 
     #[instrument(err, skip(self))]
-    async fn install_app(&mut self, payload: InstallAppPayload) -> Result<()> {
+    pub async fn install_app(&mut self, payload: InstallAppPayload) -> Result<()> {
         let msg = AdminRequest::InstallApp(Box::new(payload));
         match self.send(msg).await {
             Ok(_) => Ok(()),
@@ -162,7 +162,7 @@ impl AdminWebsocket {
     }
 
     #[instrument(skip(self), err)]
-    async fn activate_app(&mut self, happ: &Happ) -> Result<AdminResponse> {
+    pub async fn activate_app(&mut self, happ: &Happ) -> Result<AdminResponse> {
         let msg = AdminRequest::EnableApp {
             installed_app_id: happ.id(),
         };
