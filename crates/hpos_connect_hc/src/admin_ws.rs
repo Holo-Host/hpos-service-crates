@@ -134,31 +134,21 @@ impl AdminWebsocket {
             }
         };
 
-        self.install_app(payload).await?;
+        if let Err(e) = self.install_app(payload).await {
+            if !e.to_string().contains("AppAlreadyInstalled") {
+                return Err(e);
+            }
+        }
+
         self.activate_app(app).await?;
         debug!("installed & activated hApp: {}", app.id());
         Ok(())
     }
 
     #[instrument(err, skip(self))]
-    pub async fn install_app(&mut self, payload: InstallAppPayload) -> Result<()> {
+    pub async fn install_app(&mut self, payload: InstallAppPayload) -> Result<AdminResponse> {
         let msg = AdminRequest::InstallApp(Box::new(payload));
-        match self.send(msg).await {
-            Ok(_) => Ok(()),
-            Err(e) => {
-                if e.to_string().contains("AppAlreadyInstalled") {
-                    return Ok(());
-                }
-                Err(e)
-            }
-        }
-    }
-
-    #[instrument(skip(self, happ))]
-    pub async fn activate_happ(&mut self, happ: &Happ) -> Result<()> {
-        self.activate_app(happ).await?;
-        debug!("activated hApp: {}", happ.id());
-        Ok(())
+        self.send(msg).await
     }
 
     #[instrument(skip(self), err)]

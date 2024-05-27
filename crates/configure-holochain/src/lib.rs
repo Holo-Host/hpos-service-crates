@@ -69,7 +69,7 @@ pub async fn install_happs(happ_file: &HappsFile, config: &Config) -> Result<()>
             {
                 if err.to_string().contains("AppAlreadyInstalled") {
                     info!("app {} was previously installed, re-activating", &happ.id());
-                    admin_websocket.activate_happ(happ).await?;
+                    admin_websocket.activate_app(happ).await?;
                 } else {
                     return Err(err);
                 }
