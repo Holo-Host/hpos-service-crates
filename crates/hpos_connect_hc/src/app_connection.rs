@@ -95,7 +95,8 @@ impl AppConnection {
             return Ok(c);
         }
 
-        Ok(self.app_info().await?.cell_info)
+        self.cell_info = Some(self.app_info().await?.cell_info);
+        Ok(self.cell_info.clone().unwrap())
     }
 
     /// Returns a cell for a given RoleName in a connected app

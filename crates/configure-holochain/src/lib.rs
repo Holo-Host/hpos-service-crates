@@ -64,7 +64,7 @@ pub async fn install_happs(happ_file: &HappsFile, config: &Config) -> Result<()>
                     .await?;
 
             if let Err(err) = admin_websocket
-                .install_and_activate_happ(happ, mem_proof_vec, agent.clone())
+                .install_and_activate_app(happ, mem_proof_vec, agent.clone())
                 .await
             {
                 if err.to_string().contains("AppAlreadyInstalled") {
