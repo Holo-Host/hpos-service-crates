@@ -10,6 +10,7 @@ use holochain_conductor_api::{
 };
 use holochain_types::{
     app::{InstallAppPayload, InstalledAppId},
+    dna::AgentPubKey,
     websocket::AllowedOrigins,
 };
 use holochain_websocket::{connect, ConnectRequest, WebsocketConfig, WebsocketSender};
@@ -191,6 +192,15 @@ impl AdminWebsocket {
         let response = self.send(AdminRequest::ListApps { status_filter }).await?;
         match response {
             AdminResponse::AppsListed(apps_infos) => Ok(apps_infos),
+            _ => unreachable!("Unexpected response {:?}", response),
+        }
+    }
+
+    pub async fn generate_agent_pub_key(&mut self) -> Result<AgentPubKey> {
+        // Create agent key in Lair and save it in file
+        let response = self.send(AdminRequest::GenerateAgentPubKey).await?;
+        match response {
+            AdminResponse::AgentPubKeyGenerated(key) => Ok(key),
             _ => unreachable!("Unexpected response {:?}", response),
         }
     }
