@@ -27,7 +27,7 @@ pub struct AppWebsocket {
 #[derive(Clone)]
 pub struct AppConnection {
     ws: AppWebsocket,
-    keystore: MetaLairClient,
+    pub keystore: MetaLairClient,
     cell_info: Option<CellInfoMap>,
     app_id: String,
 }
