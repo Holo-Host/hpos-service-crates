@@ -3,7 +3,7 @@ use holochain_types::prelude::{
 };
 use holofuel_types::fuel::Fuel;
 use serde::{Deserialize, Serialize};
-use std::time::Duration;
+use std::{str::FromStr, time::Duration};
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct HappAndHost {
@@ -19,6 +19,19 @@ pub struct HappPreferences {
     pub price_storage: Fuel,
     pub price_bandwidth: Fuel,
     pub max_time_before_invoice: Duration,
+}
+
+impl Default for HappPreferences {
+    fn default() -> Self {
+        HappPreferences {
+            timestamp: Timestamp::now(),
+            max_fuel_before_invoice: Fuel::from_str("1").unwrap(),
+            price_compute: Fuel::new(0),
+            price_storage: Fuel::new(0),
+            price_bandwidth: Fuel::new(0),
+            max_time_before_invoice: Duration::default(),
+        }
+    }
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -42,7 +55,7 @@ pub struct HoloportDetails {
     pub preferences_hash: Option<ActionHashB64>,
 }
 
-#[derive(Debug, Serialize, Deserialize, SerializedBytes)]
+#[derive(Debug, Clone, Serialize, Deserialize, SerializedBytes)]
 pub struct PresentedHappBundle {
     pub id: ActionHashB64,
     pub provider_pubkey: AgentPubKeyB64,
@@ -64,7 +77,7 @@ pub struct PresentedHappBundle {
     pub special_installed_app_id: Option<String>,
 }
 
-#[derive(Debug, Serialize, Deserialize, SerializedBytes, Clone)]
+#[derive(Debug, Serialize, Deserialize, SerializedBytes, Clone, PartialEq, Eq)]
 pub struct PublisherPricingPref {
     pub cpu: Fuel,
     pub storage: Fuel,
