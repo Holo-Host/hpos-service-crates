@@ -2,14 +2,7 @@ use crate::app_connection::CoreAppRoleName;
 use crate::holo_config::{default_password, get_lair_url, Config, HappsFile, ADMIN_PORT};
 use crate::{AdminWebsocket, AppConnection};
 use anyhow::{anyhow, Context, Result};
-use holochain_types::dna::{ActionHashB64, AgentPubKey};
-use serde::Deserialize;
-
-#[derive(Deserialize, Debug, Clone)]
-pub struct PresentedHappBundle {
-    pub id: ActionHashB64,
-    pub bundle_url: String,
-}
+use holochain_types::dna::AgentPubKey;
 
 /// Struct giving access to local instance of HHA on HPOS
 /// `config` of type `holo_config::Config` represents CLI params and can be passed
