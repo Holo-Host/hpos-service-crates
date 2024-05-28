@@ -2,7 +2,10 @@ use crate::app_connection::CoreAppRoleName;
 use crate::holo_config::{default_password, get_lair_url, Config, HappsFile, ADMIN_PORT};
 use crate::{AdminWebsocket, AppConnection};
 use anyhow::{anyhow, Context, Result};
+use holochain_keystore::AgentPubKeyExt;
 use holochain_types::dna::AgentPubKey;
+use holochain_types::prelude::Signature;
+use std::sync::Arc;
 
 /// Struct giving access to local instance of HHA on HPOS
 /// `config` of type `holo_config::Config` represents CLI params and can be passed
@@ -57,10 +60,10 @@ impl HfAgent {
     pub fn id(&self) -> String {
         self.app.id()
     }
-}
 
-// /// Sign byte payload with holofuel agent's private key
-// pub async fn sign_raw(&mut self, data: Arc<[u8]>) -> Result<Signature> {
-//     let (_, agent_pubkey) = self.get_cell().await?;
-//     Ok(agent_pubkey.sign_raw(&self.keystore, data).await?)
-// }
+    // /// Sign byte payload with holofuel agent's private key
+    pub async fn sign_raw(&mut self, data: Arc<[u8]>) -> Result<Signature> {
+        let pubkey = self.pubkey().await?;
+        Ok(pubkey.sign_raw(&self.app.keystore, data).await?)
+    }
+}
