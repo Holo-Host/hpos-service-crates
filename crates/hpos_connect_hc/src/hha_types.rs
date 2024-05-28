@@ -64,7 +64,7 @@ pub struct PresentedHappBundle {
     pub uid: Option<String>,
     pub bundle_url: String,
     pub ui_src_url: Option<String>,
-    // pub dnas: Vec<DnaResource>,
+    pub dnas: Vec<DnaResource>,
     pub hosted_urls: Vec<String>,
     pub name: String,
     pub logo_url: Option<String>,
