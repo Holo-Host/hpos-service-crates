@@ -1,5 +1,5 @@
 use crate::app_connection::CoreAppRoleName;
-use crate::hha_types::HappInput;
+use crate::hha_types::{HappInput, HoloportDetails};
 use crate::holo_config::{default_password, get_lair_url, Config, HappsFile, ADMIN_PORT};
 use crate::{AdminWebsocket, AppConnection};
 use anyhow::{anyhow, Context, Result};
@@ -55,6 +55,28 @@ impl HHAAgent {
             .await?
             .agent_pubkey()
             .to_owned())
+    }
+
+    pub async fn get_happs(&mut self) -> Result<Vec<PresentedHappBundle>> {
+        self.app
+            .zome_call_typed(
+                CoreAppRoleName::HHA.into(),
+                ZomeName::from("hha"),
+                FunctionName::from("get_happs"),
+                (),
+            )
+            .await
+    }
+
+    pub async fn get_hosts(&mut self, happ_id: ActionHashB64) -> Result<Vec<HoloportDetails>> {
+        self.app
+            .zome_call_typed(
+                CoreAppRoleName::HHA.into(),
+                ZomeName::from("hha"),
+                FunctionName::from("get_hosts"),
+                happ_id,
+            )
+            .await
     }
 
     pub async fn get_my_happs(&mut self) -> Result<Vec<PresentedHappBundle>> {
