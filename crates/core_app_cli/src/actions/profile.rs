@@ -1,20 +1,21 @@
 use anyhow::Result;
-use holochain_types::prelude::{ExternIO, FunctionName, ZomeName};
-use hpos_hc_connect::holofuel_types::Profile;
-use hpos_hc_connect::{CoreAppAgent, CoreAppRoleName};
+use holochain_types::prelude::{FunctionName, ZomeName};
+use hpos_hc_connect::{
+    app_connection::CoreAppRoleName, hha_agent::HHAAgent, holofuel_types::Profile,
+};
 
 pub async fn get() -> Result<()> {
-    let mut agent = CoreAppAgent::connect().await?;
-    let result = agent
-        .zome_call(
-            CoreAppRoleName::Holofuel,
+    let mut agent = HHAAgent::spawn(None).await?;
+
+    let profile: Profile = agent
+        .app
+        .zome_call_typed(
+            CoreAppRoleName::Holofuel.into(),
             ZomeName::from("profile"),
             FunctionName::from("get_my_profile"),
-            ExternIO::encode(())?,
+            (),
         )
         .await?;
-
-    let profile: Profile = rmp_serde::from_slice(result.as_bytes())?;
 
     println!("===================");
     println!("Your Profile details are: ");

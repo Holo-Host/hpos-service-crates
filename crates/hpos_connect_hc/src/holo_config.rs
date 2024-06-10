@@ -1,5 +1,5 @@
 use super::hpos_agent::{read_hpos_config, Admin};
-use anyhow::{Context, Result};
+use anyhow::{anyhow, Context, Result};
 use holochain_types::prelude::{AgentPubKey, AppBundleSource};
 use holochain_types::{app::AppManifest, prelude::YamlProperties};
 use lair_keystore_api::{
@@ -15,26 +15,34 @@ use tracing::{debug, instrument};
 pub const APP_PORT: u16 = 42233;
 pub const ADMIN_PORT: u16 = 4444;
 
-pub fn default_core_happ_file() -> Result<String> {
-    env::var("CORE_HAPP_FILE").context("Failed to read CORE_HAPP_FILE. Is it set in env?")
-}
-
 pub fn default_password() -> Result<String> {
     env::var("HOLOCHAIN_DEFAULT_PASSWORD")
         .context("Failed to read HOLOCHAIN_DEFAULT_PASSWORD. Is it set in env?")
 }
 
-pub fn get_lair_url() -> Result<Url> {
-    match env::var("LAIR_CONNECTION_URL") {
-        Ok(url_string) => {
-            let url = Url::parse(&url_string)?;
-            Ok(url)
-        }
-        Err(_) => {
-            let config = read_lair_config()?;
-            Ok(config.connection_url)
-        }
+/// Read url for connection to Lair
+/// Depending on a system this url can be obtained from the following sources (in order of trying):
+/// 1. `Config` representing CLI parameters of a binary
+/// 2. From LAIR_CONNECTION_URL env var
+/// 3. From lair config present in default working directory
+/// 4. Throws an error otherwise
+pub fn get_lair_url(maybe_config: Option<&Config>) -> Result<String> {
+    if let Some(config) = maybe_config {
+        return config
+            .lair_url
+            .clone()
+            .ok_or_else(|| anyhow!("Does not have lair url, please provide --lair-url"));
     }
+
+    if let Ok(url) = env::var("LAIR_CONNECTION_URL") {
+        return Ok(url);
+    }
+
+    if let Ok(config) = read_lair_config() {
+        return Ok(config.connection_url.to_string());
+    }
+
+    Err(anyhow!("Couldn't obtain lair connection url from CLI, LAIR_CONNECTION_URL or lair working directory"))
 }
 
 fn read_lair_config() -> Result<LairServerConfigInner> {
@@ -252,9 +260,23 @@ impl HappsFile {
         debug!(?happ_file);
         Ok(happ_file)
     }
-    // helper that reads the env var insted of a path that is passed
-    pub fn load_happ_file_from_env() -> Result<Self> {
-        let file = std::fs::File::open(default_core_happ_file()?).context("failed to open file")?;
+
+    /// Loads happ file form the path constructed in such a way (in order of precedence):
+    /// 1. If `config` is passed loads from `config.happs_file_path`
+    /// 2. From CORE_HAPP_FILE env var
+    /// 3. Throws an error otherwise
+    pub fn load_happ_file_from_env(maybe_config: Option<&Config>) -> Result<Self> {
+        let path = if let Some(config) = maybe_config {
+            config.happs_file_path.clone()
+        } else if let Ok(path) = env::var("CORE_HAPP_FILE") {
+            path.into()
+        } else {
+            return Err(anyhow!(
+                "Couldn't obtain happs file path from CLI nor CORE_HAPP_FILE env var"
+            ));
+        };
+
+        let file = std::fs::File::open(path).context("failed to open file")?;
         let happ_file =
             serde_yaml::from_reader(&file).context("failed to deserialize YAML as HappsFile")?;
         Ok(happ_file)

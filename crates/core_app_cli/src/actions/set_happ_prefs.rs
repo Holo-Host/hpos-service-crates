@@ -1,9 +1,10 @@
 use anyhow::Result;
-use holochain_types::prelude::{ActionHashB64, ExternIO, FunctionName, ZomeName};
+use holochain_types::prelude::{ActionHashB64, FunctionName, ZomeName};
 use holofuel_types::fuel::Fuel;
 use hpos_hc_connect::{
+    app_connection::CoreAppRoleName,
+    hha_agent::HHAAgent,
     hha_types::{HappPreferences, SetHappPreferencesInput},
-    CoreAppAgent, CoreAppRoleName,
 };
 use std::{str::FromStr, time::Duration};
 
@@ -16,7 +17,7 @@ pub async fn get(
     max_time_before_invoice_sec: String,
     max_time_before_invoice_ms: String,
 ) -> Result<()> {
-    let mut agent = CoreAppAgent::connect().await?;
+    let mut agent = HHAAgent::spawn(None).await?;
 
     let max_time_sec = max_time_before_invoice_sec
         .parse::<u64>()
@@ -35,16 +36,15 @@ pub async fn get(
         max_time_before_invoice: Duration::new(max_time_sec, max_time_ms),
     };
 
-    let result = agent
-        .zome_call(
-            CoreAppRoleName::HHA,
+    let happ_prefs: HappPreferences = agent
+        .app
+        .zome_call_typed(
+            CoreAppRoleName::HHA.into(),
             ZomeName::from("hha"),
             FunctionName::from("set_happ_preferences"),
-            ExternIO::encode(host_pricing_prefs)?,
+            host_pricing_prefs,
         )
         .await?;
-
-    let happ_prefs: HappPreferences = rmp_serde::from_slice(result.as_bytes())?;
 
     println!("===================");
     println!("Your Published Happ Preferences are: ");

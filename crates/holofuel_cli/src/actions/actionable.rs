@@ -1,19 +1,21 @@
 use anyhow::Result;
-use holochain_types::prelude::{ExternIO, FunctionName, ZomeName};
+use holochain_types::prelude::{FunctionName, ZomeName};
+use hpos_hc_connect::app_connection::CoreAppRoleName;
+use hpos_hc_connect::hf_agent::HfAgent;
 use hpos_hc_connect::holofuel_types::Actionable;
-use hpos_hc_connect::HolofuelAgent;
 
 pub async fn get() -> Result<()> {
-    let mut agent = HolofuelAgent::connect().await?;
-    let result = agent
-        .zome_call(
+    let mut agent = HfAgent::spawn(None).await?;
+
+    let txs: Actionable = agent
+        .app
+        .zome_call_typed(
+            CoreAppRoleName::Holofuel.into(),
             ZomeName::from("transactor"),
             FunctionName::from("get_actionable_transactions"),
-            ExternIO::encode(())?,
+            (),
         )
         .await?;
-
-    let txs: Actionable = rmp_serde::from_slice(result.as_bytes())?;
 
     println!("===================");
     println!("Your Actionable List is: ");

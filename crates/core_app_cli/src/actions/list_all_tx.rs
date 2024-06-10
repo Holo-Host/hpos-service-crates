@@ -1,20 +1,23 @@
 use anyhow::Result;
-use holochain_types::prelude::{ExternIO, FunctionName, ZomeName};
-use hpos_hc_connect::holofuel_types::{Actionable, Pending, Transaction};
-use hpos_hc_connect::{CoreAppAgent, CoreAppRoleName};
+use holochain_types::prelude::{FunctionName, ZomeName};
+use hpos_hc_connect::{
+    app_connection::CoreAppRoleName,
+    hha_agent::HHAAgent,
+    holofuel_types::{Actionable, Pending, Transaction},
+};
 
 pub async fn get() -> Result<()> {
-    let mut agent = CoreAppAgent::connect().await?;
-    let result = agent
-        .zome_call(
-            CoreAppRoleName::Holofuel,
+    let mut agent = HHAAgent::spawn(None).await?;
+
+    let txs: Pending = agent
+        .app
+        .zome_call_typed(
+            CoreAppRoleName::Holofuel.into(),
             ZomeName::from("transactor"),
             FunctionName::from("get_pending_transactions"),
-            ExternIO::encode(())?,
+            (),
         )
         .await?;
-
-    let txs: Pending = rmp_serde::from_slice(result.as_bytes())?;
 
     println!("===================");
     println!("Your Pending List is: ");
@@ -36,16 +39,15 @@ pub async fn get() -> Result<()> {
         txs.accepted.len()
     );
     println!("===================");
-    let result = agent
-        .zome_call(
-            CoreAppRoleName::Holofuel,
+    let txs: Actionable = agent
+        .app
+        .zome_call_typed(
+            CoreAppRoleName::Holofuel.into(),
             ZomeName::from("transactor"),
             FunctionName::from("get_actionable_transactions"),
-            ExternIO::encode(())?,
+            (),
         )
         .await?;
-
-    let txs: Actionable = rmp_serde::from_slice(result.as_bytes())?;
 
     println!("===================");
     println!("Your Actionable List is: ");
@@ -56,16 +58,15 @@ pub async fn get() -> Result<()> {
         txs.invoice_actionable.len() + txs.promise_actionable.len()
     );
     println!("===================");
-    let result = agent
-        .zome_call(
-            CoreAppRoleName::Holofuel,
+    let txs: Vec<Transaction> = agent
+        .app
+        .zome_call_typed(
+            CoreAppRoleName::Holofuel.into(),
             ZomeName::from("transactor"),
             FunctionName::from("get_completed_transactions"),
-            ExternIO::encode(())?,
+            (),
         )
         .await?;
-
-    let txs: Vec<Transaction> = rmp_serde::from_slice(result.as_bytes())?;
 
     println!("===================");
     println!("Your Completed List is: ");

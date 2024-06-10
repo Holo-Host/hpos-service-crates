@@ -1,27 +1,24 @@
-pub mod get_my_apps;
-use anyhow::{anyhow, Context, Result};
-use hha::HHAAgent;
-use holochain_types::prelude::{AgentPubKey, FunctionName, ZomeName};
+use std::{env, fs};
+
+use anyhow::{Context, Result};
+use hpos_hc_connect::hha_agent::HHAAgent;
 pub use hpos_hc_connect::{
     hha_types::HappInput,
     holo_config::{Config, Happ, HappsFile},
 };
-use serde::Serialize;
 use tracing::{debug, info};
-mod publish;
-use std::{env, fs, path::PathBuf};
-pub mod hha;
 
 pub async fn run(config: &Config) -> Result<()> {
     info!("Running happ manager");
 
-    let core_happ: Happ = get_core_happ(&config.happs_file_path)?;
+    let mut hha = HHAAgent::spawn(Some(config)).await?;
 
-    let apps = happ_to_published()?;
+    let apps = happ_to_be_published()?;
 
     println!("Happs to be published {:?}", apps);
 
-    let list_of_published_happs = get_my_apps::published(&core_happ, config).await?;
+    let list_of_published_happs = hha.get_my_happs().await?;
+
     println!(
         "Happs that are already published {:?}",
         list_of_published_happs
@@ -35,9 +32,9 @@ pub async fn run(config: &Config) -> Result<()> {
             // if it does set a special_installed_app_id as the installed_app_id of the core_app
             // This special_installed_app_id is designed for Cloud Console(formally know as Publisher Portal)
             if app.name.contains("Cloud") {
-                app.special_installed_app_id = Some(core_happ.id())
+                app.special_installed_app_id = Some(hha.id())
             }
-            publish::publish_happ(&core_happ, config, app).await?;
+            hha.publish_happ(app).await?;
         } else {
             debug!("already published")
         }
@@ -46,63 +43,10 @@ pub async fn run(config: &Config) -> Result<()> {
     Ok(())
 }
 
-pub fn happ_to_published() -> Result<Vec<HappInput>> {
+pub fn happ_to_be_published() -> Result<Vec<HappInput>> {
     let apps_path = env::var("HOLO_PUBLISHED_HAPPS")
         .context("Failed to read HOLO_PUBLISHED_HAPPS. Is it set in env?")?;
     let app_json = fs::read(apps_path)?;
     let apps = serde_json::from_slice(&app_json)?;
     Ok(apps)
-}
-
-fn get_core_happ(happs_file_path: &PathBuf) -> Result<Happ> {
-    let happ_file =
-        HappsFile::load_happ_file(happs_file_path).context("failed to load hApps YAML config")?;
-    let core_happ = happ_file.core_app().ok_or_else(|| {
-        anyhow!(
-        "Please check that the happ config file is present. No Core apps found in configuration"
-    )
-    })?;
-    Ok(core_happ)
-}
-
-pub async fn update_jurisdiction_if_changed(
-    config: &Config,
-    hbs_jurisdiction: String,
-) -> Result<()> {
-    let core_happ: Happ = get_core_happ(&config.happs_file_path)?;
-
-    let mut agent = HHAAgent::spawn(&core_happ, config).await?;
-
-    let host_pubkey = agent.pubkey();
-
-    let hha_jurisdiction: Option<String> = agent
-        .zome_call(
-            agent.cells.core_app.clone(),
-            ZomeName::from("hha"),
-            FunctionName::from("get_host_jurisdiction"),
-            host_pubkey.clone(),
-        )
-        .await?;
-
-    if hha_jurisdiction.is_none() || hha_jurisdiction.as_ref() != Some(&hbs_jurisdiction) {
-        #[derive(Debug, Serialize)]
-        pub struct SetHostJurisdictionInput {
-            pub pubkey: AgentPubKey,
-            pub jurisdiction: String,
-        }
-
-        agent
-            .zome_call(
-                agent.cells.core_app.clone(),
-                ZomeName::from("hha"),
-                FunctionName::from("set_host_jurisdiction"),
-                SetHostJurisdictionInput {
-                    pubkey: host_pubkey,
-                    jurisdiction: hbs_jurisdiction,
-                },
-            )
-            .await?;
-    }
-
-    Ok(())
 }

@@ -11,4 +11,4 @@ hpos_hc_connect = { path = "../hpos_connect_hc" }
 serde = { workspace = true }
 structopt = "0.3.0"
 tokio = { version = "1.11", features = [ "full" ] }
-rmp-serde = "1.1.1"
+rmp-serde = { workspace = true }

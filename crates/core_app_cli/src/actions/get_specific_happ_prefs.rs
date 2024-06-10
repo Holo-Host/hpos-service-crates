@@ -1,25 +1,24 @@
 use anyhow::Result;
-use holochain_types::prelude::{ActionHash, ActionHashB64, ExternIO, FunctionName, ZomeName};
-use hpos_hc_connect::{hha_types::HappPreferences, CoreAppAgent, CoreAppRoleName};
+use holochain_types::prelude::{ActionHash, ActionHashB64, FunctionName, ZomeName};
+use hpos_hc_connect::{
+    app_connection::CoreAppRoleName, hha_agent::HHAAgent, hha_types::HappPreferences,
+};
 
 pub async fn get(pref_hash: String) -> Result<()> {
-    let mut agent = CoreAppAgent::connect().await?;
+    let mut agent = HHAAgent::spawn(None).await?;
     let pref_holo_hash = ActionHashB64::from_b64_str(&pref_hash)
         .expect("Failed to serialize string into ActionHashB4");
     let hash = ActionHash::from(pref_holo_hash);
 
-    let result = agent
-        .zome_call(
-            CoreAppRoleName::HHA,
+    let prefs: HappPreferences = agent
+        .app
+        .zome_call_typed(
+            CoreAppRoleName::HHA.into(),
             ZomeName::from("hha"),
             FunctionName::from("get_specific_happ_preferences"),
-            ExternIO::encode(hash)?,
+            hash,
         )
         .await?;
-
-    println!("ZOME CALL RESULT: {:?}", result);
-
-    let prefs: HappPreferences = rmp_serde::from_slice(result.as_bytes())?;
 
     println!("===================");
     println!("All Hosts for Preference Hash {} are: ", pref_hash);

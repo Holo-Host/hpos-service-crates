@@ -15,31 +15,33 @@
 //! ### Example:
 //!
 //! ```rust
-//! use hpos_hc_connect::HolofuelAgent;
-//! use holochain_types::prelude::{ExternIO, FunctionName, ZomeName};
+//! use hpos_hc_connect::{app_connection::CoreAppRoleName, hf_agent::HfAgent, holofuel_types::Ledger};
+//! use holochain_types::prelude::{FunctionName, ZomeName};
 //! pub async fn test() {
-//!     let mut agent: HolofuelAgent = HolofuelAgent::connect().await.unwrap();
-//!     let result: ExternIO = agent
-//!         .zome_call(
-//!             ZomeName::from("transactor"),
-//!             FunctionName::from("get_ledger"),
-//!             ExternIO::encode(()).unwrap(),
-//!          )
-//!          .await.unwrap();
+//!     let mut agent = HfAgent::spawn(None).await.unwrap();
+//!
+//!    let ledger: Ledger = agent
+//!    .app
+//!    .zome_call_typed(
+//!        CoreAppRoleName::Holofuel.into(),
+//!        ZomeName::from("transactor"),
+//!        FunctionName::from("get_ledger"),
+//!        (),
+//!    )
+//!    .await
+//!    .unwrap();
 //! }
 //! ```
 
 pub mod admin_ws;
-pub mod holo_config;
-pub mod utils;
-pub use admin_ws::AdminWebsocket;
-pub mod app_ws;
-pub use app_ws::AppWebsocket;
+pub mod app_connection;
 pub mod hf_agent;
+pub mod hha_agent;
+pub mod hha_types;
+pub mod holo_config;
+pub mod holofuel_types;
 pub mod hpos_agent;
 pub mod hpos_membrane_proof;
-pub use hf_agent::*;
-pub mod core_app_agent;
-pub use core_app_agent::*;
-pub mod hha_types;
-pub mod holofuel_types;
+pub mod utils;
+pub use admin_ws::AdminWebsocket;
+pub use app_connection::AppConnection;
