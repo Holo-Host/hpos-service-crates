@@ -2393,7 +2393,7 @@ dependencies = [
  "reqwest",
  "serde",
  "serde_yaml",
- "snafu",
+ "snafu 0.7.5",
  "sodoken",
  "taskgroup_manager",
  "tempfile",
@@ -2888,11 +2888,13 @@ dependencies = [
  "again",
  "anyhow",
  "base64 0.13.1",
+ "derive_more",
  "ed25519-dalek",
  "getrandom 0.2.12",
  "holochain_client",
  "holochain_conductor_api",
  "holochain_keystore",
+ "holochain_serialized_bytes",
  "holochain_types",
  "holochain_websocket",
  "holofuel_types",
@@ -2902,10 +2904,13 @@ dependencies = [
  "lair_keystore_api",
  "lazy_static",
  "mr_bundle",
+ "regex",
  "reqwest",
  "serde",
+ "serde_bytes",
  "serde_json",
  "serde_yaml",
+ "snafu 0.6.10",
  "sodoken",
  "structopt",
  "tempfile",
@@ -6037,12 +6042,33 @@ checksum = "e6ecd384b10a64542d77071bd64bd7b231f4ed5940fba55e98c3de13824cf3d7"
 
 [[package]]
 name = "snafu"
+version = "0.6.10"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "eab12d3c261b2308b0d80c26fffb58d17eba81a4be97890101f416b478c79ca7"
+dependencies = [
+ "doc-comment",
+ "snafu-derive 0.6.10",
+]
+
+[[package]]
+name = "snafu"
 version = "0.7.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e4de37ad025c587a29e8f3f5605c00f70b98715ef90b9061a815b9e59e9042d6"
 dependencies = [
  "doc-comment",
- "snafu-derive",
+ "snafu-derive 0.7.5",
+]
+
+[[package]]
+name = "snafu-derive"
+version = "0.6.10"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1508efa03c362e23817f96cde18abed596a25219a8b2c66e8db33c03543d315b"
+dependencies = [
+ "proc-macro2 1.0.78",
+ "quote 1.0.35",
+ "syn 1.0.109",
 ]
 
 [[package]]

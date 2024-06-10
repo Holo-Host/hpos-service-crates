@@ -1,27 +1,27 @@
+// NB: These types and functions already exist in envoy (most with just a slight modification to the fn input).
+// TODO: Consider exporting this in a utility crate that can be used by all required services.
+
+use crate::error_types;
+use crate::utils;
+
+use anyhow::Error;
 use holochain_client::{AdminWebsocket, AppWebsocket};
+use holochain_conductor_api::{AppInfo, CellInfo};
 use holochain_keystore::MetaLairClient;
-use holochain_types::prelude::{ActionHash, ActionHashB64, Nonce256Bits, Signature, Timestamp};
+use holochain_types::prelude::{
+    cell, ffs, AppBundle as HcAppBundle, AppBundleError, AppBundleSource, AppManifest,
+    CreateCloneCellPayload, DisableCloneCellPayload, EnableCloneCellPayload, InstallAppPayload,
+    MembraneProof, Record, RoleName, SerializedBytes, Signal as HcSignal, SignedActionHashed,
+    UnsafeBytes, ZomeCallUnsigned,
+};
+use holochain_types::prelude::{
+    ActionHash, ActionHashB64, CellId, Nonce256Bits, Signature, Timestamp,
+};
+use serde::{Deserialize, Serialize};
+use snafu::{ResultExt, Snafu};
+use std::sync::Arc;
 
 // CHC types
-#[derive(Debug, Snafu)]
-pub enum ChcError {
-    #[snafu(display("Failed to connect to chc at addr {}: {}", addr, source))]
-    FailedRequest {
-        source: reqwest::Error,
-        addr: Box<Url>,
-    },
-    #[snafu(display("Error status returned from chc {}:", status))]
-    FailedResponse { status: u16 },
-    #[snafu(display("Unexpected response from chc {}:", source))]
-    UnexpectedResponse { source: reqwest::Error },
-    #[snafu(display("Failed to deserialize response from chc"))]
-    SerdeError,
-    #[snafu(display("Failed to generate nonce"))]
-    NonceError,
-    #[snafu(display("Failed to sign payload"))]
-    SigningError,
-}
-
 pub struct ChcCredentials {
     pub app_websocket: &AppWebsocket,
     pub keystore: &MetaLairClient,
@@ -48,9 +48,8 @@ type GetRecordsDataResponse = Vec<GetRecordsDataRow>;
 
 // CHC functions
 /// Determines if the there is a chc error, returning the most recent hash stored in the CHC if an chc error exists and an empty vec if not.
-/// NB: This same fn exists in envoy with just a slight modification to the fn input. TODO: Consider exporting this in a utility crate that can be used by all required services.
 fn find_chc_head_moved_error_since_hashes(
-    response: &crate::holochain::RequestError,
+    response: &error_types::RequestError,
 ) -> Result<Vec<ActionHash>, Error> {
     if let Ok(error) = response {
         if let Err(
@@ -200,8 +199,7 @@ async fn get_records_data(
         .push(&agent_hash.to_string())
         .push("get_record_data");
 
-    let (nonce, timestamp) =
-        utils::fresh_nonce(Timestamp::now()).map_err(|_| ChcError::NonceError)?;
+    let (nonce, timestamp) = utils::fresh_nonce().map_err(|_| ChcError::NonceError)?;
 
     let payload = GetRecordsDataPayload {
         since_hash,

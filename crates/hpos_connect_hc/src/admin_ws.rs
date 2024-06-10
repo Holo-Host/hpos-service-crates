@@ -120,35 +120,35 @@ impl AdminWebsocket {
             Err(e) => {
                 if e.to_string().contains("AppAlreadyInstalled") {
                     return Ok(());
-                } else if chc_credentials.is_some() && Ok(since_hashes) =
-                    chc::find_chc_head_moved_error_since_hashes(e)
-                {
-                    if !since_hashes.is_empty() {
-                        debug!(
-                            "Going to graft chain through call to chc db.",
-                            &since_hashes
-                        );
+                } else if chc_credentials.is_some() {
+                    if let Ok(since_hashes) = chc::find_chc_head_moved_error_since_hashes(e) {
+                        if !since_hashes.is_empty() {
+                            debug!(
+                                "Going to graft chain through call to chc db. {:?}",
+                                &since_hashes
+                            );
 
-                        // unwrap is ok here because if it were none it would not pass the above check
-                        let (app_websocket, keystore, chc_url) = chc_credentials.unwrap();
+                            // unwrap is ok here because if it were none it would not pass the above check
+                            let (app_websocket, keystore, chc_url) = chc_credentials.unwrap();
 
-                        for since_hash in since_hashes {
-                            chc::handle_out_of_sync_install(
-                                keystore,
-                                self, // admin_websocket
-                                app_websocket,
-                                Some(since_hash),
-                                happ.id(),
-                                chc_url,
-                            )
-                            .await;
-                        }
+                            for since_hash in since_hashes {
+                                chc::handle_out_of_sync_install(
+                                    keystore,
+                                    self, // admin_websocket
+                                    app_websocket,
+                                    Some(since_hash),
+                                    happ.id(),
+                                    chc_url,
+                                )
+                                .await;
+                            }
 
-                        let post_sync_app_status = app_websocket.get_app_info(happ.id()).await;
-                        debug!("Post graft app status.", &post_sync_app_status);
+                            let post_sync_app_status = app_websocket.get_app_info(happ.id()).await;
+                            debug!("Post graft app status. {:?} ", &post_sync_app_status);
 
-                        if post_sync_app_status.is_some() {
-                            return Ok(());
+                            if post_sync_app_status.is_some() {
+                                return Ok(());
+                            }
                         }
                     }
                 }
