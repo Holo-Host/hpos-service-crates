@@ -53,6 +53,13 @@ use test_case::test_case;
 /// Tests cannot run in parallel because they are all accessing same /tmp dir
 
 async fn run_configure_holochain(f_r_a_k: &str, r_o_m_p: &str) {
+    // Uncomment those lines if you need logging
+    // but this will work only for one test case ran at the time
+    // because tracing subscribes here sets a global subscriber for each test
+    // use tracing_subscriber::EnvFilter;
+    // let filter = EnvFilter::from_default_env().add_directive("again=trace".parse().unwrap());
+    // tracing_subscriber::fmt().with_env_filter(filter).init();
+
     // Point HPOS_CONFIG_PATH to test config file
     set_var(
         "HPOS_CONFIG_PATH",

@@ -1,5 +1,5 @@
 use anyhow::Result;
-use holochain_types::prelude::{ActionHash, ActionHashB64};
+use holochain_types::prelude::ActionHashB64;
 use holochain_types::prelude::{ExternIO, FunctionName, ZomeName};
 use hpos_hc_connect::{hha_types::HappAndHost, CoreAppAgent, CoreAppRoleName};
 

@@ -1,10 +1,11 @@
-use super::holo_config::{self, HappsFile, APP_PORT};
-use crate::utils::fresh_nonce;
+use super::holo_config::{self, HappsFile, ADMIN_PORT};
+use crate::{utils::fresh_nonce, AdminWebsocket, AppWebsocket};
 use anyhow::{anyhow, Context, Result};
-use holochain_client::{AgentPubKey, AppWebsocket};
-use holochain_conductor_api::{AppInfo, CellInfo, ProvisionedCell, ZomeCall};
+use holochain_conductor_api::{AppInfo, AppResponse, CellInfo, ProvisionedCell, ZomeCall};
 use holochain_keystore::{AgentPubKeyExt, MetaLairClient};
-use holochain_types::prelude::{ExternIO, FunctionName, Signature, ZomeCallUnsigned, ZomeName};
+use holochain_types::prelude::{
+    AgentPubKey, ExternIO, FunctionName, Signature, ZomeCallUnsigned, ZomeName,
+};
 use std::sync::Arc;
 
 pub struct CoreAppAgent {
@@ -17,12 +18,15 @@ pub struct CoreAppAgent {
 impl CoreAppAgent {
     /// connects to a holofuel agent that is running on a hpos server
     pub async fn connect() -> Result<Self> {
-        let app_websocket = AppWebsocket::connect(format!("ws://localhost:{}/", APP_PORT))
+        let mut admin_websocket = AdminWebsocket::connect(ADMIN_PORT)
             .await
             .context("failed to connect to holochain's app interface")?;
-        // let admin_websocket = AdminWebsocket::connect(format!("ws://localhost:{}/", ADMIN_PORT))
-        //     .await
-        //     .context("failed to connect to holochain's app interface")?;
+
+        let core_app_port = admin_websocket
+            .attach_app_interface(None)
+            .await
+            .context("failed to start app interface for core app")?;
+
         let passphrase =
             sodoken::BufRead::from(holo_config::default_password()?.as_bytes().to_vec());
         let keystore = holochain_keystore::lair_keystore::spawn_lair_keystore(
@@ -33,6 +37,12 @@ impl CoreAppAgent {
 
         let app_file = HappsFile::load_happ_file_from_env()?;
         let core_app = app_file.core_app().unwrap();
+
+        let token = admin_websocket.issue_app_auth_token(core_app.id()).await?;
+
+        let app_websocket = AppWebsocket::connect(core_app_port, token)
+            .await
+            .context("failed to connect to holochain's app interface")?;
 
         Ok(Self {
             app_websocket,
@@ -47,12 +57,7 @@ impl CoreAppAgent {
         &mut self,
         role_name: CoreAppRoleName,
     ) -> Result<(ProvisionedCell, AgentPubKey)> {
-        match self
-            .app_websocket
-            .app_info(self.core_app_id.clone())
-            .await
-            .map_err(|err| anyhow!("{:?}", err))?
-        {
+        match self.app_websocket.get_app_info().await {
             Some(AppInfo {
                 // This works on the assumption that the core apps has HHA in the first position of the vec
                 cell_info,
@@ -98,12 +103,15 @@ impl CoreAppAgent {
         let signed_zome_call =
             ZomeCall::try_from_unsigned_zome_call(&self.keystore, zome_call_unsigned).await?;
 
-        let response = self
+        match self
             .app_websocket
-            .call_zome(signed_zome_call)
+            .zome_call(signed_zome_call)
             .await
-            .map_err(|err| anyhow!("{:?}", err))?;
-        Ok(response)
+            .map_err(|err| anyhow!("{:?}", err))?
+        {
+            AppResponse::ZomeCalled(bytes) => Ok(*bytes),
+            _ => Err(anyhow!("")),
+        }
     }
 }
 

@@ -3,6 +3,7 @@ use serde::Deserialize;
 use std::process::{Command, Output};
 
 #[derive(Debug, Deserialize)]
+#[allow(dead_code)]
 struct HostingCriteria {
     id: String,
     jurisdiction: String,
@@ -11,7 +12,7 @@ struct HostingCriteria {
 
 pub async fn get_jurisdiction() -> Result<String> {
     let output: Output = Command::new("hpos-holochain-client")
-        .args(&["--url=http://localhost/holochain-api/", "hosting-criteria"])
+        .args(["--url=http://localhost/holochain-api/", "hosting-criteria"])
         .output()?;
 
     let output_str = String::from_utf8_lossy(&output.stdout).to_string();

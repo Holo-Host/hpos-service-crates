@@ -4,37 +4,60 @@ use holochain_conductor_api::{CellInfo, ZomeCall};
 use holochain_keystore::MetaLairClient;
 use holochain_types::prelude::{AgentPubKey, ExternIO, FunctionName, ZomeName};
 use holochain_types::prelude::{Nonce256Bits, Timestamp, ZomeCallUnsigned};
-use hpos_hc_connect::holo_config::{Config, Happ};
-use hpos_hc_connect::AppWebsocket;
+use hpos_hc_connect::holo_config::{Config, Happ, ADMIN_PORT};
+use hpos_hc_connect::{AdminWebsocket, AppWebsocket};
+use serde::{de::DeserializeOwned, Serialize};
 use std::time::Duration;
-use tracing::debug;
+use tracing::{debug, trace};
+
+pub struct Cells {
+    pub core_app: ProvisionedCell,
+    pub holofuel: ProvisionedCell,
+}
 
 pub struct HHAAgent {
     app_ws: AppWebsocket,
     keystore: MetaLairClient,
-    cell: ProvisionedCell,
+    pub cells: Cells,
 }
 
 impl HHAAgent {
     pub async fn spawn(core_happ: &Happ, config: &Config) -> Result<Self> {
         debug!("get_all_enabled_hosted_happs");
-        let mut app_ws = AppWebsocket::connect(42233)
+
+        let mut admin_websocket = AdminWebsocket::connect(ADMIN_PORT)
+            .await
+            .context("failed to connect to holochain's app interface")?;
+
+        let port = admin_websocket.attach_app_interface(None).await?;
+
+        let token = admin_websocket.issue_app_auth_token(core_happ.id()).await?;
+
+        let mut app_ws = AppWebsocket::connect(port, token)
             .await
             .context("failed to connect to holochain's app interface")?;
         debug!("get app info for {}", core_happ.id());
-        let cell = match app_ws.get_app_info(core_happ.id()).await {
+        let cells = match app_ws.get_app_info().await {
             Some(AppInfo {
                 // This works on the assumption that the core happs has HHA in the first position of the vec
                 cell_info,
                 ..
             }) => {
-                debug!("got app info");
-                let cell = match &cell_info.get("core-app").unwrap()[0] {
-                    CellInfo::Provisioned(c) => c.clone(),
-                    _ => return Err(anyhow!("core-app cell not found")),
-                };
-                debug!("got cell {:?}", cell);
-                cell
+                trace!("got app info");
+
+                let core_app: holochain_conductor_api::ProvisionedCell =
+                    match &cell_info.get("core-app").unwrap()[0] {
+                        CellInfo::Provisioned(c) => c.clone(),
+                        _ => return Err(anyhow!("core-app cell not found")),
+                    };
+                trace!("got core happ cell {:?}", core_app);
+                let holofuel: holochain_conductor_api::ProvisionedCell =
+                    match &cell_info.get("holofuel").unwrap()[0] {
+                        CellInfo::Provisioned(c) => c.clone(),
+                        _ => return Err(anyhow!("holofuel cell not found")),
+                    };
+                trace!("got holofuel cell {:?}", holofuel);
+                Cells { core_app, holofuel }
             }
             None => return Err(anyhow!("HHA is not installed")),
         };
@@ -60,33 +83,46 @@ impl HHAAgent {
         Ok(Self {
             app_ws,
             keystore,
-            cell,
+            cells,
         })
     }
-    pub async fn zome_call(
+    pub async fn zome_call<T, R>(
         &mut self,
+        cell: ProvisionedCell,
         zome_name: ZomeName,
         fn_name: FunctionName,
-        payload: ExternIO,
-    ) -> Result<AppResponse> {
+        payload: T,
+    ) -> Result<R>
+    where
+        T: Serialize + std::fmt::Debug,
+        R: DeserializeOwned,
+    {
         let (nonce, expires_at) = fresh_nonce()?;
         let zome_call_unsigned = ZomeCallUnsigned {
-            cell_id: self.cell.cell_id.clone(),
+            cell_id: cell.cell_id.clone(),
             zome_name,
             fn_name,
-            payload,
+            payload: ExternIO::encode(payload)?,
             cap_secret: None,
-            provenance: self.cell.cell_id.agent_pubkey().clone(),
+            provenance: cell.cell_id.agent_pubkey().clone(),
             nonce,
             expires_at,
         };
         let signed_zome_call =
             ZomeCall::try_from_unsigned_zome_call(&self.keystore, zome_call_unsigned).await?;
 
-        self.app_ws.zome_call(signed_zome_call).await
+        let response = self.app_ws.zome_call(signed_zome_call).await?;
+
+        match response {
+            AppResponse::ZomeCalled(r) => {
+                let response: R = rmp_serde::from_slice(r.as_bytes())?;
+                Ok(response)
+            }
+            _ => Err(anyhow!("unexpected response: {:?}", response)),
+        }
     }
     pub fn pubkey(&self) -> AgentPubKey {
-        self.cell.cell_id.agent_pubkey().to_owned()
+        self.cells.core_app.cell_id.agent_pubkey().to_owned()
     }
 }
 

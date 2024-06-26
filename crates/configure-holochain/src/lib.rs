@@ -1,5 +1,5 @@
 use anyhow::{Context, Result};
-use holo_happ_manager;
+pub use hpos_hc_connect::AdminWebsocket;
 pub use hpos_hc_connect::{
     chc::ChcCredentials,
     holo_config::{Config, Happ, HappsFile, MembraneProofFile, ProofPayload},
@@ -7,9 +7,11 @@ pub use hpos_hc_connect::{
     hpos_membrane_proof,
     utils::{download_file, extract_zip},
 };
+pub use hpos_hc_connect::{hpos_agent::Agent, hpos_membrane_proof};
 pub use hpos_hc_connect::{AdminWebsocket, AppWebsocket};
 use std::sync::Arc;
 use tracing::{debug, info, instrument, warn};
+
 pub mod hpos_holochain_api;
 mod utils;
 
@@ -40,16 +42,23 @@ pub async fn install_happs(happ_file: &HappsFile, config: &Config) -> Result<()>
     )
     .await?;
 
-    let mut app_websocket = AppWebsocket::connect(config.happ_port)
-        .await
-        .context("failed to connect to holochain's app interface")?;
-
     let mut admin_websocket = AdminWebsocket::connect(config.admin_port)
         .await
         .context("failed to connect to holochain's admin interface")?;
 
-    if let Err(error) = admin_websocket.attach_app_interface(config.happ_port).await {
-        warn!(port = ?config.happ_port, ?error, "failed to start app interface, maybe it's already up?");
+    let token = admin_websocket
+        .issue_app_auth_token(holofuel_id.clone())
+        .await?;
+
+    let mut app_websocket = AppWebsocket::connect(config.happ_port, token)
+        .await
+        .context("failed to connect to holochain's app interface")?;
+
+    if let Err(error) = admin_websocket
+        .attach_app_interface(Some(config.happ_port))
+        .await
+    {
+        warn!(port = ?config.happ_port, ?error, "failed to start app interface for hosted happs, maybe it's already up?");
     }
 
     let agent = Agent::init(admin_websocket.clone()).await?;
@@ -109,13 +118,10 @@ pub async fn install_happs(happ_file: &HappsFile, config: &Config) -> Result<()>
     let happs_to_keep: Vec<String> = happs_to_install.iter().map(|happ| happ.id()).collect();
 
     for app in &*active_happs {
-        if let Some(app_info) = app_websocket.get_app_info(app.to_string()).await {
-            if !utils::keep_app_active(&app_info.installed_app_id, happs_to_keep.clone()) {
-                info!("deactivating app {}", app_info.installed_app_id);
-                admin_websocket
-                    .uninstall_app(&app_info.installed_app_id)
-                    .await?;
-            }
+        let installed_app_id = app.to_string();
+        if !utils::keep_app_active(&installed_app_id, happs_to_keep.clone()) {
+            info!("deactivating app {}", &installed_app_id);
+            admin_websocket.uninstall_app(&installed_app_id).await?;
         }
     }
 
@@ -147,14 +153,11 @@ async fn install_ui(happ: &Happ, config: &Config) -> Result<()> {
 }
 
 pub async fn update_host_jurisdiction_if_changed(config: &Config) -> Result<()> {
-    match std::env::var("IS_INTEGRATION_TEST") {
-        Ok(is_integration_test) => {
-            if is_integration_test == "TRUE" {
-                // set in ../tests/integration.rs and ../../holo_happ_manager/tests/integration.ts
-                return Ok(());
-            }
+    if let Ok(is_integration_test) = std::env::var("IS_INTEGRATION_TEST") {
+        if is_integration_test == "TRUE" {
+            // set in ../tests/integration.rs and ../../holo_happ_manager/tests/integration.ts
+            return Ok(());
         }
-        Err(_) => {} // if we failed to find the env var, we can just carry on
     }
 
     // get current jurisdiction in hbs

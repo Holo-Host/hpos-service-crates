@@ -8,5 +8,4 @@ update:
 		-p lair_keystore_api@$(shell jq .lair_keystore_api ./version-manager.json) \
 		-p holochain_conductor_api@$(shell jq .holochain_conductor_api ./version-manager.json) \
 		-p holochain_websocket@$(shell jq .holochain_websocket ./version-manager.json) \
-		-p mr_bundle@$(shell jq .mr_bundle ./version-manager.json) \
-		-p holochain_client@$(shell jq .holochain_client ./version-manager.json) --pinned
+		-p mr_bundle@$(shell jq .mr_bundle ./version-manager.json)  --pinned

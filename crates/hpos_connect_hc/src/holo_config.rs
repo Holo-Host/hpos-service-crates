@@ -13,7 +13,7 @@ use structopt::StructOpt;
 use tracing::{debug, instrument};
 
 pub const APP_PORT: u16 = 42233;
-// pub const ADMIN_PORT: u16 = 4444;
+pub const ADMIN_PORT: u16 = 4444;
 
 pub fn default_core_happ_file() -> Result<String> {
     env::var("CORE_HAPP_FILE").context("Failed to read CORE_HAPP_FILE. Is it set in env?")

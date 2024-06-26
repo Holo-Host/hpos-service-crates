@@ -1,44 +1,81 @@
-use super::chc;
+use crate::chc;
+use crate::utils::WsPollRecv;
+
 use super::holo_config::Happ;
 use super::hpos_agent::Agent;
 use super::hpos_membrane_proof::MembraneProofs;
 use anyhow::{anyhow, Context, Result};
-use holochain_client::AppWebsocket;
-use holochain_conductor_api::{AdminRequest, AdminResponse, AppStatusFilter};
-use holochain_keystore::{lair_keystore, MetaLairClient};
-use holochain_types::app::{AppBundleSource, InstallAppPayload, InstalledAppId};
-use holochain_websocket::{connect, WebsocketConfig, WebsocketSender};
-use std::{env, sync::Arc};
+use holochain_conductor_api::{
+    AdminRequest, AdminResponse, AppAuthenticationToken, AppAuthenticationTokenIssued,
+    AppStatusFilter, IssueAppAuthenticationTokenPayload,
+};
+use holochain_types::{
+    app::{AppBundleSource, InstallAppPayload, InstalledAppId},
+    websocket::AllowedOrigins,
+};
+use holochain_websocket::{connect, ConnectRequest, WebsocketConfig, WebsocketSender};
+use std::{env, net::ToSocketAddrs, sync::Arc};
 use tracing::{debug, info, instrument, trace};
-use url::Url;
 
+#[allow(dead_code)]
 #[derive(Clone)]
 pub struct AdminWebsocket {
     tx: WebsocketSender,
+    rx: Arc<WsPollRecv>,
 }
 
 impl AdminWebsocket {
     /// Initializes websocket connection to holochain's admin interface
     #[instrument(err)]
     pub async fn connect(admin_port: u16) -> Result<Self> {
-        let url = format!("ws://localhost:{}/", admin_port);
-        let url = Url::parse(&url).context("invalid ws:// URL")?;
-        let websocket_config = Arc::new(WebsocketConfig::default());
-        let (tx, _rx) = again::retry(|| {
+        let socket_addr = format!("localhost:{admin_port}");
+        let addr = socket_addr
+            .to_socket_addrs()?
+            .next()
+            .expect("invalid websocket address");
+        let websocket_config = Arc::new(WebsocketConfig::CLIENT_DEFAULT);
+        let (tx, rx) = again::retry(|| {
             let websocket_config = Arc::clone(&websocket_config);
-            connect(url.clone().into(), websocket_config)
+            connect(websocket_config, ConnectRequest::new(addr))
         })
         .await?;
 
-        Ok(Self { tx })
+        let rx = WsPollRecv::new::<AdminResponse>(rx).into();
+
+        Ok(Self { tx, rx })
     }
 
-    pub async fn attach_app_interface(&mut self, happ_port: u16) -> Result<AdminResponse> {
+    /// Attach an interface for app calls. If a port numer is None conductor will choose an available port
+    /// Returns attached port number
+    pub async fn attach_app_interface(&mut self, happ_port: Option<u16>) -> Result<u16> {
         info!(port = ?happ_port, "starting app interface");
         let msg = AdminRequest::AttachAppInterface {
-            port: Some(happ_port),
+            port: happ_port,
+            allowed_origins: AllowedOrigins::Any,
+            installed_app_id: None,
         };
-        self.send(msg).await
+        match self.send(msg).await? {
+            AdminResponse::AppInterfaceAttached { port } => Ok(port),
+            _ => Err(anyhow!("Failed to attach app interface")),
+        }
+    }
+
+    pub async fn issue_app_auth_token(&mut self, app_id: String) -> Result<AppAuthenticationToken> {
+        debug!("issuing app authentication token for app {:?}", app_id);
+        let msg = AdminRequest::IssueAppAuthenticationToken(IssueAppAuthenticationTokenPayload {
+            installed_app_id: app_id,
+            expiry_seconds: 30,
+            single_use: true,
+        });
+        let response = self.send(msg).await?;
+
+        match response {
+            AdminResponse::AppAuthenticationTokenIssued(AppAuthenticationTokenIssued {
+                token,
+                expires_at: _,
+            }) => Ok(token),
+            _ => Err(anyhow!("Error while issuing authentication token")),
+        }
     }
 
     pub async fn list_app(
@@ -176,6 +213,22 @@ impl AdminWebsocket {
     #[instrument(skip(self), err)]
     pub async fn uninstall_app(&mut self, installed_app_id: &str) -> Result<AdminResponse> {
         let msg = AdminRequest::UninstallApp {
+            installed_app_id: installed_app_id.to_string(),
+        };
+        self.send(msg).await
+    }
+
+    #[instrument(skip(self), err)]
+    pub async fn enable_app(&mut self, installed_app_id: &str) -> Result<AdminResponse> {
+        let msg = AdminRequest::EnableApp {
+            installed_app_id: installed_app_id.to_string(),
+        };
+        self.send(msg).await
+    }
+
+    #[instrument(skip(self), err)]
+    pub async fn disable_app(&mut self, installed_app_id: &str) -> Result<AdminResponse> {
+        let msg = AdminRequest::DisableApp {
             installed_app_id: installed_app_id.to_string(),
         };
         self.send(msg).await
