@@ -149,7 +149,7 @@ impl AdminWebsocket {
     #[instrument(err, skip(self))]
     pub async fn install_app(&mut self, payload: InstallAppPayload) -> Result<AdminResponse> {
         let msg = AdminRequest::InstallApp(Box::new(payload));
-        self.send(msg, 300).await // First install takes a while due to compile to WASM step
+        self.send(msg, Some(300)).await // First install takes a while due to compile to WASM step
     }
 
     #[instrument(skip(self), err)]
@@ -207,13 +207,15 @@ impl AdminWebsocket {
 
     #[instrument(skip(self))]
     pub async fn send(&mut self, msg: AdminRequest, duration: Option<u64>) -> Result<AdminResponse> {
+        // default timeout is 60 seconds
         let timeout_duration = std::time::Duration::from_secs(duration.unwrap_or(60));
         
         let response = self
             .tx
-            .request_timeout(msg, std::time::Duration::from_secs(timeout_duration))
+            .request_timeout(msg, timeout_duration)
             .await
             .context("failed to send message")?;
+
         match response {
             AdminResponse::Error(error) => Err(anyhow!("error: {:?}", error)),
             _ => {
