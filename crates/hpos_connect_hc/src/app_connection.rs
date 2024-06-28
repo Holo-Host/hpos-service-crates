@@ -3,6 +3,7 @@ use crate::{
     utils::{fresh_nonce, WsPollRecv},
 };
 use anyhow::{anyhow, Context, Result};
+use core::fmt::Debug;
 use holochain_conductor_api::{
     AppAuthenticationRequest, AppInfo, AppRequest, AppResponse, CellInfo, ZomeCall,
 };
@@ -127,18 +128,14 @@ impl AppConnection {
     }
 
     /// Make a zome call to holochain's cell defined by `role_name`.
-    /// Returns typed deserialized response.
-    pub async fn zome_call_typed<T, R>(
+    /// Returns raw response in a form of ExternIo encoded bytes
+    pub async fn zome_call_raw<T: Debug + Serialize>(
         &mut self,
         role_name: RoleName,
         zome_name: ZomeName,
         fn_name: FunctionName,
         payload: T,
-    ) -> Result<R>
-    where
-        T: Serialize + std::fmt::Debug,
-        R: DeserializeOwned,
-    {
+    ) -> Result<ExternIO> {
         let (nonce, expires_at) = fresh_nonce()?;
         let cell = self.cell(role_name).await?;
 
@@ -155,15 +152,32 @@ impl AppConnection {
         let signed_zome_call =
             ZomeCall::try_from_unsigned_zome_call(&self.keystore, zome_call_unsigned).await?;
 
-        let response = self.zome_call(signed_zome_call).await?;
-
-        match response {
-            AppResponse::ZomeCalled(r) => {
-                let response: R = rmp_serde::from_slice(r.as_bytes())?;
-                Ok(response)
-            }
-            _ => Err(anyhow!("unexpected ZomeCallresponse: {:?}", response)),
+        match self.zome_call(signed_zome_call).await {
+            Ok(AppResponse::ZomeCalled(r)) => Ok(*r),
+            Ok(r) => Err(anyhow!("unexpected ZomeCall response: {:?}", r)),
+            Err(e) => Err(e),
         }
+    }
+
+    /// Make a zome call to holochain's cell defined by `role_name`.
+    /// Returns typed deserialized response.
+    pub async fn zome_call_typed<T, R>(
+        &mut self,
+        role_name: RoleName,
+        zome_name: ZomeName,
+        fn_name: FunctionName,
+        payload: T,
+    ) -> Result<R>
+    where
+        T: Serialize + Debug,
+        R: DeserializeOwned,
+    {
+        rmp_serde::from_slice(
+            self.zome_call_raw(role_name, zome_name, fn_name, payload)
+                .await?
+                .as_bytes(),
+        )
+        .context("Error while deserializing zome call response")
     }
 
     /// Sign byte payload with holofuel agent's private key
