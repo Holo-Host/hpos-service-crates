@@ -82,7 +82,9 @@ impl AdminWebsocket {
         &mut self,
         status_filter: Option<AppStatusFilter>,
     ) -> Result<Vec<InstalledAppId>> {
-        let response = self.send(AdminRequest::ListApps { status_filter }, None).await?;
+        let response = self
+            .send(AdminRequest::ListApps { status_filter }, None)
+            .await?;
         match response {
             AdminResponse::AppsListed(info) => {
                 Ok(info.iter().map(|i| i.installed_app_id.to_owned()).collect())
@@ -189,7 +191,9 @@ impl AdminWebsocket {
         &mut self,
         status_filter: Option<AppStatusFilter>,
     ) -> Result<Vec<AppInfo>> {
-        let response = self.send(AdminRequest::ListApps { status_filter }, None).await?;
+        let response = self
+            .send(AdminRequest::ListApps { status_filter }, None)
+            .await?;
         match response {
             AdminResponse::AppsListed(apps_infos) => Ok(apps_infos),
             _ => unreachable!("Unexpected response {:?}", response),
@@ -206,10 +210,14 @@ impl AdminWebsocket {
     }
 
     #[instrument(skip(self))]
-    pub async fn send(&mut self, msg: AdminRequest, duration: Option<u64>) -> Result<AdminResponse> {
+    pub async fn send(
+        &mut self,
+        msg: AdminRequest,
+        duration: Option<u64>,
+    ) -> Result<AdminResponse> {
         // default timeout is 60 seconds
         let timeout_duration = std::time::Duration::from_secs(duration.unwrap_or(60));
-        
+
         let response = self
             .tx
             .request_timeout(msg, timeout_duration)
