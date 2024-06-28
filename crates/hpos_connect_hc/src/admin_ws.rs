@@ -209,7 +209,7 @@ impl AdminWebsocket {
     pub async fn send(&mut self, msg: AdminRequest) -> Result<AdminResponse> {
         let response = self
             .tx
-            .request(msg)
+            .request_timeout(msg, std::time::Duration::from_secs(600))
             .await
             .context("failed to send message")?;
         match response {
