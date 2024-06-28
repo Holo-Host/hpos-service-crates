@@ -54,7 +54,7 @@ impl AdminWebsocket {
             allowed_origins: AllowedOrigins::Any,
             installed_app_id: None,
         };
-        match self.send(msg).await? {
+        match self.send(msg, None).await? {
             AdminResponse::AppInterfaceAttached { port } => Ok(port),
             _ => Err(anyhow!("Failed to attach app interface")),
         }
@@ -67,7 +67,7 @@ impl AdminWebsocket {
             expiry_seconds: 30,
             single_use: true,
         });
-        let response = self.send(msg).await?;
+        let response = self.send(msg, None).await?;
 
         match response {
             AdminResponse::AppAuthenticationTokenIssued(AppAuthenticationTokenIssued {
@@ -82,7 +82,7 @@ impl AdminWebsocket {
         &mut self,
         status_filter: Option<AppStatusFilter>,
     ) -> Result<Vec<InstalledAppId>> {
-        let response = self.send(AdminRequest::ListApps { status_filter }).await?;
+        let response = self.send(AdminRequest::ListApps { status_filter }, None).await?;
         match response {
             AdminResponse::AppsListed(info) => {
                 Ok(info.iter().map(|i| i.installed_app_id.to_owned()).collect())
@@ -149,7 +149,7 @@ impl AdminWebsocket {
     #[instrument(err, skip(self))]
     pub async fn install_app(&mut self, payload: InstallAppPayload) -> Result<AdminResponse> {
         let msg = AdminRequest::InstallApp(Box::new(payload));
-        self.send(msg).await
+        self.send(msg, 300).await // First install takes a while due to compile to WASM step
     }
 
     #[instrument(skip(self), err)]
@@ -157,7 +157,7 @@ impl AdminWebsocket {
         let msg = AdminRequest::EnableApp {
             installed_app_id: happ.id(),
         };
-        self.send(msg).await
+        self.send(msg, None).await
     }
 
     #[instrument(skip(self), err)]
@@ -165,7 +165,7 @@ impl AdminWebsocket {
         let msg = AdminRequest::UninstallApp {
             installed_app_id: installed_app_id.to_string(),
         };
-        self.send(msg).await
+        self.send(msg, None).await
     }
 
     #[instrument(skip(self), err)]
@@ -173,7 +173,7 @@ impl AdminWebsocket {
         let msg = AdminRequest::EnableApp {
             installed_app_id: installed_app_id.to_string(),
         };
-        self.send(msg).await
+        self.send(msg, None).await
     }
 
     #[instrument(skip(self), err)]
@@ -181,7 +181,7 @@ impl AdminWebsocket {
         let msg = AdminRequest::DisableApp {
             installed_app_id: installed_app_id.to_string(),
         };
-        self.send(msg).await
+        self.send(msg, None).await
     }
 
     #[instrument(skip(self), err)]
@@ -189,7 +189,7 @@ impl AdminWebsocket {
         &mut self,
         status_filter: Option<AppStatusFilter>,
     ) -> Result<Vec<AppInfo>> {
-        let response = self.send(AdminRequest::ListApps { status_filter }).await?;
+        let response = self.send(AdminRequest::ListApps { status_filter }, None).await?;
         match response {
             AdminResponse::AppsListed(apps_infos) => Ok(apps_infos),
             _ => unreachable!("Unexpected response {:?}", response),
@@ -198,7 +198,7 @@ impl AdminWebsocket {
 
     pub async fn generate_agent_pub_key(&mut self) -> Result<AgentPubKey> {
         // Create agent key in Lair and save it in file
-        let response = self.send(AdminRequest::GenerateAgentPubKey).await?;
+        let response = self.send(AdminRequest::GenerateAgentPubKey, None).await?;
         match response {
             AdminResponse::AgentPubKeyGenerated(key) => Ok(key),
             _ => unreachable!("Unexpected response {:?}", response),
@@ -206,10 +206,12 @@ impl AdminWebsocket {
     }
 
     #[instrument(skip(self))]
-    pub async fn send(&mut self, msg: AdminRequest) -> Result<AdminResponse> {
+    pub async fn send(&mut self, msg: AdminRequest, duration: Option<u64>) -> Result<AdminResponse> {
+        let timeout_duration = std::time::Duration::from_secs(duration.unwrap_or(60));
+        
         let response = self
             .tx
-            .request_timeout(msg, std::time::Duration::from_secs(600))
+            .request_timeout(msg, std::time::Duration::from_secs(timeout_duration))
             .await
             .context("failed to send message")?;
         match response {
