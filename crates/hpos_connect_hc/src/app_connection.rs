@@ -8,9 +8,10 @@ use holochain_conductor_api::{
     AppAuthenticationRequest, AppInfo, AppRequest, AppResponse, CellInfo, ZomeCall,
 };
 use holochain_keystore::MetaLairClient;
-use holochain_types::{app::CreateCloneCellPayload, prelude::{
-    CellId, ClonedCell, ExternIO, FunctionName, RoleName, ZomeCallUnsigned, ZomeName
-}};
+use holochain_types::{
+    app::CreateCloneCellPayload,
+    prelude::{CellId, ClonedCell, ExternIO, FunctionName, RoleName, ZomeCallUnsigned, ZomeName},
+};
 use holochain_websocket::{connect, ConnectRequest, WebsocketConfig, WebsocketSender};
 use serde::{de::DeserializeOwned, Serialize};
 use std::{collections::HashMap, net::ToSocketAddrs, sync::Arc};
@@ -102,9 +103,7 @@ impl AppConnection {
 
     /// Returns a cell for a given RoleName in a connected app
     pub async fn cell(&mut self, role_name: RoleName) -> Result<CellId> {
-        let info = &self
-        .cell_info()
-        .await?;
+        let info = &self.cell_info().await?;
         match &info
             .get(&role_name)
             .ok_or(anyhow!("unable to find cell for RoleName {}!", &role_name))?[0]
@@ -116,29 +115,40 @@ impl AppConnection {
 
     /// Returns a all cloned cells for a given RoleName in a connected app
     pub async fn clone_cells(&mut self, role_name: RoleName) -> Result<Vec<ClonedCell>> {
-        let info = &self
-        .cell_info()
-        .await?;
+        let info = &self.cell_info().await?;
         let app_cells = info
-        .get(&role_name)
-        .ok_or(anyhow!("unable to find cells for RoleName {}", &role_name))?;
-        let cells = app_cells.into_iter().filter_map(|cell_info| match cell_info {
-            CellInfo::Cloned(cloned_cell) => Some(cloned_cell.clone()),
-            _ => None
-        }).collect();
+            .get(&role_name)
+            .ok_or(anyhow!("unable to find cells for RoleName {}", &role_name))?;
+        let cells = app_cells
+            .into_iter()
+            .filter_map(|cell_info| match cell_info {
+                CellInfo::Cloned(cloned_cell) => Some(cloned_cell.clone()),
+                _ => None,
+            })
+            .collect();
         Ok(cells)
     }
 
     /// Returns a cell for a given RoleName and CloneName in a connected app
     pub async fn clone_cell(&mut self, role_name: RoleName, clone_name: String) -> Result<CellId> {
         let clone_cells = self.clone_cells(role_name.clone()).await?;
-        let cell = clone_cells.into_iter().find_map(|cell| {
-            if cell.name == clone_name {Some(cell)} else {None}
-        }
-        ).ok_or(anyhow!("unable to find clone cell for RoleName {} with name {}", &role_name, &clone_name))?;
+        let cell = clone_cells
+            .into_iter()
+            .find_map(|cell| {
+                if cell.name == clone_name {
+                    Some(cell)
+                } else {
+                    None
+                }
+            })
+            .ok_or(anyhow!(
+                "unable to find clone cell for RoleName {} with name {}",
+                &role_name,
+                &clone_name
+            ))?;
         Ok(cell.cell_id.clone())
     }
-    
+
     /// Creates a clone cell in a connected app
     pub async fn create_clone(&mut self, payload: CreateCloneCellPayload) -> Result<ClonedCell> {
         let app_request = AppRequest::CreateCloneCell(Box::new(payload.clone()));
@@ -172,9 +182,9 @@ impl AppConnection {
         fn_name: FunctionName,
         payload: T,
     ) -> Result<ExternIO> {
-
         let cell_id = self.cell(role_name).await?;
-        self.zome_call_raw_cell_id(cell_id, zome_name, fn_name, payload).await
+        self.zome_call_raw_cell_id(cell_id, zome_name, fn_name, payload)
+            .await
     }
 
     /// Make a zome call to holochain's cell defined by `cell_id``.
@@ -221,7 +231,6 @@ impl AppConnection {
         T: Serialize + Debug,
         R: DeserializeOwned,
     {
-
         rmp_serde::from_slice(
             self.zome_call_raw(role_name, zome_name, fn_name, payload)
                 .await?
@@ -244,7 +253,6 @@ impl AppConnection {
         T: Serialize + Debug,
         R: DeserializeOwned,
     {
-
         let cell_id = self.clone_cell(role_name, clone_name).await?;
 
         rmp_serde::from_slice(
