@@ -6,7 +6,9 @@ use holochain_types::{
     },
 };
 use hpos_hc_connect::{
-    app_connection::CoreAppRoleName, hf_agent::HfAgent, holofuel_types::ReserveSettingFile,
+    app_connection::CoreAppRoleName,
+    hf_agent::HfAgent,
+    holofuel_types::{Profile, ReserveSettingFile},
 };
 use serde::{Deserialize, Serialize};
 use std::env;
@@ -57,23 +59,34 @@ async fn main() -> Result<()> {
     if ReserveSettingFile::load_happ_file().is_ok() {
         nickname = Some("HOT Reserve".to_string());
     }
-    debug!("Setting nickname as {:?}", nickname);
-
-    let _: EntryHashB64 = agent
+    let profile: Profile = agent
         .app
         .zome_call_typed(
             CoreAppRoleName::Holofuel.into(),
             ZomeName::from("profile"),
-            FunctionName::from("update_my_profile"),
-            ProfileInput {
-                nickname,
-                avatar_url: None,
-            },
+            FunctionName::from("get_my_profile"),
+            (),
         )
         .await?;
-
-    info!("Profile name set successfully");
-
+    // is a profile name already set you are not allowed to update it
+    if profile.nickname.is_none() {
+        debug!("Setting nickname as {:?}", nickname);
+        let _: EntryHashB64 = agent
+            .app
+            .zome_call_typed(
+                CoreAppRoleName::Holofuel.into(),
+                ZomeName::from("profile"),
+                FunctionName::from("update_my_profile"),
+                ProfileInput {
+                    nickname,
+                    avatar_url: None,
+                },
+            )
+            .await?;
+        info!("Profile name set successfully");
+    } else {
+        info!("Profile name already set as {:?}", profile.nickname);
+    }
     // initialize reserve details
     reserve_init::set_up_reserve(agent, apk).await?;
     info!("Completed initializing the holofuel instance");
