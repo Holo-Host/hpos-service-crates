@@ -93,11 +93,9 @@ impl AdminWebsocket {
         }
     }
 
-    pub async fn list_running_app(&mut self) -> Result<Vec<InstalledAppId>> {
-        let mut running = self.list_app(Some(AppStatusFilter::Running)).await?;
-        let mut enabled = self.list_app(Some(AppStatusFilter::Enabled)).await?;
-        running.append(&mut enabled);
-        Ok(running)
+    pub async fn list_enabled_apps(&mut self) -> Result<Vec<InstalledAppId>> {
+        let enabled = self.list_app(Some(AppStatusFilter::Enabled)).await?;
+        Ok(enabled)
     }
 
     #[instrument(skip(self, app, membrane_proofs, agent))]
