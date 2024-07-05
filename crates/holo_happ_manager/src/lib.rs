@@ -30,8 +30,8 @@ pub async fn run(config: &Config) -> Result<()> {
         {
             // Check if the name is "cloud console"
             // if it does set a special_installed_app_id as the installed_app_id of the core_app
-            // This special_installed_app_id is designed for Cloud Console(formally know as Publisher Portal)
-            if app.name.contains("Cloud") {
+            // This special_installed_app_id is designed for Cloud Console or Holofuel
+            if app.name.contains("Cloud") || app.name.contains("Holofuel") {
                 app.special_installed_app_id = Some(hha.id())
             }
             hha.publish_happ(app).await?;
