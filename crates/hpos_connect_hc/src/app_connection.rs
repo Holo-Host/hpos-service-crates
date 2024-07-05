@@ -9,8 +9,8 @@ use holochain_conductor_api::{
 };
 use holochain_keystore::MetaLairClient;
 use holochain_types::{
-    app::CreateCloneCellPayload,
-    prelude::{CellId, ClonedCell, ExternIO, FunctionName, RoleName, ZomeCallUnsigned, ZomeName},
+    app::{CreateCloneCellPayload, DeleteCloneCellPayload, DisableCloneCellPayload, EnableCloneCellPayload},
+    prelude::{CellId, ClonedCell, EnableCloneCellInput, ExternIO, FunctionName, RoleName, ZomeCallUnsigned, ZomeName},
 };
 use holochain_websocket::{connect, ConnectRequest, WebsocketConfig, WebsocketSender};
 use serde::{de::DeserializeOwned, Serialize};
@@ -159,6 +159,26 @@ impl AppConnection {
         }
     }
 
+    /// Disables a clone cell
+    pub async fn disable_clone(&mut self, payload: DisableCloneCellPayload) -> Result<()> {
+        let app_request = AppRequest::DisableCloneCell(Box::new(payload.clone()));
+        let response = self.send(app_request,).await?;
+        match response {
+            AppResponse::CloneCellDisabled => Ok(()),
+            _ => Err(anyhow!("Error disabling clone {:?}", payload)),
+        }
+    }
+
+    /// Enable a clone cell
+    pub async fn enable_clone(&mut self, payload: EnableCloneCellPayload) -> Result<ClonedCell> {
+        let app_request = AppRequest::EnableCloneCell(Box::new(payload.clone()));
+        let response = self.send(app_request,).await?;
+        match response {
+            AppResponse::CloneCellEnabled(cloned_cell) => Ok(cloned_cell),
+            _ => Err(anyhow!("Error enabling clone {:?}", payload)),
+        }
+    }
+    
     /// Raw zome call function taking holochain_conductor_api::app_interface::ZomeCall as an argument
     /// and returning AppResponse without checking an outcomeor deserializing
     #[instrument(skip(self))]

@@ -4,12 +4,13 @@ use super::holo_config::Happ;
 use super::hpos_agent::Agent;
 use super::hpos_membrane_proof::MembraneProofs;
 use anyhow::{anyhow, Context, Result};
+use chrono::Duration;
 use holochain_conductor_api::{
     AdminRequest, AdminResponse, AppAuthenticationToken, AppAuthenticationTokenIssued, AppInfo,
     AppStatusFilter, IssueAppAuthenticationTokenPayload,
 };
 use holochain_types::{
-    app::{InstallAppPayload, InstalledAppId},
+    app::{DeleteCloneCellPayload, InstallAppPayload, InstalledAppId},
     dna::AgentPubKey,
     websocket::AllowedOrigins,
 };
@@ -204,6 +205,16 @@ impl AdminWebsocket {
         match response {
             AdminResponse::AgentPubKeyGenerated(key) => Ok(key),
             _ => unreachable!("Unexpected response {:?}", response),
+        }
+    }
+
+    /// Deletes a clone cell
+    pub async fn delete_clone(&mut self, payload: DeleteCloneCellPayload) -> Result<()> {
+        let admin_request = AdminRequest::DeleteCloneCell(Box::new(payload.clone()));
+        let response = self.send(admin_request, None).await?;
+        match response {
+            AdminResponse::CloneCellDeleted => Ok(()),
+            _ => Err(anyhow!("Error creating clone {:?}", payload)),
         }
     }
 
