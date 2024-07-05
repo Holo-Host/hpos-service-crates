@@ -1,7 +1,7 @@
 use chrono::DateTime;
 use chrono::Datelike;
-use chrono::NaiveDate;
 use chrono::Duration;
+use chrono::NaiveDate;
 use chrono::Timelike;
 use chrono::Utc;
 use holochain_types::prelude::ClonedCell;
@@ -22,7 +22,9 @@ pub fn sl_get_current_time_bucket(days_in_bucket: u32) -> u32 {
     let now_utc = Utc::now();
     if std::env::var("IS_TEST_ENV").is_ok() {
         if let Ok(test_time_bucket_str) = std::env::var("SL_TEST_TIME_BUCKET") {
-            test_time_bucket_str.parse::<u32>().expect("wanted an int for SL_TEST_TIME_BUCKET")
+            test_time_bucket_str
+                .parse::<u32>()
+                .expect("wanted an int for SL_TEST_TIME_BUCKET")
         } else {
             10
         }
@@ -33,13 +35,14 @@ pub fn sl_get_current_time_bucket(days_in_bucket: u32) -> u32 {
 
 pub fn sl_within_min_of_next_time_bucket(days_in_bucket: u32, minutes_before: i64) -> bool {
     if let Ok(val) = std::env::var("SL_TEST_IS_BEFORE_NEXT_BUCKET") {
-         if val == "true" {
+        if val == "true" {
             return true;
-         }
+        }
     }
     let now_utc = Utc::now();
     let current_time_bucket = time_bucket_from_date(now_utc, days_in_bucket);
-    let time_bucket_soon = time_bucket_from_date(now_utc + Duration::minutes(minutes_before), days_in_bucket);
+    let time_bucket_soon =
+        time_bucket_from_date(now_utc + Duration::minutes(minutes_before), days_in_bucket);
     current_time_bucket != time_bucket_soon
 }
 
