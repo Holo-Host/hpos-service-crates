@@ -9,14 +9,8 @@ use holochain_conductor_api::{
 };
 use holochain_keystore::MetaLairClient;
 use holochain_types::{
-    app::{
-        CreateCloneCellPayload, DeleteCloneCellPayload, DisableCloneCellPayload,
-        EnableCloneCellPayload,
-    },
-    prelude::{
-        CellId, ClonedCell, EnableCloneCellInput, ExternIO, FunctionName, RoleName,
-        ZomeCallUnsigned, ZomeName,
-    },
+    app::{CreateCloneCellPayload, DisableCloneCellPayload, EnableCloneCellPayload},
+    prelude::{CellId, ClonedCell, ExternIO, FunctionName, RoleName, ZomeCallUnsigned, ZomeName},
 };
 use holochain_websocket::{connect, ConnectRequest, WebsocketConfig, WebsocketSender};
 use serde::{de::DeserializeOwned, Serialize};

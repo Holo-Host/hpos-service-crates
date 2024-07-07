@@ -4,7 +4,6 @@ use super::holo_config::Happ;
 use super::hpos_agent::Agent;
 use super::hpos_membrane_proof::MembraneProofs;
 use anyhow::{anyhow, Context, Result};
-use chrono::Duration;
 use holochain_conductor_api::{
     AdminRequest, AdminResponse, AppAuthenticationToken, AppAuthenticationTokenIssued, AppInfo,
     AppStatusFilter, IssueAppAuthenticationTokenPayload,
