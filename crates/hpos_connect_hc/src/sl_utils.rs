@@ -9,7 +9,7 @@ use holochain_types::prelude::ClonedCell;
 
 pub const SL_BUCKET_SIZE_DAYS: u32 = 14;
 pub const SL_MINUTES_BEFORE_BUCKET_TO_CLONE: i64 = 9;
-pub const SL_DELETING_LOG_WINDOW_SIZE_MIN : u32 = 10;
+pub const SL_DELETING_LOG_WINDOW_SIZE_MIN: u32 = 10;
 pub const HOLO_EPOCH_YEAR: u16 = 2024;
 
 /// given the date in UTC timezone, return the current bucket
@@ -71,5 +71,5 @@ pub fn sl_within_deleting_check_window(window_size: u32) -> bool {
     }
     let now = Local::now();
     let min = now.minute();
-    now.hour() == 0 && min >=1 && min <=window_size
+    now.hour() == 0 && min >= 1 && min <= window_size
 }
