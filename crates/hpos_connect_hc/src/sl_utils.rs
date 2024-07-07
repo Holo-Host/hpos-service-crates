@@ -1,6 +1,7 @@
 use chrono::DateTime;
 use chrono::Datelike;
 use chrono::Duration;
+use chrono::Local;
 use chrono::NaiveDate;
 use chrono::Timelike;
 use chrono::Utc;
@@ -8,8 +9,10 @@ use holochain_types::prelude::ClonedCell;
 
 pub const SL_BUCKET_SIZE_DAYS: u32 = 14;
 pub const SL_MINUTES_BEFORE_BUCKET_TO_CLONE: i64 = 9;
+pub const SL_DELETING_LOG_WINDOW_SIZE_MIN : u32 = 10;
 pub const HOLO_EPOCH_YEAR: u16 = 2024;
 
+/// given the date in UTC timezone, return the current bucket
 pub fn time_bucket_from_date(date: DateTime<Utc>, days_in_bucket: u32) -> u32 {
     let epoch_start = NaiveDate::from_ymd_opt(HOLO_EPOCH_YEAR.into(), 1, 1).unwrap();
     let days_since_epoch: u32 = (date.num_days_from_ce() - epoch_start.num_days_from_ce())
@@ -18,6 +21,9 @@ pub fn time_bucket_from_date(date: DateTime<Utc>, days_in_bucket: u32) -> u32 {
     days_since_epoch / days_in_bucket
 }
 
+/// returns the current time bucket in a deterministic way so that all code elements
+/// that rely on logging can know which service logger instance they should be
+/// interacting
 pub fn sl_get_current_time_bucket(days_in_bucket: u32) -> u32 {
     let now_utc = Utc::now();
     if std::env::var("IS_TEST_ENV").is_ok() {
@@ -33,6 +39,8 @@ pub fn sl_get_current_time_bucket(days_in_bucket: u32) -> u32 {
     }
 }
 
+/// returns whether we are within `minutes_before` minutes of the next time bucket
+/// (used to check for cloning new service loggers)
 pub fn sl_within_min_of_next_time_bucket(days_in_bucket: u32, minutes_before: i64) -> bool {
     if let Ok(val) = std::env::var("SL_TEST_IS_BEFORE_NEXT_BUCKET") {
         if val == "true" {
@@ -46,9 +54,22 @@ pub fn sl_within_min_of_next_time_bucket(days_in_bucket: u32, minutes_before: i6
     current_time_bucket != time_bucket_soon
 }
 
+/// returns all the buckets that are indide the range of the `days` param
 pub fn sl_get_bucket_range(_clone_cells: Vec<ClonedCell>, days: u32) -> (u32, u32, u32) {
     let bucket_size = SL_BUCKET_SIZE_DAYS; // TODO: get this from: clone_cells[0].dna_modifiers.properties;
     let time_bucket: u32 = sl_get_current_time_bucket(bucket_size);
     let buckets_for_days_in_request = days / bucket_size;
     (bucket_size, time_bucket, buckets_for_days_in_request)
+}
+
+/// returns whether the local time is within the deleting window which is`windows_size`` min after midnight.
+pub fn sl_within_deleting_check_window(window_size: u32) -> bool {
+    if let Ok(val) = std::env::var("SL_TEST_IS_IN_DELETING_WINDOW") {
+        if val == "true" {
+            return true;
+        }
+    }
+    let now = Local::now();
+    let min = now.minute();
+    now.hour() == 0 && min >=1 && min <=window_size
 }
