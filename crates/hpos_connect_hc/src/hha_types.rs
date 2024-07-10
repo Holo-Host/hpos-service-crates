@@ -72,7 +72,7 @@ pub struct SetHappPreferencesInput {
 #[derive(Debug, Serialize, Deserialize, SerializedBytes, Clone)]
 pub struct HostSettings {
     is_enabled: bool,
-    is_host_disabled: bool,
+    pub is_host_disabled: bool,
     is_auto_disabled: bool,
 }
 

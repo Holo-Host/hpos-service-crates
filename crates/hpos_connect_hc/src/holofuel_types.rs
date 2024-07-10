@@ -51,7 +51,7 @@ pub struct Transaction {
     pub direction: TransactionDirection,
     pub status: TransactionStatus,
     pub note: Option<String>,
-    pub proof_of_service_token: Option<CapSecret>,
+    pub proof_of_service: Option<POS>,
     pub url: Option<String>,
     pub expiration_date: Option<Timestamp>,
 }
