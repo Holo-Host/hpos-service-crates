@@ -69,6 +69,13 @@ pub struct SetHappPreferencesInput {
     pub max_time_before_invoice: Duration, // how much time to allow to pass before sending invoice even if fuel trigger not reached.
 }
 
+#[derive(Debug, Serialize, Deserialize, SerializedBytes)]
+pub struct HostSettings {
+    is_enabled: bool,
+    is_host_disabled: bool,
+    is_auto_disabled: bool,
+}
+
 #[derive(Debug, Clone, Deserialize)]
 pub struct HoloportId(pub String);
 
