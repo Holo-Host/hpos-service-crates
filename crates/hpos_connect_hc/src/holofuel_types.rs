@@ -8,6 +8,15 @@ use serde::Serialize;
 use std::time::Duration;
 use tracing::debug;
 
+#[derive(serde::Serialize, serde::Deserialize, Debug)]
+pub struct PendingTransaction {
+    pub invoice_pending: Vec<Transaction>,
+    pub promise_pending: Vec<Transaction>,
+    pub invoice_declined: Vec<Transaction>,
+    pub promise_declined: Vec<Transaction>,
+    pub accepted: Vec<Transaction>,
+}
+
 #[derive(Serialize, Deserialize, Debug, SerializedBytes)]
 pub struct Ledger {
     pub balance: String,
@@ -30,6 +39,13 @@ pub struct Actionable {
     pub promise_actionable: Vec<Transaction>,
 }
 
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, SerializedBytes)]
+#[serde(rename_all = "snake_case")]
+pub enum POS {
+    Hosting(CapSecret),
+    Redemption(String), // Contains wallet address
+}
+
 #[derive(Serialize, Deserialize, Debug, SerializedBytes)]
 pub struct Transaction {
     pub id: EntryHashB64,
@@ -42,7 +58,7 @@ pub struct Transaction {
     pub direction: TransactionDirection,
     pub status: TransactionStatus,
     pub note: Option<String>,
-    pub proof_of_service_token: Option<CapSecret>,
+    pub proof_of_service: Option<POS>,
     pub url: Option<String>,
     pub expiration_date: Option<Timestamp>,
 }
