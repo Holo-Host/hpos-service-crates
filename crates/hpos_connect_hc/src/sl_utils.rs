@@ -5,8 +5,8 @@ use chrono::Local;
 use chrono::NaiveDate;
 use chrono::Timelike;
 use chrono::Utc;
-use holochain_types::prelude::ClonedCell;
 use const_env::from_env;
+use holochain_types::prelude::ClonedCell;
 
 #[from_env]
 pub const SL_BUCKET_SIZE_DAYS: u32 = 14;
@@ -16,7 +16,6 @@ pub const SL_MINUTES_BEFORE_BUCKET_TO_CLONE: i64 = 9;
 pub const SL_DELETING_LOG_WINDOW_SIZE_MINUTES: u32 = 10;
 #[from_env]
 pub const HOLO_EPOCH_YEAR: u16 = 2024;
-
 
 /// given the date in UTC timezone, return the current bucket
 pub fn time_bucket_from_date(date: DateTime<Utc>, days_in_bucket: u32) -> u32 {
