@@ -8,6 +8,15 @@ use serde::Serialize;
 use std::time::Duration;
 use tracing::debug;
 
+#[derive(serde::Serialize, serde::Deserialize, Debug)]
+pub struct PendingTransaction {
+    pub invoice_pending: Vec<Transaction>,
+    pub promise_pending: Vec<Transaction>,
+    pub invoice_declined: Vec<Transaction>,
+    pub promise_declined: Vec<Transaction>,
+    pub accepted: Vec<Transaction>,
+}
+
 #[derive(Serialize, Deserialize, Debug, SerializedBytes)]
 pub struct Ledger {
     pub balance: String,
