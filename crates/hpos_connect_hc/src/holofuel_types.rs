@@ -39,6 +39,13 @@ pub struct Actionable {
     pub promise_actionable: Vec<Transaction>,
 }
 
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, SerializedBytes)]
+#[serde(rename_all = "snake_case")]
+pub enum POS {
+    Hosting(CapSecret),
+    Redemption(String), // Contains wallet address
+}
+
 #[derive(Serialize, Deserialize, Debug, SerializedBytes)]
 pub struct Transaction {
     pub id: EntryHashB64,
