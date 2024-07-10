@@ -100,6 +100,8 @@ pub struct PresentedHappBundle {
     pub publisher_pricing_pref: PublisherPricingPref,
     pub login_config: LoginConfig,
     pub special_installed_app_id: Option<String>,
+    pub host_settings: HostSettings,
+    pub last_edited: Timestamp,
 }
 
 #[derive(Debug, Serialize, Deserialize, SerializedBytes, Clone, PartialEq, Eq)]
