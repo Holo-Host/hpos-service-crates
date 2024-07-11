@@ -113,8 +113,8 @@ impl AppConnection {
         }
     }
 
-    /// Returns a all cloned cells for a given RoleName in a connected app
-    pub async fn clone_cells(&mut self, role_name: RoleName) -> Result<Vec<ClonedCell>> {
+    /// Returns all cloned cells for a given RoleName in a connected app
+    pub async fn cloned_cells(&mut self, role_name: RoleName) -> Result<Vec<ClonedCell>> {
         let info = &self.cell_info().await?;
         let app_cells = info
             .get(&role_name)

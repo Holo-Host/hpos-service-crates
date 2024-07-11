@@ -27,7 +27,7 @@ pub fn time_bucket_from_date(date: DateTime<Utc>, days_in_bucket: u32) -> u32 {
 }
 
 /// returns the current time bucket in a deterministic way so that all code elements
-/// that rely on logging can know which service logger instance they should be
+/// that rely on logging can know the service logger instance with which they should be
 /// interacting
 pub fn sl_get_current_time_bucket(days_in_bucket: u32) -> u32 {
     let now_utc = Utc::now();
@@ -45,7 +45,7 @@ pub fn sl_get_current_time_bucket(days_in_bucket: u32) -> u32 {
 }
 
 /// returns whether we are within `minutes_before` minutes of the next time bucket
-/// (used to check for cloning new service loggers)
+/// (this fn is used to check for cloning new service loggers)
 pub fn sl_within_min_of_next_time_bucket(days_in_bucket: u32, minutes_before: i64) -> bool {
     if let Ok(val) = std::env::var("SL_TEST_IS_BEFORE_NEXT_BUCKET") {
         if val == "true" {
@@ -59,7 +59,7 @@ pub fn sl_within_min_of_next_time_bucket(days_in_bucket: u32, minutes_before: i6
     current_time_bucket != time_bucket_soon
 }
 
-/// returns all the buckets that are indide the range of the `days` param
+/// returns all the buckets that are inside the range of the `days` param
 pub fn sl_get_bucket_range(_clone_cells: Vec<ClonedCell>, days: u32) -> (u32, u32, u32) {
     let bucket_size = SL_BUCKET_SIZE_DAYS; // TODO: get this from: clone_cells[0].dna_modifiers.properties;
     let time_bucket: u32 = sl_get_current_time_bucket(bucket_size);
