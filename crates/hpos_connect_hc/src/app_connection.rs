@@ -130,9 +130,9 @@ impl AppConnection {
     }
 
     /// Returns a cell for a given RoleName and CloneName in a connected app
-    pub async fn clone_cell(&mut self, role_name: RoleName, clone_name: String) -> Result<CellId> {
-        let clone_cells = self.clone_cells(role_name.clone()).await?;
-        let cell = clone_cells
+    pub async fn cloned_cell_id(&mut self, role_name: RoleName, clone_name: String) -> Result<CellId> {
+        let cloned_cells = self.cloned_cells(role_name.clone()).await?;
+        let cell = cloned_cells
             .into_iter()
             .find_map(|cell| {
                 if cell.name == clone_name {
@@ -273,7 +273,7 @@ impl AppConnection {
         T: Serialize + Debug,
         R: DeserializeOwned,
     {
-        let cell_id = self.clone_cell(role_name, clone_name).await?;
+        let cell_id = self.cloned_cell_id(role_name, clone_name).await?;
 
         rmp_serde::from_slice(
             self.zome_call_raw_cell_id(cell_id, zome_name, fn_name, payload)

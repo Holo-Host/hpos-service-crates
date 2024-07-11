@@ -8,6 +8,21 @@ use chrono::Utc;
 use const_env::from_env;
 use holochain_types::prelude::ClonedCell;
 
+// General Notes:
+// These constants are defined here for use by all the other repos
+// that depend on service-logger function.  They should only be overridden
+// globally in holo-nixpkgs if the system wide determination is made to
+// change the default values.
+// The primary place that uses these values is hpos-api-rust, but other 
+// repos may also consume them.
+
+// Time-bucket Notes:
+// Currently the time-bucket size (SL_BUCKET_SIZE_DAYS) is a implemented as a global constant,
+// that should apply for all service-logger instances, the sl-dna is built to be future-proofed
+// and thus stores the value in its properties.  This is so that different apps could have different
+// log rotation schedules.  But that is not currently implemented in the `sl-check` endpoint of
+// `hpos-api-rust`.  But this is why all of these functions take the `days_in_bucket`` parameter
+// rather than using the global directly.
 #[from_env]
 pub const SL_BUCKET_SIZE_DAYS: u32 = 14;
 #[from_env]
@@ -46,6 +61,9 @@ pub fn sl_get_current_time_bucket(days_in_bucket: u32) -> u32 {
 
 /// returns whether we are within `minutes_before` minutes of the next time bucket
 /// (this fn is used to check for cloning new service loggers)
+/// note that `days_in_bucket` and `minutes_before` are passed in as parameters by
+/// the caller as part of future-proofing, but currently they all just use the constants
+/// provided above.
 pub fn sl_within_min_of_next_time_bucket(days_in_bucket: u32, minutes_before: i64) -> bool {
     if let Ok(val) = std::env::var("SL_TEST_IS_BEFORE_NEXT_BUCKET") {
         if val == "true" {
