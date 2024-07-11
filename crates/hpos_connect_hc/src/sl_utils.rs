@@ -1,3 +1,4 @@
+use anyhow::{anyhow, Result};
 use chrono::DateTime;
 use chrono::Datelike;
 use chrono::Duration;
@@ -7,14 +8,13 @@ use chrono::Timelike;
 use chrono::Utc;
 use const_env::from_env;
 use holochain_types::prelude::ClonedCell;
-use anyhow::{anyhow, Result};
 
 // General Notes:
 // These constants are defined here for use by all the other repos
 // that depend on service-logger function.  They should only be overridden
 // globally in holo-nixpkgs if the system wide determination is made to
 // change the default values.
-// The primary place that uses these values is hpos-api-rust, but other 
+// The primary place that uses these values is hpos-api-rust, but other
 // repos may also consume them.
 
 // Time-bucket Notes:
@@ -104,14 +104,23 @@ pub fn sl_clone_name(spec: SlCloneSpec) -> String {
 }
 
 pub struct SlCloneSpec {
-    pub days_in_bucket: u32, 
+    pub days_in_bucket: u32,
     pub time_bucket: u32,
 }
 
 /// returns the bucket size and bucket from a clone name
 pub fn sl_clone_name_spec(name: &str) -> Result<SlCloneSpec> {
     let mut parts = name.split(".");
-    let days_in_bucket = parts.next().ok_or(anyhow!("no days in clone name"))?.parse::<u32>()?;
-    let time_bucket = parts.next().ok_or(anyhow!("no bucket in clone name"))?.parse::<u32>()?;
-    Ok(SlCloneSpec{days_in_bucket, time_bucket})
+    let days_in_bucket = parts
+        .next()
+        .ok_or(anyhow!("no days in clone name"))?
+        .parse::<u32>()?;
+    let time_bucket = parts
+        .next()
+        .ok_or(anyhow!("no bucket in clone name"))?
+        .parse::<u32>()?;
+    Ok(SlCloneSpec {
+        days_in_bucket,
+        time_bucket,
+    })
 }

@@ -130,7 +130,11 @@ impl AppConnection {
     }
 
     /// Returns a cell for a given RoleName and CloneName in a connected app
-    pub async fn cloned_cell_id(&mut self, role_name: RoleName, clone_name: String) -> Result<CellId> {
+    pub async fn cloned_cell_id(
+        &mut self,
+        role_name: RoleName,
+        clone_name: String,
+    ) -> Result<CellId> {
         let cloned_cells = self.cloned_cells(role_name.clone()).await?;
         let cell = cloned_cells
             .into_iter()
