@@ -79,11 +79,10 @@ pub fn sl_within_min_of_next_time_bucket(days_in_bucket: u32, minutes_before: i6
 }
 
 /// returns all the buckets that are inside the range of the `days` param
-pub fn sl_get_bucket_range(_clone_cells: Vec<ClonedCell>, days: u32) -> (u32, u32, u32) {
-    let bucket_size = SL_BUCKET_SIZE_DAYS; // TODO: get this from: clone_cells[0].dna_modifiers.properties;
+pub fn sl_get_bucket_range(bucket_size: u32, days: u32) -> (u32, u32) {
     let time_bucket: u32 = sl_get_current_time_bucket(bucket_size);
     let buckets_for_days_in_request = days / bucket_size;
-    (bucket_size, time_bucket, buckets_for_days_in_request)
+    (time_bucket, buckets_for_days_in_request)
 }
 
 /// returns whether the local time is within the deleting window which is`windows_size`` min after midnight.
