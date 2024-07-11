@@ -7,6 +7,7 @@ use chrono::Timelike;
 use chrono::Utc;
 use const_env::from_env;
 use holochain_types::prelude::ClonedCell;
+use anyhow::{anyhow, Result};
 
 // General Notes:
 // These constants are defined here for use by all the other repos
@@ -95,4 +96,22 @@ pub fn sl_within_deleting_check_window(window_size: u32) -> bool {
     let now = Local::now();
     let min = now.minute();
     now.hour() == 0 && min >= 1 && min <= window_size
+}
+
+/// creates the clone name from the bucket and bucket size
+pub fn sl_clone_name(spec: SlCloneSpec) -> String {
+    format!("{}.{}", spec.days_in_bucket, spec.time_bucket)
+}
+
+pub struct SlCloneSpec {
+    pub days_in_bucket: u32, 
+    pub time_bucket: u32,
+}
+
+/// returns the bucket size and bucket from a clone name
+pub fn sl_clone_name_spec(name: &str) -> Result<SlCloneSpec> {
+    let mut parts = name.split(".");
+    let days_in_bucket = parts.next().ok_or(anyhow!("no days in clone name"))?.parse::<u32>()?;
+    let time_bucket = parts.next().ok_or(anyhow!("no bucket in clone name"))?.parse::<u32>()?;
+    Ok(SlCloneSpec{days_in_bucket, time_bucket})
 }
