@@ -7,7 +7,7 @@ use chrono::NaiveDate;
 use chrono::Timelike;
 use chrono::Utc;
 use const_env::from_env;
-use holochain_types::dna::{ActionHashB64, AgentPubKey, DnaHashB64};
+use holochain_types::dna::{ActionHashB64, AgentPubKeyB64, DnaHashB64};
 use holochain_types::prelude::YamlProperties;
 use holochain_types::prelude::{holochain_serial, SerializedBytes};
 use serde::Deserialize;
@@ -45,7 +45,7 @@ pub struct SlDnaProperties {
     pub bound_happ_id: Option<ActionHashB64>,
     pub bound_hf_dna: Option<DnaHashB64>,
     pub bound_hha_dna: Option<DnaHashB64>,
-    pub holo_admin: Option<AgentPubKey>,
+    pub holo_admin: Option<AgentPubKeyB64>,
     pub bucket_size: Option<u32>,
     pub time_bucket: Option<u32>,
 }
