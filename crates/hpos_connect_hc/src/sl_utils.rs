@@ -7,7 +7,11 @@ use chrono::NaiveDate;
 use chrono::Timelike;
 use chrono::Utc;
 use const_env::from_env;
-use holochain_types::prelude::ClonedCell;
+use holochain_types::dna::{ActionHashB64, AgentPubKey, DnaHashB64};
+use holochain_types::prelude::YamlProperties;
+use holochain_types::prelude::{holochain_serial, SerializedBytes};
+use serde::Deserialize;
+use serde::Serialize;
 
 // General Notes:
 // These constants are defined here for use by all the other repos
@@ -15,7 +19,7 @@ use holochain_types::prelude::ClonedCell;
 // globally in holo-nixpkgs if the system wide determination is made to
 // change the default values.
 // The primary place that uses these values is hpos-api-rust, but other
-// repos may also consume them.
+// repos may also consume them.gs
 
 // Time-bucket Notes:
 // Currently the time-bucket size (SL_BUCKET_SIZE_DAYS) is a implemented as a global constant,
@@ -32,6 +36,25 @@ pub const SL_MINUTES_BEFORE_BUCKET_TO_CLONE: i64 = 9;
 pub const SL_DELETING_LOG_WINDOW_SIZE_MINUTES: u32 = 10;
 #[from_env]
 pub const HOLO_EPOCH_YEAR: u16 = 2024;
+
+/// This is the structure of the DNA properties for service logger instances
+/// This struct must be kept up to date with the service-logger implementation
+#[derive(Serialize, Deserialize, Debug, SerializedBytes)]
+pub struct SlDnaProperties {
+    pub cron_schedule: Option<String>,
+    pub bound_happ_id: Option<ActionHashB64>,
+    pub bound_hf_dna: Option<DnaHashB64>,
+    pub bound_hha_dna: Option<DnaHashB64>,
+    pub holo_admin: Option<AgentPubKey>,
+    pub bucket_size: Option<u32>,
+    pub time_bucket: Option<u32>,
+}
+
+pub fn sl_serialized_props(props: &SlDnaProperties) -> YamlProperties {
+    YamlProperties::new(
+        serde_yaml::to_value(props)
+        .expect("should serialize"))
+}
 
 /// given the date in UTC timezone, return the current bucket
 pub fn time_bucket_from_date(date: DateTime<Utc>, days_in_bucket: u32) -> u32 {
