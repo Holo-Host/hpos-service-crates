@@ -10,6 +10,7 @@ use std::sync::Arc;
 /// Struct giving access to local instance of HHA on HPOS
 /// `config` of type `holo_config::Config` represents CLI params and can be passed
 /// to describe local running environment
+#[derive(Clone)]
 pub struct HfAgent {
     pub app: AppConnection,
 }
