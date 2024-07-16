@@ -47,12 +47,16 @@ impl AdminWebsocket {
 
     /// Attach an interface for app calls. If a port numer is None conductor will choose an available port
     /// Returns attached port number
-    pub async fn attach_app_interface(&mut self, happ_port: Option<u16>) -> Result<u16> {
+    pub async fn attach_app_interface(
+        &mut self,
+        happ_port: Option<u16>,
+        installed_app_id: Option<InstalledAppId>,
+    ) -> Result<u16> {
         info!(port = ?happ_port, "starting app interface");
         let msg = AdminRequest::AttachAppInterface {
             port: happ_port,
             allowed_origins: AllowedOrigins::Any,
-            installed_app_id: None,
+            installed_app_id,
         };
         match self.send(msg, None).await? {
             AdminResponse::AppInterfaceAttached { port } => Ok(port),

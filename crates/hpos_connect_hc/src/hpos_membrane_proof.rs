@@ -81,7 +81,7 @@ pub async fn get_mem_proof(admin: Admin) -> Result<MembraneProof> {
     let memproof_path =
         env::var("MEM_PROOF_PATH").context("Failed to read MEM_PROOF_PATH. Is it set in env?")?;
 
-    println!(
+    debug!(
         "Looking for memproof in provided file at {:?}",
         memproof_path
     );
@@ -89,7 +89,7 @@ pub async fn get_mem_proof(admin: Admin) -> Result<MembraneProof> {
         debug!("Using memproof from file");
         return Ok(m);
     }
-    println!("No Membrane Proof found locally.");
+    debug!("No Membrane Proof found locally.");
 
     let role = env::var("HOLOFUEL_INSTANCE_ROLE")
         .context("Failed to read HOLOFUEL_INSTANCE_ROLE. Is it set in env?")?;
@@ -100,10 +100,10 @@ pub async fn get_mem_proof(admin: Admin) -> Result<MembraneProof> {
         payload: RegistrationPayload { role },
     };
 
-    println!("Getting memproof from Membrane Proof server...");
+    debug!("Getting memproof from Membrane Proof server...");
     let (mem_proof_str, mem_proof_serialized) = download_memproof(payload).await?;
 
-    println!("Saving memproof to local file...");
+    debug!("Saving memproof to local file...");
     save_mem_proof_to_file(&mem_proof_str, &memproof_path)?;
 
     debug!("Using memproof downloaded from Membrane Proof server");

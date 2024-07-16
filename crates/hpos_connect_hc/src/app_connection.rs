@@ -49,20 +49,14 @@ impl AppConnection {
         let app_interface = attached_app_interfaces.into_iter().find(|a| {
             a.installed_app_id.is_some() && a.installed_app_id.to_owned().unwrap() == app_id
         });
-        println!(
-            "FOUND APP INTERFACE: >> ?? app_interface: {:?} ",
-            app_interface
-        );
 
         let app_port = match app_interface {
             Some(a) => a.port,
             None => admin_ws
-                .attach_app_interface(None)
+                .attach_app_interface(None, Some(app_id.clone()))
                 .await
                 .context("failed to start app interface for core app")?,
         };
-
-        println!("USING APP PORT: >> ?? app_port: {} ", app_port);
 
         let token = admin_ws.issue_app_auth_token(app_id.clone()).await?;
         let websocket_config = Arc::new(WebsocketConfig::CLIENT_DEFAULT);
@@ -84,8 +78,6 @@ impl AppConnection {
         tx.authenticate(AppAuthenticationRequest { token })
             .await
             .map_err(|err| anyhow!("Failed to send authentication: {err:?}"))?;
-
-        println!("CONNECTED TO APP INTEFACE");
 
         Ok(Self {
             ws: AppWebsocket { tx, rx },
