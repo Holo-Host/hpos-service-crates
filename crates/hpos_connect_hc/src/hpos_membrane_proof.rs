@@ -80,10 +80,17 @@ pub async fn get_mem_proof(admin: Admin) -> Result<MembraneProof> {
 
     let memproof_path =
         env::var("MEM_PROOF_PATH").context("Failed to read MEM_PROOF_PATH. Is it set in env?")?;
+
+    println!(
+        "Looking for memproof in provided file at {:?}",
+        memproof_path
+    );
     if let Ok(m) = load_mem_proof_from_file(&memproof_path) {
         debug!("Using memproof from file");
         return Ok(m);
     }
+    println!("No Membrane Proof found locally.");
+
     let role = env::var("HOLOFUEL_INSTANCE_ROLE")
         .context("Failed to read HOLOFUEL_INSTANCE_ROLE. Is it set in env?")?;
     let payload = Registration {
@@ -92,9 +99,14 @@ pub async fn get_mem_proof(admin: Admin) -> Result<MembraneProof> {
         email: admin.email,
         payload: RegistrationPayload { role },
     };
+
+    println!("Getting memproof from Membrane Proof server...");
     let (mem_proof_str, mem_proof_serialized) = download_memproof(payload).await?;
+
+    println!("Saving memproof to local file...");
     save_mem_proof_to_file(&mem_proof_str, &memproof_path)?;
-    debug!("Using memproof downloaded from HBS server");
+
+    debug!("Using memproof downloaded from Membrane Proof server");
     Ok(mem_proof_serialized)
 }
 
@@ -199,8 +211,7 @@ async fn download_memproof(
         }
         Err(e) => {
             error!("Error: {:?}", e);
-            let err: RegistrationError = resp.json().await?;
-            Err(AuthError::RegistrationError(err.to_string()).into())
+            Err(AuthError::RegistrationError(e.to_string()).into())
         }
     }
 }
