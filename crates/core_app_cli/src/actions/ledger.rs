@@ -1,11 +1,11 @@
 use anyhow::Result;
 use holochain_types::prelude::{FunctionName, ZomeName};
 use hpos_hc_connect::app_connection::CoreAppRoleName;
-use hpos_hc_connect::hha_agent::HHAAgent;
+use hpos_hc_connect::hha_agent::CoreAppAgent;
 use hpos_hc_connect::holofuel_types::Ledger;
 
 pub async fn get() -> Result<()> {
-    let mut agent = HHAAgent::spawn(None).await?;
+    let mut agent = CoreAppAgent::spawn(None).await?;
 
     let ledger: Ledger = agent
         .app

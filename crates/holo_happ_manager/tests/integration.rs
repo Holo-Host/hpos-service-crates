@@ -1,5 +1,5 @@
 use holo_happ_manager;
-use hpos_hc_connect::hha_agent::HHAAgent;
+use hpos_hc_connect::hha_agent::CoreAppAgent;
 
 #[tokio::test]
 async fn run_happ_manager() {
@@ -83,7 +83,7 @@ async fn run_happ_manager() {
     println!("Run holo happ manager script");
     holo_happ_manager::run(&config).await.unwrap();
 
-    let mut hha = HHAAgent::spawn(Some(&config)).await.unwrap();
+    let mut hha = CoreAppAgent::spawn(Some(&config)).await.unwrap();
 
     let published_happ = hha.get_my_happs().await.unwrap();
 

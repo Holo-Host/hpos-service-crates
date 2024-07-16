@@ -1,11 +1,11 @@
 use anyhow::Result;
 use holochain_types::prelude::{FunctionName, ZomeName};
 use hpos_hc_connect::{
-    app_connection::CoreAppRoleName, hha_agent::HHAAgent, holofuel_types::Profile,
+    app_connection::CoreAppRoleName, hha_agent::CoreAppAgent, holofuel_types::Profile,
 };
 
 pub async fn get() -> Result<()> {
-    let mut agent = HHAAgent::spawn(None).await?;
+    let mut agent = CoreAppAgent::spawn(None).await?;
 
     let profile: Profile = agent
         .app

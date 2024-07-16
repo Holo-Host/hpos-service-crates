@@ -3,7 +3,7 @@ use holochain_types::prelude::{ActionHashB64, FunctionName, ZomeName};
 use holofuel_types::fuel::Fuel;
 use hpos_hc_connect::{
     app_connection::CoreAppRoleName,
-    hha_agent::HHAAgent,
+    hha_agent::CoreAppAgent,
     hha_types::{HappPreferences, SetHappPreferencesInput},
 };
 use std::{str::FromStr, time::Duration};
@@ -17,7 +17,7 @@ pub async fn get(
     max_time_before_invoice_sec: String,
     max_time_before_invoice_ms: String,
 ) -> Result<()> {
-    let mut agent = HHAAgent::spawn(None).await?;
+    let mut agent = CoreAppAgent::spawn(None).await?;
 
     let max_time_sec = max_time_before_invoice_sec
         .parse::<u64>()

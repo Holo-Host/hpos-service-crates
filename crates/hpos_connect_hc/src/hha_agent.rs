@@ -18,11 +18,11 @@ use holochain_types::prelude::{ExternIO, FunctionName, Signature, ZomeName};
 /// `config` of type `holo_config::Config` represents CLI params and can be passed
 /// to describe local running environment
 #[derive(Clone)]
-pub struct HHAAgent {
+pub struct CoreAppAgent {
     pub app: AppConnection,
 }
 
-impl HHAAgent {
+impl CoreAppAgent {
     pub async fn spawn(config: Option<&Config>) -> Result<Self> {
         let mut admin_ws = AdminWebsocket::connect(ADMIN_PORT)
             .await

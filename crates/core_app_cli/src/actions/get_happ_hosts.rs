@@ -1,11 +1,11 @@
 use anyhow::Result;
 use holochain_types::prelude::{FunctionName, ZomeName};
 use hpos_hc_connect::{
-    app_connection::CoreAppRoleName, hha_agent::HHAAgent, hha_types::HoloportDetails,
+    app_connection::CoreAppRoleName, hha_agent::CoreAppAgent, hha_types::HoloportDetails,
 };
 
 pub async fn get(happ_id: String) -> Result<()> {
-    let mut agent = HHAAgent::spawn(None).await?;
+    let mut agent = CoreAppAgent::spawn(None).await?;
 
     let hosts: Vec<HoloportDetails> = agent
         .app

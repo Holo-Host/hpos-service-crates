@@ -6,7 +6,7 @@ use super::hpos_membrane_proof::MembraneProofs;
 use anyhow::{anyhow, Context, Result};
 use holochain_conductor_api::{
     AdminRequest, AdminResponse, AppAuthenticationToken, AppAuthenticationTokenIssued, AppInfo,
-    AppStatusFilter, IssueAppAuthenticationTokenPayload,
+    AppInterfaceInfo, AppStatusFilter, IssueAppAuthenticationTokenPayload,
 };
 use holochain_types::{
     app::{InstallAppPayload, InstalledAppId},
@@ -57,6 +57,14 @@ impl AdminWebsocket {
         match self.send(msg, None).await? {
             AdminResponse::AppInterfaceAttached { port } => Ok(port),
             _ => Err(anyhow!("Failed to attach app interface")),
+        }
+    }
+
+    pub async fn list_app_interfaces(&mut self) -> Result<Vec<AppInterfaceInfo>> {
+        debug!("listing app interfaces");
+        match self.send(AdminRequest::ListAppInterfaces, None).await? {
+            AdminResponse::AppInterfacesListed(app_interfaces) => Ok(app_interfaces),
+            _ => Err(anyhow!("Failed to fetch list of attached app interfaces")),
         }
     }
 
