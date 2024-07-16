@@ -17,11 +17,11 @@ use holochain_types::prelude::{ExternIO, FunctionName, Signature, ZomeName};
 /// Struct giving access to local instance of HHA on HPOS
 /// `config` of type `holo_config::Config` represents CLI params and can be passed
 /// to describe local running environment
-pub struct HHAAgent {
+pub struct CoreAppAgent {
     pub app: AppConnection,
 }
 
-impl HHAAgent {
+impl CoreAppAgent {
     pub async fn spawn(config: Option<&Config>) -> Result<Self> {
         let mut admin_ws = AdminWebsocket::connect(ADMIN_PORT)
             .await

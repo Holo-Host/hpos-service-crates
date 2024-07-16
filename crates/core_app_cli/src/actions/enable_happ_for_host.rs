@@ -2,11 +2,11 @@ use anyhow::Result;
 use holochain_types::prelude::ActionHashB64;
 use holochain_types::prelude::{FunctionName, ZomeName};
 use hpos_hc_connect::app_connection::CoreAppRoleName;
-use hpos_hc_connect::hha_agent::HHAAgent;
+use hpos_hc_connect::hha_agent::CoreAppAgent;
 use hpos_hc_connect::hha_types::HappAndHost;
 
 pub async fn get(happ_id: String, host_id: String) -> Result<()> {
-    let mut agent = HHAAgent::spawn(None).await?;
+    let mut agent = CoreAppAgent::spawn(None).await?;
 
     let holo_hash = ActionHashB64::from_b64_str(&happ_id.clone())
         .expect("Failed to serialize string into ActionHashB4");

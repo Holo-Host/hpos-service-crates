@@ -2,12 +2,12 @@ use anyhow::Result;
 use holochain_types::prelude::{FunctionName, ZomeName};
 use hpos_hc_connect::{
     app_connection::CoreAppRoleName,
-    hha_agent::HHAAgent,
+    hha_agent::CoreAppAgent,
     holofuel_types::{Actionable, Pending, Transaction},
 };
 
 pub async fn get() -> Result<()> {
-    let mut agent = HHAAgent::spawn(None).await?;
+    let mut agent = CoreAppAgent::spawn(None).await?;
 
     let txs: Pending = agent
         .app

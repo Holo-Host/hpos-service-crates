@@ -1,7 +1,7 @@
 use std::{env, fs};
 
 use anyhow::{Context, Result};
-use hpos_hc_connect::hha_agent::HHAAgent;
+use hpos_hc_connect::hha_agent::CoreAppAgent;
 pub use hpos_hc_connect::{
     hha_types::HappInput,
     holo_config::{Config, Happ, HappsFile},
@@ -11,7 +11,7 @@ use tracing::{debug, info};
 pub async fn run(config: &Config) -> Result<()> {
     info!("Running happ manager");
 
-    let mut hha = HHAAgent::spawn(Some(config)).await?;
+    let mut hha = CoreAppAgent::spawn(Some(config)).await?;
 
     let apps = happ_to_be_published()?;
 

@@ -3,7 +3,9 @@ use holochain_types::{
     dna::AgentPubKey,
     prelude::{FunctionName, ZomeName},
 };
-use hpos_hc_connect::{app_connection::CoreAppRoleName, hha_agent::HHAAgent, holo_config::Config};
+use hpos_hc_connect::{
+    app_connection::CoreAppRoleName, hha_agent::CoreAppAgent, holo_config::Config,
+};
 use serde::{Deserialize, Serialize};
 use std::process::{Command, Output};
 
@@ -31,7 +33,7 @@ pub async fn update_jurisdiction_if_changed(
     config: &Config,
     hbs_jurisdiction: String,
 ) -> Result<()> {
-    let mut agent = HHAAgent::spawn(Some(config)).await?;
+    let mut agent = CoreAppAgent::spawn(Some(config)).await?;
 
     let host_pubkey = agent.pubkey().await?;
 
