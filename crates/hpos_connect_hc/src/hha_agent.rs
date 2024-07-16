@@ -17,7 +17,6 @@ use holochain_types::prelude::{ExternIO, FunctionName, Signature, ZomeName};
 /// Struct giving access to local instance of HHA on HPOS
 /// `config` of type `holo_config::Config` represents CLI params and can be passed
 /// to describe local running environment
-#[derive(Clone)]
 pub struct CoreAppAgent {
     pub app: AppConnection,
 }
