@@ -51,9 +51,7 @@ pub struct SlDnaProperties {
 }
 
 pub fn sl_serialized_props(props: &SlDnaProperties) -> YamlProperties {
-    YamlProperties::new(
-        serde_yaml::to_value(props)
-        .expect("should serialize"))
+    YamlProperties::new(serde_yaml::to_value(props).expect("should serialize"))
 }
 
 /// given the date in UTC timezone, return the current bucket
