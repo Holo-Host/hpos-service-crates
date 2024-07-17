@@ -6,7 +6,7 @@ use super::hpos_membrane_proof::MembraneProofs;
 use anyhow::{anyhow, Context, Result};
 use holochain_conductor_api::{
     AdminRequest, AdminResponse, AppAuthenticationToken, AppAuthenticationTokenIssued, AppInfo,
-    AppStatusFilter, IssueAppAuthenticationTokenPayload,
+    AppInterfaceInfo, AppStatusFilter, IssueAppAuthenticationTokenPayload,
 };
 use holochain_types::{
     app::{DeleteCloneCellPayload, InstallAppPayload, InstalledAppId},
@@ -47,16 +47,28 @@ impl AdminWebsocket {
 
     /// Attach an interface for app calls. If a port numer is None conductor will choose an available port
     /// Returns attached port number
-    pub async fn attach_app_interface(&mut self, happ_port: Option<u16>) -> Result<u16> {
+    pub async fn attach_app_interface(
+        &mut self,
+        happ_port: Option<u16>,
+        installed_app_id: Option<InstalledAppId>,
+    ) -> Result<u16> {
         info!(port = ?happ_port, "starting app interface");
         let msg = AdminRequest::AttachAppInterface {
             port: happ_port,
             allowed_origins: AllowedOrigins::Any,
-            installed_app_id: None,
+            installed_app_id,
         };
         match self.send(msg, None).await? {
             AdminResponse::AppInterfaceAttached { port } => Ok(port),
             _ => Err(anyhow!("Failed to attach app interface")),
+        }
+    }
+
+    pub async fn list_app_interfaces(&mut self) -> Result<Vec<AppInterfaceInfo>> {
+        debug!("listing app interfaces");
+        match self.send(AdminRequest::ListAppInterfaces, None).await? {
+            AdminResponse::AppInterfacesListed(app_interfaces) => Ok(app_interfaces),
+            _ => Err(anyhow!("Failed to fetch list of attached app interfaces")),
         }
     }
 

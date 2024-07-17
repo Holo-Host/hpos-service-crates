@@ -35,29 +35,44 @@ pub struct AppConnection {
 }
 
 impl AppConnection {
+    // Connect to app interface for given installed app id if one already exists,
+    // otherwise attach a new app interface and then establish connection.
     pub async fn connect(
         admin_ws: &mut AdminWebsocket,
         keystore: MetaLairClient,
         app_id: String,
     ) -> Result<Self> {
-        let app_port = admin_ws
-            .attach_app_interface(None)
+        let attached_app_interfaces = admin_ws
+            .list_app_interfaces()
             .await
-            .context("failed to start app interface for core app")?;
+            .context("failed to start fetch app interfaces during app connection setup")?;
+
+        let app_interface = attached_app_interfaces.into_iter().find(|a| {
+            a.installed_app_id.is_some() && a.installed_app_id.to_owned().unwrap() == app_id
+        });
+
+        let app_port = match app_interface {
+            Some(a) => a.port,
+            None => admin_ws
+                .attach_app_interface(None, Some(app_id.clone()))
+                .await
+                .context("failed to start app interface for core app")?,
+        };
 
         let token = admin_ws.issue_app_auth_token(app_id.clone()).await?;
-
+        let websocket_config = Arc::new(WebsocketConfig::CLIENT_DEFAULT);
         let socket_addr = format!("localhost:{app_port}");
         let addr = socket_addr
             .to_socket_addrs()?
             .next()
             .context("invalid websocket address")?;
-        let websocket_config = Arc::new(WebsocketConfig::CLIENT_DEFAULT);
+
         let (tx, rx) = again::retry(|| {
             let websocket_config = Arc::clone(&websocket_config);
             connect(websocket_config, ConnectRequest::new(addr))
         })
         .await?;
+
         let rx = WsPollRecv::new::<AppResponse>(rx).into();
 
         // Websocket connection needs authentication via token previously obtained from Admin Interface

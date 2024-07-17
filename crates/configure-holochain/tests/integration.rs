@@ -53,8 +53,8 @@ use test_case::test_case;
 /// Tests cannot run in parallel because they are all accessing same /tmp dir
 
 async fn run_configure_holochain(f_r_a_k: &str, r_o_m_p: &str) {
-    // Uncomment those lines if you need logging
-    // but this will work only for one test case ran at the time
+    // Uncomment these lines if you need logging
+    // but this will work only for one test case run at the time
     // because tracing subscribes here sets a global subscriber for each test
     // use tracing_subscriber::EnvFilter;
     // let filter = EnvFilter::from_default_env().add_directive("again=trace".parse().unwrap());
@@ -84,7 +84,7 @@ async fn run_configure_holochain(f_r_a_k: &str, r_o_m_p: &str) {
     // Holoports do not force read-only memproof
     set_var("READ_ONLY_MEM_PROOF", r_o_m_p);
 
-    // devNet HBS server url, because given hpos-config is registered in devNet database
+    // Use devNet HBS server url, because given hpos-config is registered in devNet database
     set_var(
         "MEM_PROOF_SERVER_URL",
         "https://membrane-proof.dev.holotest.net",
@@ -100,7 +100,7 @@ async fn run_configure_holochain(f_r_a_k: &str, r_o_m_p: &str) {
     };
 
     // spin up lair
-    println!("Starting lair-keystore");
+    println!("\nStarting lair-keystore");
     let (_lair, lair_config, _) =
         holochain_env_setup::lair::spawn(&tmp_dir, &log_dir, Some(&device_bundle), None)
             .await
@@ -125,17 +125,23 @@ async fn run_configure_holochain(f_r_a_k: &str, r_o_m_p: &str) {
     set_var("IS_INTEGRATION_TEST", "TRUE");
 
     println!("Run configure holochain script");
-    configure_holochain::run(config.clone()).await.unwrap();
+    configure_holochain::run(config.clone())
+        .await
+        .expect("Failed when running configure holochain script the first time");
 
     // Second run should not error out
-    configure_holochain::run(config.clone()).await.unwrap();
+    configure_holochain::run(config.clone())
+        .await
+        .expect("Failed when running configure holochain script the second time");
 
     // Delete memproof which is an equivalent of changing DEV_UID_OVERRIDE for holoport
     // which was creating a bug https://github.com/Holo-Host/hpos-configure-holochain/issues/136
     delete_mem_proof_file().unwrap();
 
     // Third run should not error out
-    configure_holochain::run(config).await.unwrap();
+    configure_holochain::run(config)
+        .await
+        .expect("Failed when running configure holochain script the third time");
 
     let mut connection = configure_holochain::AdminWebsocket::connect(4444)
         .await
