@@ -9,7 +9,7 @@ use holochain_conductor_api::{
     AppInterfaceInfo, AppStatusFilter, IssueAppAuthenticationTokenPayload,
 };
 use holochain_types::{
-    app::{InstallAppPayload, InstalledAppId},
+    app::{DeleteCloneCellPayload, InstallAppPayload, InstalledAppId},
     dna::AgentPubKey,
     websocket::AllowedOrigins,
 };
@@ -105,11 +105,9 @@ impl AdminWebsocket {
         }
     }
 
-    pub async fn list_running_app(&mut self) -> Result<Vec<InstalledAppId>> {
-        let mut running = self.list_app(Some(AppStatusFilter::Running)).await?;
-        let mut enabled = self.list_app(Some(AppStatusFilter::Enabled)).await?;
-        running.append(&mut enabled);
-        Ok(running)
+    pub async fn list_enabled_apps(&mut self) -> Result<Vec<InstalledAppId>> {
+        let enabled = self.list_app(Some(AppStatusFilter::Enabled)).await?;
+        Ok(enabled)
     }
 
     #[instrument(skip(self, app, membrane_proofs, agent))]
@@ -218,6 +216,16 @@ impl AdminWebsocket {
         match response {
             AdminResponse::AgentPubKeyGenerated(key) => Ok(key),
             _ => unreachable!("Unexpected response {:?}", response),
+        }
+    }
+
+    /// Deletes a clone cell
+    pub async fn delete_clone(&mut self, payload: DeleteCloneCellPayload) -> Result<()> {
+        let admin_request = AdminRequest::DeleteCloneCell(Box::new(payload.clone()));
+        let response = self.send(admin_request, None).await?;
+        match response {
+            AdminResponse::CloneCellDeleted => Ok(()),
+            _ => Err(anyhow!("Error creating clone {:?}", payload)),
         }
     }
 

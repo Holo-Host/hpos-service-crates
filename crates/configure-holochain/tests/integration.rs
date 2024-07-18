@@ -152,7 +152,7 @@ async fn run_configure_holochain(f_r_a_k: &str, r_o_m_p: &str) {
         .unwrap();
 
     let happs = connection
-        .list_running_app()
+        .list_enabled_apps()
         .await
         .context("failed to get installed hApps")
         .unwrap();
