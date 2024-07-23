@@ -152,10 +152,10 @@ impl CoreAppAgent {
                 CoreAppRoleName::HHA.into(),
                 ZomeName::from("hha"),
                 FunctionName::from("enable_happ"),
-                ExternIO::encode(HappAndHost {
+                HappAndHost {
                     happ_id: happ_id.to_owned(),
                     holoport_id: holoport_id.to_owned(),
-                })?,
+                },
             )
             .await
     }
@@ -170,10 +170,10 @@ impl CoreAppAgent {
                 CoreAppRoleName::HHA.into(),
                 ZomeName::from("hha"),
                 FunctionName::from("disable_happ"),
-                ExternIO::encode(HappAndHost {
+                HappAndHost {
                     happ_id: happ_id.to_owned(),
                     holoport_id: holoport_id.to_owned(),
-                })?,
+                },
             )
             .await
     }
