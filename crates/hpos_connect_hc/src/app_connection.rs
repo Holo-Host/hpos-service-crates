@@ -13,7 +13,7 @@ use holochain_types::{
     prelude::{CellId, ClonedCell, ExternIO, FunctionName, RoleName, ZomeCallUnsigned, ZomeName},
 };
 use holochain_websocket::{connect, ConnectRequest, WebsocketConfig, WebsocketSender};
-use serde::{de::DeserializeOwned, Serialize};
+use serde::{self, de::DeserializeOwned, Serialize};
 use std::{collections::HashMap, net::ToSocketAddrs, sync::Arc};
 use tracing::{instrument, trace};
 
@@ -41,15 +41,20 @@ impl AppConnection {
         admin_ws: &mut AdminWebsocket,
         keystore: MetaLairClient,
         app_id: String,
+        force_new_interface: bool,
     ) -> Result<Self> {
-        let attached_app_interfaces = admin_ws
-            .list_app_interfaces()
-            .await
-            .context("failed to start fetch app interfaces during app connection setup")?;
+        let app_interface = if !force_new_interface {
+            let attached_app_interfaces = admin_ws
+                .list_app_interfaces()
+                .await
+                .context("failed to start fetch app interfaces during app connection setup")?;
 
-        let app_interface = attached_app_interfaces.into_iter().find(|a| {
-            a.installed_app_id.is_some() && a.installed_app_id.to_owned().unwrap() == app_id
-        });
+            attached_app_interfaces.into_iter().find(|a| {
+                a.installed_app_id.is_some() && a.installed_app_id.to_owned().unwrap() == app_id
+            })
+        } else {
+            None
+        };
 
         let app_port = match app_interface {
             Some(a) => a.port,

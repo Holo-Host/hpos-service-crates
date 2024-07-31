@@ -20,7 +20,6 @@ url = "2.4.0"
 isahc = "1.7.2"
 tempfile = "3.1"
 thiserror = "1.0"
-serde = { workspace = true }
 holochain_types = { workspace = true }
 holochain_conductor_api = { workspace = true }
 holochain_websocket = { workspace = true }
@@ -35,3 +34,5 @@ url2 = "0.0.6"
 holofuel_types = { workspace = true }
 chrono = "0.4.19"
 const_env = "0.1"
+serde = { workspace = true }
+log = "0.4.17"
