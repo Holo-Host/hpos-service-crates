@@ -21,7 +21,10 @@ pub async fn get(pref_hash: String) -> Result<()> {
         .await?;
 
     println!("===================");
-    println!("All Hosts for Preference Hash {} are: ", pref_hash);
+    println!(
+        "Host Preference Details for Preference Hash {} are: ",
+        pref_hash
+    );
     println!("{:#?}", prefs);
     println!("===================");
 
