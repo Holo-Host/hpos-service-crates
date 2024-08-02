@@ -19,7 +19,7 @@ struct HostingCriteria {
 
 pub async fn get_jurisdiction() -> Result<String> {
     let output: Output = Command::new("hpos-holochain-client")
-        .args(["--url=http://localhost/holochain-api/", "hosting-criteria"])
+        .args(["--url=http://localhost/api/v2/", "hosting-criteria"])
         .output()?;
 
     let output_str = String::from_utf8_lossy(&output.stdout).to_string();

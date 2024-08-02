@@ -11,7 +11,7 @@ use crate::{AdminWebsocket, AppConnection};
 use anyhow::{anyhow, Context, Result};
 use holochain_keystore::AgentPubKeyExt;
 use holochain_types::dna::{ActionHashB64, AgentPubKey};
-use holochain_types::prelude::{ExternIO, FunctionName, Signature, ZomeName};
+use holochain_types::prelude::{FunctionName, Signature, ZomeName};
 
 // NOTE: This should really be renamed CORE_APP_AGENT, as it related to the core app and therfore connects to BOTH hha and hf
 /// Struct giving access to local instance of HHA on HPOS
