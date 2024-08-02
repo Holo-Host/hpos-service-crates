@@ -41,15 +41,20 @@ impl AppConnection {
         admin_ws: &mut AdminWebsocket,
         keystore: MetaLairClient,
         app_id: String,
+        force_new_interface: bool,
     ) -> Result<Self> {
-        let attached_app_interfaces = admin_ws
-            .list_app_interfaces()
-            .await
-            .context("failed to start fetch app interfaces during app connection setup")?;
+        let app_interface = if !force_new_interface {
+            let attached_app_interfaces = admin_ws
+                .list_app_interfaces()
+                .await
+                .context("failed to start fetch app interfaces during app connection setup")?;
 
-        let app_interface = attached_app_interfaces.into_iter().find(|a| {
-            a.installed_app_id.is_some() && a.installed_app_id.to_owned().unwrap() == app_id
-        });
+            attached_app_interfaces.into_iter().find(|a| {
+                a.installed_app_id.is_some() && a.installed_app_id.to_owned().unwrap() == app_id
+            })
+        } else {
+            None
+        };
 
         let app_port = match app_interface {
             Some(a) => a.port,
@@ -135,7 +140,7 @@ impl AppConnection {
             .get(&role_name)
             .ok_or(anyhow!("unable to find cells for RoleName {}", &role_name))?;
         let cells = app_cells
-            .into_iter()
+            .iter()
             .filter_map(|cell_info| match cell_info {
                 CellInfo::Cloned(cloned_cell) => Some(cloned_cell.clone()),
                 _ => None,
