@@ -8,6 +8,7 @@ use hpos_hc_connect::{
 };
 use serde::{Deserialize, Serialize};
 use std::process::{Command, Output};
+use tracing::debug;
 
 #[derive(Debug, Deserialize)]
 #[allow(dead_code)]
@@ -23,8 +24,10 @@ pub async fn get_jurisdiction() -> Result<String> {
         .output()?;
 
     let output_str = String::from_utf8_lossy(&output.stdout).to_string();
+    debug!("called hpos api and got result {}", output_str);
 
     let hosting_criteria: HostingCriteria = serde_json::from_str(&output_str)?;
+    debug!("hosting_criteria result {:?}", hosting_criteria);
 
     Ok(hosting_criteria.jurisdiction)
 }
