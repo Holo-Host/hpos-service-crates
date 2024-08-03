@@ -1,4 +1,4 @@
-use anyhow::Result;
+use anyhow::{Context, Result};
 use holochain_types::{
     dna::AgentPubKey,
     prelude::{FunctionName, ZomeName},
@@ -7,39 +7,18 @@ use hpos_hc_connect::{
     app_connection::CoreAppRoleName, hha_agent::CoreAppAgent, holo_config::Config,
 };
 use serde::{Deserialize, Serialize};
-use std::process::{Command, Output};
-use tracing::debug;
+use tracing::{debug, error, trace, warn};
 
-#[derive(Debug, Deserialize)]
-#[allow(dead_code)]
-struct HostingCriteria {
-    id: String,
-    jurisdiction: String,
-    kyc: String,
-}
-
-pub async fn get_jurisdiction() -> Result<String> {
-    let client = reqwest::Client::new();
-    let response = client
-        .get("http://localhost/api/v2/host/hosting_criteria")
-        .send()
-        .await?;
-    let text = response.text().await.unwrap();
-    println!(" >>> text {:?}", text);
-    let hosting_criteria: HostingCriteria = serde_json::from_str(&text)?;
-    debug!("hosting_criteria result {:?}", hosting_criteria);
-
-    let output: Output = Command::new("hpos-holochain-client")
-        .args(["--url=http://localhost/api/v2/", "hosting-criteria"])
-        .output()?;
-
-    let output_str = String::from_utf8_lossy(&output.stdout).to_string();
-    debug!("called hpos api and got result {}", output_str);
-
-    let hosting_criteria: HostingCriteria = serde_json::from_str(&output_str)?;
-    debug!("hosting_criteria result {:?}", hosting_criteria);
-
-    Ok(hosting_criteria.jurisdiction)
+#[derive(Serialize, Deserialize, Clone, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct RegistrationRecord {
+    pub id: String,
+    email: String,
+    access_token: String,
+    permissions: Vec<String>,
+    pub kyc: String,
+    pub jurisdiction: String,
+    public_key: String,
 }
 
 pub async fn update_jurisdiction_if_changed(
@@ -82,4 +61,103 @@ pub async fn update_jurisdiction_if_changed(
     }
 
     Ok(())
+}
+
+#[derive(Debug, Clone)]
+pub struct HbsClient {
+    pub client: reqwest::Client,
+    jwt: String,
+    url: String,
+}
+impl HbsClient {
+    pub async fn connect() -> Result<Self> {
+        let client = reqwest::Client::builder().build()?;
+        let hbs_id: String =
+            std::env::var("HBS_AUTH_ID").expect("HBS_AUTH_ID must be set in the env");
+        let hbs_secret: String =
+            std::env::var("HBS_AUTH_SECRET").expect("HBS_AUTH_SECRET must be set in the env");
+        let url = std::env::var("HBS_URL").context("Failed to read HBS_URL. Is it set in env?")?;
+        let jwt = match Self::get_auth_token(&url, &client).await {
+            Ok(jwt) => jwt,
+            Err(err) => {
+                error!("HbsClient::Failed to fetch JWT token from HBS. Using HBS_AUTH_ID: {:?} and HBS_AUTH_SECRET: {:?}.",  hbs_id, hbs_secret);
+                return Err(err);
+            }
+        };
+        Ok(Self { client, jwt, url })
+    }
+
+    pub async fn get_auth_token(hbs_url: &str, client: &reqwest::Client) -> Result<String> {
+        let params = [
+            ("id", std::env::var("HBS_AUTH_ID")?),
+            ("secret", std::env::var("HBS_AUTH_SECRET")?),
+        ];
+
+        let request = client
+            .request(
+                reqwest::Method::GET,
+                format!("{}/auth/api/v1/service-account", hbs_url),
+            )
+            .query(&params);
+
+        match request.send().await {
+            Ok(res) => {
+                debug!(
+                    "HbsClient::Received `service-account` response status: {}",
+                    res.status()
+                );
+                let res = res.error_for_status()?;
+                let jwt = res.text().await?;
+                Ok(jwt)
+            }
+            Err(err) => {
+                warn!(
+                    "HbsClient::Call to `service-account` failed. Error: {:?}",
+                    err
+                );
+                Err(err.into())
+            }
+        }
+    }
+
+    /// Handles get request to HBS server under `/registration/api/v3/my-registration` path
+    /// Returns only the host's jurisdiction
+    pub async fn get_registration_details() -> Result<String> {
+        trace!("HbsClient::Getting registration details for Host");
+        let connection = Self::connect().await?;
+
+        let mut headers = reqwest::header::HeaderMap::new();
+        headers.insert("Content-Type", "application/json".parse()?);
+        let request = connection
+            .client
+            .request(
+                reqwest::Method::GET,
+                format!("{}/registration/api/v3/my-registration", connection.url),
+            )
+            .bearer_auth(connection.jwt.clone())
+            .headers(headers);
+
+        let response = request.send().await?;
+        let response = response.error_for_status()?;
+        let record: RegistrationRecord = response
+            .json()
+            .await
+            .context("Failed to parse response body")?;
+
+        trace!("HbsClient::Registration record results: {:?}", record);
+
+        Ok(record.jurisdiction)
+    }
+}
+
+#[tokio::test]
+async fn get_host_registration_details_call() {
+    env_logger::init();
+    use dotenv::dotenv;
+    dotenv().ok();
+
+    std::env::set_var("HBS_URL", "https://hbs.dev.holotest.net".to_string());
+    let res = HbsClient::get_registration_details().await.unwrap();
+
+    println!(" >> HbsClient::Registration record results: {:?}", res);
 }
