@@ -16,6 +16,7 @@ holo_happ_manager = { version = "0.1.0", path = "../holo_happ_manager" }
 hpos_hc_connect = { path = "../hpos_connect_hc" }
 hpos-config-core = { workspace = true }
 holochain_types = { workspace = true }
+reqwest = { workspace = true }
 
 [dev-dependencies]
 test-case = "2.2.2"

@@ -135,7 +135,7 @@ impl AppConnection {
             .get(&role_name)
             .ok_or(anyhow!("unable to find cells for RoleName {}", &role_name))?;
         let cells = app_cells
-            .into_iter()
+            .iter()
             .filter_map(|cell_info| match cell_info {
                 CellInfo::Cloned(cloned_cell) => Some(cloned_cell.clone()),
                 _ => None,

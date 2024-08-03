@@ -620,6 +620,7 @@ dependencies = [
  "holochain_types",
  "hpos-config-core",
  "hpos_hc_connect",
+ "reqwest",
  "serde",
  "serde_json",
  "serial_test 1.0.0",

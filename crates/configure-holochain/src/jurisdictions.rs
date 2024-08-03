@@ -19,6 +19,16 @@ struct HostingCriteria {
 }
 
 pub async fn get_jurisdiction() -> Result<String> {
+    let client = reqwest::Client::new();
+    let response = client
+        .get("http://localhost/api/v2/host/hosting_criteria")
+        .send()
+        .await?;
+    let text = response.text().await.unwrap();
+    println!(" >>> text {:?}", text);
+    let hosting_criteria: HostingCriteria = serde_json::from_str(&text)?;
+    debug!("hosting_criteria result {:?}", hosting_criteria);
+
     let output: Output = Command::new("hpos-holochain-client")
         .args(["--url=http://localhost/api/v2/", "hosting-criteria"])
         .output()?;
