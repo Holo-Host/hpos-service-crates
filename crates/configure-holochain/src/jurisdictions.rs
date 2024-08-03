@@ -10,15 +10,10 @@ use serde::{Deserialize, Serialize};
 use tracing::{debug, error, trace, warn};
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
-#[serde(rename_all = "camelCase")]
-pub struct RegistrationRecord {
-    pub id: String,
+pub struct JurisdictionRecord {
+    _id: String,
     email: String,
-    access_token: String,
-    permissions: Vec<String>,
-    pub kyc: String,
     pub jurisdiction: String,
-    public_key: String,
 }
 
 pub async fn update_jurisdiction_if_changed(
@@ -139,11 +134,8 @@ impl HbsClient {
 
         let response = request.send().await?;
         let response = response.error_for_status()?;
-        let record: RegistrationRecord = response
-            .json()
-            .await
-            .context("Failed to parse response body")?;
 
+        let record: JurisdictionRecord = response.json().await?;
         trace!("HbsClient::Registration record results: {:?}", record);
 
         Ok(record.jurisdiction)
@@ -157,7 +149,5 @@ async fn get_host_registration_details_call() {
     dotenv().ok();
 
     std::env::set_var("HBS_URL", "https://hbs.dev.holotest.net".to_string());
-    let res = HbsClient::get_registration_details().await.unwrap();
-
-    println!(" >> HbsClient::Registration record results: {:?}", res);
+    HbsClient::get_registration_details().await.unwrap();
 }
