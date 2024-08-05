@@ -35,6 +35,8 @@ pub struct AppConnection {
 }
 
 impl AppConnection {
+    // Connect to app interface for given installed app id if one already exists,
+    // otherwise attach a new app interface and then establish connection.
     pub async fn connect(
         admin_ws: &mut AdminWebsocket,
         keystore: MetaLairClient,
@@ -48,9 +50,6 @@ impl AppConnection {
             }
         }
     }
-
-    // Connect to app interface for given installed app id if one already exists,
-    // otherwise attach a new app interface and then establish connection.
     async fn inner_connect(
         admin_ws: &mut AdminWebsocket,
         keystore: MetaLairClient,
