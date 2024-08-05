@@ -9,7 +9,7 @@ use hpos_hc_connect::{
 };
 use reqwest::{Client, Response};
 use serde::{Deserialize, Serialize};
-use tracing::trace;
+use tracing::{debug, trace};
 
 pub async fn update_jurisdiction_if_changed(
     config: &Config,
@@ -119,7 +119,7 @@ impl HbsClient {
         let mut response = self
             .call_holo_client(payload.clone(), signature.clone())
             .await?;
-        trace!("HBS Response: {:?}", response);
+        debug!("HBS Response: {:?}", response);
         let mut body = response.text().await?;
 
         // 504 Gateway Timeout

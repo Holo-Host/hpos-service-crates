@@ -135,7 +135,7 @@ pub async fn update_host_jurisdiction_if_changed(config: &Config) -> Result<()> 
     let hbs_jurisdiction = match hbs.get_host_registration().await {
         Ok(r) => r.jurisdiction,
         Err(e) => {
-            debug!("Failed to get jurisdiction from hbs {}", e);
+            debug!("Failed to get jurisdiction from hbs. Error: {}", e);
             return Ok(());
         }
     };
