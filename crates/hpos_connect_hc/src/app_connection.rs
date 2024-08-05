@@ -35,9 +35,25 @@ pub struct AppConnection {
 }
 
 impl AppConnection {
+    pub async fn connect(
+        admin_ws: &mut AdminWebsocket,
+        keystore: MetaLairClient,
+        app_id: String,
+    ) -> Result<Self> {
+        match Self::inner_connect(admin_ws, keystore.clone(), app_id.clone(), false).await {
+            Ok(c) => Ok(c),
+            Err(e) => {
+                log::warn!("Failed to connnect to existing app websocket for core happ id: {:?}... creating and connecting to a new one.  Error: {:#?}", app_id, e);
+                Self::inner_connect(admin_ws, keystore, app_id, true)
+                    .await
+                    .context("Failed to connect to holochain's app interface")
+            }
+        }
+    }
+
     // Connect to app interface for given installed app id if one already exists,
     // otherwise attach a new app interface and then establish connection.
-    pub async fn connect(
+    async fn inner_connect(
         admin_ws: &mut AdminWebsocket,
         keystore: MetaLairClient,
         app_id: String,

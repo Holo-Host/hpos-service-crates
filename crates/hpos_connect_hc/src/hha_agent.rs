@@ -12,7 +12,6 @@ use anyhow::{anyhow, Context, Result};
 use holochain_keystore::AgentPubKeyExt;
 use holochain_types::dna::{ActionHashB64, AgentPubKey};
 use holochain_types::prelude::{FunctionName, Signature, ZomeName};
-use log::warn;
 
 // NOTE: This should really be renamed CORE_APP_AGENT, as it related to the core app and therfore connects to BOTH hha and hf
 /// Struct giving access to local instance of HHA on HPOS
@@ -42,22 +41,7 @@ impl CoreAppAgent {
         )
         .await?;
 
-        let app = match AppConnection::connect(
-            &mut admin_ws,
-            keystore.clone(),
-            core_app.id(),
-            false,
-        )
-        .await
-        {
-            Ok(conn) => conn,
-            Err(err) => {
-                warn!("Failed to connnect to existing app websocket for core happ id: {:?}... creating and connecting to a new one.  Error: {:#?}", core_app.id(), err);
-                AppConnection::connect(&mut admin_ws, keystore, core_app.id(), true)
-                    .await
-                    .context("Failed to connect to holochain's app interface")?
-            }
-        };
+        let app = AppConnection::connect(&mut admin_ws, keystore.clone(), core_app.id()).await?;
 
         Ok(Self { app })
     }
