@@ -44,9 +44,7 @@ impl AppConnection {
             Ok(c) => Ok(c),
             Err(e) => {
                 log::warn!("Failed to connnect to existing app websocket for core happ id: {:?}... creating and connecting to a new one.  Error: {:#?}", app_id, e);
-                Self::inner_connect(admin_ws, keystore, app_id, true)
-                    .await
-                    .context("Failed to connect to holochain's app interface")
+                Self::inner_connect(admin_ws, keystore, app_id, true).await
             }
         }
     }
