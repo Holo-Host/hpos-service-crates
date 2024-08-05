@@ -107,14 +107,13 @@ impl HbsClient {
             timestamp,
             pub_key,
         };
-        trace!("payload: {:?}", payload);
+        trace!("HBS `holo-client` payload: {:?}", payload);
 
         // Msgpack encodes payload
         let encoded_payload = ExternIO::encode(&payload)?;
 
         // Signs encoded bytes
         let signature = self.keys.sign(encoded_payload).await?;
-        trace!("signature: {:?}", signature);
 
         let mut response = self
             .call_holo_client(payload.clone(), signature.clone())
