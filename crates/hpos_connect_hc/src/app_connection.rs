@@ -41,27 +41,31 @@ impl AppConnection {
         admin_ws: &mut AdminWebsocket,
         keystore: MetaLairClient,
         app_id: String,
-        force_new_interface: bool,
     ) -> Result<Self> {
-        let app_interface = if !force_new_interface {
-            let attached_app_interfaces = admin_ws
-                .list_app_interfaces()
-                .await
-                .context("failed to start fetch app interfaces during app connection setup")?;
-
-            attached_app_interfaces.into_iter().find(|a| {
-                a.installed_app_id.is_some() && a.installed_app_id.to_owned().unwrap() == app_id
-            })
-        } else {
-            None
-        };
+        let attached_app_interfaces = admin_ws
+            .list_app_interfaces()
+            .await
+            .context("failed to start fetch app interfaces during app connection setup")?;
+        let app_interface = attached_app_interfaces.into_iter().find(|a| {
+            a.installed_app_id.is_some() && a.installed_app_id.to_owned().unwrap() == app_id
+        });
 
         let app_port = match app_interface {
             Some(a) => a.port,
-            None => admin_ws
-                .attach_app_interface(None, Some(app_id.clone()))
-                .await
-                .context("failed to start app interface for core app")?,
+            None => {
+                let policy = again::RetryPolicy::fixed(core::time::Duration::from_millis(100))
+                    .with_max_retries(1)
+                    .with_jitter(false);
+                policy
+                    .retry(|| async {
+                        admin_ws
+                            .clone()
+                            .attach_app_interface(None, Some(app_id.clone()))
+                            .await
+                            .context("failed to start app interface for core app")
+                    })
+                    .await?
+            }
         };
 
         let token = admin_ws.issue_app_auth_token(app_id.clone()).await?;

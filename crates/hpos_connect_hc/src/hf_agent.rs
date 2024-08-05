@@ -40,7 +40,7 @@ impl HfAgent {
             holofuel.id()
         };
 
-        let app = AppConnection::connect(&mut admin_ws, keystore, holofuel_id, false)
+        let app = AppConnection::connect(&mut admin_ws, keystore, holofuel_id)
             .await
             .context("failed to connect to holochain's app interface")?;
 
