@@ -1,4 +1,4 @@
-use anyhow::{Context, Result};
+use anyhow::{anyhow, Context, Result};
 use holochain_types::{
     dna::AgentPubKey,
     prelude::{ExternIO, FunctionName, Timestamp, ZomeName},
@@ -7,7 +7,7 @@ use hpos_hc_connect::{
     app_connection::CoreAppRoleName, hha_agent::CoreAppAgent, holo_config::Config,
     host_keys::HostKeys,
 };
-use reqwest::Client;
+use reqwest::{Client, Response};
 use serde::{Deserialize, Serialize};
 use tracing::trace;
 
@@ -116,17 +116,46 @@ impl HbsClient {
         let signature = self.keys.sign(encoded_payload).await?;
         trace!("signature: {:?}", signature);
 
+        let mut response = self
+            .call_holo_client(payload.clone(), signature.clone())
+            .await?;
+        trace!("HBS Response: {:?}", response);
+        let mut body = response.text().await?;
+
+        // 504 Gateway Timeout
+        // here we either need to retry once more or end the script
+        if body.contains("error code: 504") {
+            tracing::warn!(
+                "Gateway Timeout during `holo-client` call to HBS. Retrying once more..."
+            );
+            response = self.call_holo_client(payload, signature).await?;
+            body = response.text().await?;
+            if body.contains("error code: 504") {
+                tracing::warn!("Gateway Timeout during `holo-client` call to HBS. Exiting...");
+                return Err(anyhow!(
+                    "Failed to call holo-client and fetch host jurisdiction."
+                ));
+            }
+        }
+
+        let result: serde_json::Value = serde_json::from_str(&body)?;
+        let record: RegistrationRecord =
+            serde_json::from_value(result).context("Failed to parse response body")?;
+        Ok(record)
+    }
+
+    async fn call_holo_client(
+        &self,
+        payload: HoloClientPayload,
+        signature: String,
+    ) -> Result<Response> {
         let client = Client::new();
-        let res = client
+        Ok(client
             .post(format!("{}/auth/api/v1/holo-client", self.hbs_url))
             .json(&payload)
             .header("X-Signature", signature)
             .send()
-            .await?;
-
-        trace!("API response: {:?}", res);
-        let record = res.json().await.context("Failed to parse response body")?;
-        Ok(record)
+            .await?)
     }
 }
 
