@@ -95,7 +95,7 @@ async fn run_configure_holochain(f_r_a_k: &str, r_o_m_p: &str) {
     set_var("HOLOCHAIN_DEFAULT_PASSWORD", "pass");
 
     let device_bundle = match get_hpos_config().unwrap() {
-        Config::V2 { device_bundle, .. } => device_bundle,
+        Config::V3 { device_bundle, .. } | Config::V2 { device_bundle, .. } => device_bundle,
         _ => panic!("Unsupported Config version"),
     };
 

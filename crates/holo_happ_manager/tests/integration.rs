@@ -51,7 +51,7 @@ async fn run_happ_manager() {
     set_var("IS_INTEGRATION_TEST", "TRUE");
 
     let device_bundle = match get_hpos_config().unwrap() {
-        Config::V2 { device_bundle, .. } => device_bundle,
+        Config::V3 { device_bundle, .. } | Config::V2 { device_bundle, .. } => device_bundle,
         _ => panic!("Unsupported Config version"),
     };
 
