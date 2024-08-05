@@ -119,6 +119,7 @@ impl HbsClient {
             .call_holo_client(payload.clone(), signature.clone())
             .await?;
         debug!("HBS Response: {:?}", response);
+        response = response.error_for_status()?;
         let mut body = response.text().await?;
 
         // 504 Gateway Timeout
