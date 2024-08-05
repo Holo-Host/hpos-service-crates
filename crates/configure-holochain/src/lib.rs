@@ -131,8 +131,9 @@ pub async fn update_host_jurisdiction_if_changed(config: &Config) -> Result<()> 
     }
 
     // get current jurisdiction in hbs
-    let hbs_jurisdiction = match HbsClient::get_registration_details().await {
-        Ok(hbs_jurisdiction) => hbs_jurisdiction,
+    let hbs = HbsClient::connect().await?;
+    let hbs_jurisdiction = match hbs.get_host_registration().await {
+        Ok(r) => r.jurisdiction,
         Err(e) => {
             debug!("Failed to get jurisdiction from hbs {}", e);
             return Ok(());
