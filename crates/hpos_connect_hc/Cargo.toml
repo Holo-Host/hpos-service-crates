@@ -35,3 +35,4 @@ url2 = "0.0.6"
 holofuel_types = { workspace = true }
 chrono = "0.4.19"
 const_env = "0.1"
+log = "0.4.17"
