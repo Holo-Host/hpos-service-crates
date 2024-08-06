@@ -40,6 +40,7 @@ pub mod hha_agent;
 pub mod hha_types;
 pub mod holo_config;
 pub mod holofuel_types;
+pub mod host_keys;
 pub mod hpos_agent;
 pub mod hpos_membrane_proof;
 pub mod sl_utils;
