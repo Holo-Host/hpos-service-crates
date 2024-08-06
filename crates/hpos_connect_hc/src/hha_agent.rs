@@ -43,7 +43,7 @@ impl CoreAppAgent {
 
         let app = AppConnection::connect(&mut admin_ws, keystore, core_app.id())
             .await
-            .context("failed to connect to holochain's app interface")?;
+            .context("Failed to connect to holochain's app interface")?;
 
         Ok(Self { app })
     }

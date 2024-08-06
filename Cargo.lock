@@ -2322,6 +2322,7 @@ dependencies = [
  "isahc",
  "lair_keystore_api",
  "lazy_static",
+ "log",
  "mr_bundle",
  "reqwest",
  "rmp-serde",
