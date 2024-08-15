@@ -7,7 +7,7 @@ use hpos_hc_connect::{
 pub async fn get() -> Result<()> {
     let mut agent = HfAgent::spawn(None).await?;
 
-    let txs: Pending = agent
+    let txs: Pending = match agent
         .app
         .zome_call_typed(
             CoreAppRoleName::Holofuel.into(),
@@ -15,7 +15,14 @@ pub async fn get() -> Result<()> {
             FunctionName::from("get_pending_transactions"),
             (),
         )
-        .await?;
+        .await
+    {
+        Ok(txs) => txs,
+        Err(e) => {
+            println!("Error: {:?}", e);
+            return Ok(());
+        }
+    };
 
     println!("===================");
     println!("Your Pending List is: ");

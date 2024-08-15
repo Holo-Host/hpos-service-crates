@@ -5,6 +5,7 @@ pub use hpos_hc_connect::{
     utils::{download_file, extract_zip},
 };
 use hpos_hc_connect::{hpos_agent::Agent, hpos_membrane_proof};
+use std::collections::HashMap;
 use std::sync::Arc;
 use tracing::{debug, info, instrument, warn};
 pub mod jurisdictions;
@@ -64,7 +65,7 @@ pub async fn install_happs(happ_file: &HappsFile, config: &Config) -> Result<()>
                     .await?;
 
             if let Err(err) = admin_websocket
-                .install_and_activate_app(happ, mem_proof_vec, agent.clone())
+                .install_and_activate_app(happ, Some(mem_proof_vec), agent.clone(), HashMap::new())
                 .await
             {
                 if err.to_string().contains("AppAlreadyInstalled") {
@@ -88,7 +89,9 @@ pub async fn install_happs(happ_file: &HappsFile, config: &Config) -> Result<()>
         let installed_app_id = app.to_string();
         if !utils::keep_app_active(&installed_app_id, happs_to_keep.clone()) {
             info!("deactivating app {}", &installed_app_id);
-            admin_websocket.uninstall_app(&installed_app_id).await?;
+            admin_websocket
+                .uninstall_app(&installed_app_id, false)
+                .await?;
         }
     }
 
