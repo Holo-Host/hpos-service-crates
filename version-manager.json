@@ -2,7 +2,7 @@
   "holochain_rev": "holochain-0.4.0-dev.18",
   "holochain_types": "0.4.0-dev.18",
   "holofuel_types": "0.5.12",
-  "holochain_keystore": "0.4.0-dev.18",
+  "holochain_keystore": "0.4.0-dev.16",
   "holochain_conductor_api": "0.4.0-dev.18",
   "holochain_websocket": "0.4.0-dev.18",
   "lair_keystore_api": "0.4.5",
