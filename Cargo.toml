@@ -1,4 +1,5 @@
 [workspace]
+resolver = "2"
 
 members = [
   "crates/configure-holochain",
@@ -15,16 +16,16 @@ members = [
 hpos-config-core = { git = "https://github.com/Holo-Host/hpos-config", rev = "86411bdaabe7061a4b150d36c062fddc2c6c74cc" }
 hpos-config-seed-bundle-explorer ={ git = "https://github.com/Holo-Host/hpos-config", rev = "86411bdaabe7061a4b150d36c062fddc2c6c74cc" }
 ed25519-dalek = "2.1.1"
-holochain_keystore = "0.4.0-dev.11"
-holochain_types = { version = "0.4.0-dev.11", features = ["chc"] }
-holochain_conductor_api = "0.4.0-dev.11"
+holochain_keystore = "0.4.0-dev.16"
+holochain_types = { version = "0.4.0-dev.18", features = ["chc"] }
+holochain_conductor_api = "0.4.0-dev.18"
 lair_keystore_api = "0.4.5"
-holochain_websocket = "0.4.0-dev.11"
-holofuel_types = "0.5.11"
+holochain_websocket = "0.4.0-dev.18"
+holofuel_types = "0.5.12"
 sodoken = "0.0.11"
-serde = { version = "1.0", features = ["derive", "rc"] } # { version = "1.0.193", features = ["derive"] }
+serde = { version = "1.0", features = ["derive", "rc"] } 
 rmp-serde = "1.1.1"
-mr_bundle = { version = "0.4.0-dev.4" }
+mr_bundle = { version = "0.4.0-dev.5" }
 reqwest = { version = "0.12.4", features = ["json"]}
 
 [profile.dev]
