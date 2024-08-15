@@ -18,7 +18,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout sources
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
       - name: Restore cache
         uses: actions/cache@v2
@@ -55,16 +55,16 @@ jobs:
           remove-android: "true"
           remove-haskell: "true"
       - name: Checkout sources
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
       - name: Use Nix
-        uses: cachix/install-nix-action@v18
+        uses: cachix/install-nix-action@v27
         with:
           install_url: https://releases.nixos.org/nix/nix-2.12.0/install
       - name: ⚡ Nix Cache
-        uses: cachix/cachix-action@v10
+        uses: cachix/cachix-action@v14
         with:
-          name: holo-host-ci
-          authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
+          name: holochain-ci
+
       - name: Restore cache
         uses: actions/cache@v2
         with:
