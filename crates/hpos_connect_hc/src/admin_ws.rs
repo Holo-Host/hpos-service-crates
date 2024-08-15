@@ -2,7 +2,6 @@ use crate::utils::WsPollRecv;
 
 use super::holo_config::Happ;
 use super::hpos_agent::Agent;
-use super::hpos_membrane_proof::MembraneProofs;
 use anyhow::{anyhow, Context, Result};
 use holochain_conductor_api::{
     AdminRequest, AdminResponse, AppAuthenticationToken, AppAuthenticationTokenIssued, AppInfo,
@@ -11,10 +10,11 @@ use holochain_conductor_api::{
 use holochain_types::{
     app::{DeleteCloneCellPayload, InstallAppPayload, InstalledAppId},
     dna::AgentPubKey,
+    prelude::{CellId, SerializedBytes},
     websocket::AllowedOrigins,
 };
 use holochain_websocket::{connect, ConnectRequest, WebsocketConfig, WebsocketSender};
-use std::{env, net::ToSocketAddrs, sync::Arc};
+use std::{collections::HashMap, env, net::ToSocketAddrs, sync::Arc};
 use tracing::{debug, info, instrument, trace};
 
 #[allow(dead_code)]
@@ -114,8 +114,9 @@ impl AdminWebsocket {
     pub async fn install_and_activate_app(
         &mut self,
         app: &Happ,
-        membrane_proofs: MembraneProofs,
+        membrane_proofs: Option<HashMap<String, Arc<SerializedBytes>>>,
         agent: Agent,
+        existing_cells: HashMap<String, CellId>,
     ) -> Result<()> {
         let source = app.source().await?;
 
@@ -134,6 +135,7 @@ impl AdminWebsocket {
                 membrane_proofs,
                 network_seed: Some(id),
                 ignore_genesis_failure: false,
+                existing_cells,
             }
         } else {
             debug!("using default network_seed to install");
@@ -144,6 +146,7 @@ impl AdminWebsocket {
                 membrane_proofs,
                 network_seed: None,
                 ignore_genesis_failure: false,
+                existing_cells,
             }
         };
 
@@ -173,9 +176,14 @@ impl AdminWebsocket {
     }
 
     #[instrument(skip(self), err)]
-    pub async fn uninstall_app(&mut self, installed_app_id: &str) -> Result<AdminResponse> {
+    pub async fn uninstall_app(
+        &mut self,
+        installed_app_id: &str,
+        force: bool,
+    ) -> Result<AdminResponse> {
         let msg = AdminRequest::UninstallApp {
             installed_app_id: installed_app_id.to_string(),
+            force,
         };
         self.send(msg, None).await
     }
