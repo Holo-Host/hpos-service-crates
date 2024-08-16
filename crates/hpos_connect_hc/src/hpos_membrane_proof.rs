@@ -45,8 +45,6 @@ struct RegistrationRequest {
     mem_proof: String,
 }
 
-pub type MembraneProofs = HashMap<String, Arc<SerializedBytes>>;
-
 lazy_static! {
     static ref CLIENT: Client = Client::new();
 }
@@ -115,7 +113,10 @@ pub async fn get_mem_proof(admin: Admin) -> Result<MembraneProof> {
 /// Currently creates memproofs only for core-app
 /// otherwise returns empty HashMap
 /// Returns HashMap<dna_name, memproof_bytes>
-pub async fn create_vec_for_happ(happ: &Happ, mem_proof: MembraneProof) -> Result<MembraneProofs> {
+pub async fn create_vec_for_happ(
+    happ: &Happ,
+    mem_proof: MembraneProof,
+) -> Result<HashMap<String, Arc<SerializedBytes>>> {
     let happ_id = happ.id();
     let mut mem_proofs_vec = HashMap::new();
     if happ_id.contains("core-app") {
@@ -142,7 +143,7 @@ pub async fn create_vec_for_happ(happ: &Happ, mem_proof: MembraneProof) -> Resul
 }
 
 /// returns core-app specic vec of memproofs for each core-app DNA
-fn add_core_app(mem_proof: MembraneProof) -> Result<MembraneProofs> {
+fn add_core_app(mem_proof: MembraneProof) -> Result<HashMap<String, Arc<SerializedBytes>>> {
     let mut vec = HashMap::new();
     vec.insert("core-app".to_string(), mem_proof.clone());
     vec.insert("holofuel".to_string(), mem_proof);
@@ -150,7 +151,7 @@ fn add_core_app(mem_proof: MembraneProof) -> Result<MembraneProofs> {
 }
 
 /// returns holofuel specic vec of memproofs for each holofuel DNA
-fn add_holofuel(mem_proof: MembraneProof) -> Result<MembraneProofs> {
+fn add_holofuel(mem_proof: MembraneProof) -> Result<HashMap<String, Arc<SerializedBytes>>> {
     let mut vec = HashMap::new();
     vec.insert("holofuel".to_string(), mem_proof);
     Ok(vec)
