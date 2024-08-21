@@ -75,6 +75,15 @@ async fn populate_admin(admin_websocket: AdminWebsocket) -> Result<Admin> {
     let key = get_agent_key(admin_websocket, &config).await?;
 
     match config {
+        Config::V3 {
+            registration_code,
+            settings,
+            ..
+        } => Ok(Admin {
+            key,
+            registration_code,
+            email: settings.admin.email,
+        }),
         Config::V2 {
             registration_code,
             settings,
