@@ -8,8 +8,11 @@ use hpos_hc_connect::{hpos_agent::Agent, hpos_membrane_proof};
 use std::collections::HashMap;
 use std::sync::Arc;
 use tracing::{debug, info, instrument, warn};
-pub mod jurisdictions;
+
 mod utils;
+
+pub mod jurisdictions;
+use jurisdictions::HbsClient;
 
 #[instrument(err, skip(config))]
 pub async fn run(config: Config) -> Result<()> {
@@ -131,10 +134,11 @@ pub async fn update_host_jurisdiction_if_changed(config: &Config) -> Result<()> 
     }
 
     // get current jurisdiction in hbs
-    let hbs_jurisdiction = match jurisdictions::get_jurisdiction().await {
-        Ok(hbs_jurisdiction) => hbs_jurisdiction,
+    let hbs = HbsClient::connect().await?;
+    let hbs_jurisdiction = match hbs.get_host_registration().await {
+        Ok(r) => r.jurisdiction,
         Err(e) => {
-            debug!("Failed to get jurisdiction from hbs {}", e);
+            debug!("Failed to get jurisdiction from hbs. Error: {}", e);
             return Ok(());
         }
     };
