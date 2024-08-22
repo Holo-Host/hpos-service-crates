@@ -13,8 +13,8 @@ members = [
 ]
 
 [workspace.dependencies]
-hpos-config-core = { git = "https://github.com/Holo-Host/hpos-config", rev = "86411bdaabe7061a4b150d36c062fddc2c6c74cc" }
-hpos-config-seed-bundle-explorer ={ git = "https://github.com/Holo-Host/hpos-config", rev = "86411bdaabe7061a4b150d36c062fddc2c6c74cc" }
+hpos-config-core = { git = "https://github.com/Holo-Host/hpos-config", rev = "77d740c83a02e322e670e360eb450076b593b328" }
+hpos-config-seed-bundle-explorer ={ git = "https://github.com/Holo-Host/hpos-config", rev = "77d740c83a02e322e670e360eb450076b593b328" }
 ed25519-dalek = "2.1.1"
 holochain_keystore = "0.4.0-dev.16"
 holochain_types = { version = "0.4.0-dev.18", features = ["chc"] }
