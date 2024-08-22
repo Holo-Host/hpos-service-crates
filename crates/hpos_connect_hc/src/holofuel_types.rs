@@ -76,13 +76,20 @@ pub enum TransactionDirection {
 
 #[derive(Serialize, Deserialize, Debug, SerializedBytes)]
 pub enum TransactionStatus {
-    Actionable, // tx that is create by 1st instance and waiting for counterparty to complete the tx
-    Pending,    // tx that was created by 1st instance and second instance
-    Accepted,   // tx that was accepted by counterparty but has yet to complete countersigning.
+    Actionable, // tx that was created by 1st instance and is awaiting acceptance by the counterparty to complete the tx
+    Pending, // tx that was created by 1st instance and second instance (reciprocal state is either "actionable" or "awaiting countersigning")
+    Accepted(AcceptedBy), // tx that was accepted by the counterparty, but has yet to complete countersigning.
     Completed,
     Declined,
     Expired,
 }
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub enum AcceptedBy {
+    ByMe,           // In this scenario, my agent is the counteryparty of the original tx
+    ByCounterParty, // In this scenario, my agent is the author of the original tx
+}
+
 
 #[derive(Serialize, Deserialize, Debug, SerializedBytes)]
 pub struct Profile {
