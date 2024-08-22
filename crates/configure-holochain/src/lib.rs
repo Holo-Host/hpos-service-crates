@@ -8,8 +8,11 @@ use hpos_hc_connect::{hpos_agent::Agent, hpos_membrane_proof};
 use std::collections::HashMap;
 use std::sync::Arc;
 use tracing::{debug, info, instrument, warn};
-pub mod jurisdictions;
+
 mod utils;
+
+pub mod jurisdictions;
+use jurisdictions::HbsClient;
 
 #[instrument(err, skip(config))]
 pub async fn run(config: Config) -> Result<()> {
@@ -19,7 +22,13 @@ pub async fn run(config: Config) -> Result<()> {
         .context("failed to load hApps YAML config")?;
     install_happs(&happ_file, &config).await?;
 
-    update_host_jurisdiction_if_changed(&config).await?;
+    if let Err(e) = update_host_jurisdiction_if_changed(&config).await {
+        warn!(
+            "Note: This is only needed for holoports. Failed to update jurisdiction.  Error: {}",
+            e
+        );
+    }
+
     Ok(())
 }
 
@@ -131,13 +140,8 @@ pub async fn update_host_jurisdiction_if_changed(config: &Config) -> Result<()> 
     }
 
     // get current jurisdiction in hbs
-    let hbs_jurisdiction = match jurisdictions::get_jurisdiction().await {
-        Ok(hbs_jurisdiction) => hbs_jurisdiction,
-        Err(e) => {
-            debug!("Failed to get jurisdiction from hbs {}", e);
-            return Ok(());
-        }
-    };
+    let hbs = HbsClient::connect().await?;
+    let hbs_jurisdiction = hbs.get_host_registration().await?.jurisdiction;
 
     jurisdictions::update_jurisdiction_if_changed(config, hbs_jurisdiction).await
 }

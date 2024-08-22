@@ -213,6 +213,15 @@ impl Happ {
             .await?;
             let key = AgentPubKey::from_raw_32(pub_key.to_bytes().to_vec());
             match config {
+                hpos_config_core::Config::V3 {
+                    registration_code,
+                    settings,
+                    ..
+                } => Ok(Some(Admin {
+                    key,
+                    registration_code,
+                    email: settings.admin.email,
+                })),
                 hpos_config_core::Config::V2 {
                     registration_code,
                     settings,

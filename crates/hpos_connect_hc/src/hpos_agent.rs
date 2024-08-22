@@ -1,9 +1,11 @@
 use super::admin_ws::AdminWebsocket;
 use super::hpos_membrane_proof::{delete_mem_proof_file, get_mem_proof};
 use anyhow::{Context, Result};
+use ed25519_dalek::*;
 use holochain_types::dna::AgentPubKey;
 use holochain_types::prelude::MembraneProof;
 use hpos_config_core::Config;
+use hpos_config_seed_bundle_explorer::unlock;
 use std::{env, fs, fs::File, io::prelude::*};
 use tracing::{info, instrument};
 
@@ -34,6 +36,29 @@ impl Agent {
     }
 }
 
+pub async fn get_signing_admin() -> Result<(SigningKey, String)> {
+    let password = bundle_default_password()?;
+    let config_path = env::var("HPOS_CONFIG_PATH")
+        .context("Failed to read HPOS_CONFIG_PATH. Is it set in env?")?;
+    match get_hpos_config()? {
+        Config::V2 {
+            device_bundle,
+            settings,
+            ..
+        } => {
+            // take in password
+            let signing_key = unlock(&device_bundle, Some(password))
+                .await
+                .context(format!(
+                    "unable to unlock the device bundle from {}",
+                    &config_path
+                ))?;
+            Ok((signing_key, settings.admin.email))
+        }
+        _ => Err(AuthError::ConfigVersionError.into()),
+    }
+}
+
 #[derive(thiserror::Error, Debug)]
 pub enum AuthError {
     #[error("Error: Invalid config version used. please upgrade to hpos-config v2")]
@@ -50,6 +75,15 @@ async fn populate_admin(admin_websocket: AdminWebsocket) -> Result<Admin> {
     let key = get_agent_key(admin_websocket, &config).await?;
 
     match config {
+        Config::V3 {
+            registration_code,
+            settings,
+            ..
+        } => Ok(Admin {
+            key,
+            registration_code,
+            email: settings.admin.email,
+        }),
         Config::V2 {
             registration_code,
             settings,
