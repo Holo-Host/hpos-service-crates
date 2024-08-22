@@ -22,7 +22,7 @@ pub async fn run(config: Config) -> Result<()> {
         .context("failed to load hApps YAML config")?;
     install_happs(&happ_file, &config).await?;
 
-    update_host_jurisdiction_if_changed(&config).await?;
+    // update_host_jurisdiction_if_changed(&config).await?;
     Ok(())
 }
 
