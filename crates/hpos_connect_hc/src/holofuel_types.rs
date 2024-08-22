@@ -90,7 +90,6 @@ pub enum AcceptedBy {
     ByCounterParty, // In this scenario, my agent is the author of the original tx
 }
 
-
 #[derive(Serialize, Deserialize, Debug, SerializedBytes)]
 pub struct Profile {
     pub agent_address: AgentPubKeyB64,
