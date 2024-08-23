@@ -129,7 +129,7 @@ impl AdminWebsocket {
         let payload = if let Ok(id) = env::var("DEV_UID_OVERRIDE") {
             debug!("using network_seed to install: {}", id);
             InstallAppPayload {
-                agent_key,
+                agent_key: Some(agent_key),
                 installed_app_id: Some(app.id()),
                 source,
                 membrane_proofs,
@@ -140,7 +140,7 @@ impl AdminWebsocket {
         } else {
             debug!("using default network_seed to install");
             InstallAppPayload {
-                agent_key,
+                agent_key: Some(agent_key),
                 installed_app_id: Some(app.id()),
                 source,
                 membrane_proofs,
