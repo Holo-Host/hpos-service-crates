@@ -92,9 +92,15 @@ fn write_holochain_config(
     struct HolochainConfig {
         data_root_path: PathBuf,
         keystore: KeystoreConfig,
+        dpki: DpkiConfig,
         admin_interfaces: Option<Vec<AdminInterfaceConfig>>,
     }
-
+    #[derive(Serialize)]
+    pub struct DpkiConfig {
+        pub dna_path: Option<PathBuf>,
+        pub device_seed_lair_tag: String,
+        pub no_dpki: bool,
+    }
     #[derive(Serialize)]
     #[serde(tag = "type", rename_all = "snake_case")]
     enum KeystoreConfig {
@@ -116,6 +122,12 @@ fn write_holochain_config(
         data_root_path: "./databases".into(),
         keystore: KeystoreConfig::LairServer {
             connection_url: lair_connection_url,
+        },
+        // Holo does not use DPKI, when we start using it this should be updated
+        dpki: DpkiConfig {
+            dna_path: None,
+            device_seed_lair_tag: "dont-use-dpki".to_string(),
+            no_dpki: true,
         },
         admin_interfaces: Some(vec![AdminInterfaceConfig {
             driver: AdminInterfaceDriver::Websocket {

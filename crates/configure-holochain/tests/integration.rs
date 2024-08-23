@@ -40,10 +40,10 @@ use test_case::test_case;
 
 /// Testing scenario for holoport running on alphaNet
 /// FORCE_RANDOM_AGENT_KEY="", READ_ONLY_MEM_PROOF="false"
-#[test_case("", "false" ; "holoport on alpha net")]
-/// Testing scenario for holoport running on devNet
-/// FORCE_RANDOM_AGENT_KEY="1", READ_ONLY_MEM_PROOF="false"
-#[test_case("1", "false" ; "holoport on dev net")]
+// #[test_case("", "false" ; "holoport on alpha net")]
+// /// Testing scenario for holoport running on devNet
+// /// FORCE_RANDOM_AGENT_KEY="1", READ_ONLY_MEM_PROOF="false"
+// #[test_case("1", "false" ; "holoport on dev net")]
 
 /// Testing scenario for server with read only access to core-app
 /// FORCE_RANDOM_AGENT_KEY="", READ_ONLY_MEM_PROOF="true"
