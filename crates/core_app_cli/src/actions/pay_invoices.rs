@@ -48,7 +48,7 @@ pub async fn get() -> Result<()> {
         println!("Accepted tx: {:?}", hash);
         println!("Trying to complete, if this fails it will be completed by your schedular");
 
-        let _: EntryHashB64 = agent
+        let _ = agent
             .app
             .zome_call_typed(
                 CoreAppRoleName::Holofuel.into(),
