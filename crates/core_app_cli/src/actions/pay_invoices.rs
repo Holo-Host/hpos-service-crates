@@ -5,7 +5,7 @@ use holochain_types::prelude::{
 };
 use hpos_hc_connect::app_connection::CoreAppRoleName;
 use hpos_hc_connect::hha_agent::CoreAppAgent;
-use hpos_hc_connect::holofuel_types::Pending;
+use hpos_hc_connect::holofuel_types::{CounterSigningResponse, Pending};
 use serde::{Deserialize, Serialize};
 
 pub async fn get() -> Result<()> {
@@ -48,7 +48,7 @@ pub async fn get() -> Result<()> {
         println!("Accepted tx: {:?}", hash);
         println!("Trying to complete, if this fails it will be completed by your schedular");
 
-        let _: EntryHashB64 = agent
+        let countersigning_response: CounterSigningResponse = agent
             .app
             .zome_call_typed(
                 CoreAppRoleName::Holofuel.into(),
@@ -57,6 +57,8 @@ pub async fn get() -> Result<()> {
                 hash,
             )
             .await?;
+
+        println!("CounterSigningResponse {:?}", countersigning_response);
     } else {
         println!("===================");
         println!("No pending invoices");
