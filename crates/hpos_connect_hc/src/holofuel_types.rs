@@ -39,6 +39,14 @@ pub struct Actionable {
     pub promise_actionable: Vec<Transaction>,
 }
 
+#[derive(Serialize, Deserialize, SerializedBytes, Debug, Clone, PartialEq)]
+pub enum CounterSigningResponse {
+    Successful(EntryHashB64),
+    UnableToReachCounterparty(String),
+    FeeDropOff(String),
+    TimeDelayWait(String),
+}
+
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, SerializedBytes)]
 #[serde(rename_all = "snake_case")]
 pub enum POS {
