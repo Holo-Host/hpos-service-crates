@@ -5,7 +5,7 @@ use holochain_types::prelude::{
 };
 use hpos_hc_connect::app_connection::CoreAppRoleName;
 use hpos_hc_connect::hha_agent::CoreAppAgent;
-use hpos_hc_connect::holofuel_types::{Pending, CounterSigningResponse} ;
+use hpos_hc_connect::holofuel_types::{CounterSigningResponse, Pending};
 use serde::{Deserialize, Serialize};
 
 pub async fn get() -> Result<()> {
@@ -59,7 +59,6 @@ pub async fn get() -> Result<()> {
             .await?;
 
         println!("CounterSigningResponse {:?}", countersigning_response);
-
     } else {
         println!("===================");
         println!("No pending invoices");
