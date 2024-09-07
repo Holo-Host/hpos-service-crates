@@ -52,12 +52,9 @@ fn read_lair_config() -> Result<LairServerConfigInner> {
 }
 
 fn default_lair_dir() -> Result<String> {
-    let working_dir = env::var("HOLOCHAIN_WORKING_DIR")
-        .context("Failed to read HOLOCHAIN_WORKING_DIR. Is it set in env?")?;
-    Ok(format!(
-        "{}/lair-keystore/lair-keystore-config.yaml",
-        working_dir
-    ))
+    let working_dir = env::var("LAIR_WORKING_DIR")
+        .context("Failed to read LAIR_WORKING_DIR. Is it set in env?")?;
+    Ok(format!("{}/lair-keystore-config.yaml", working_dir))
 }
 
 #[derive(Debug, Clone, StructOpt)]
