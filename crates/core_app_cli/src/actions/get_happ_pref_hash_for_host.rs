@@ -28,6 +28,8 @@ pub async fn get(happ_id: String, host_id: String) -> Result<()> {
             println!("Happ Preference Hash: {:#?}", p);
             println!("===================");
         }
+    } else {
+        println!("Error: No preferences found for host {:?}", host_id)
     }
 
     Ok(())
