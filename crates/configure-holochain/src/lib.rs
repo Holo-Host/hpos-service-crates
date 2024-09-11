@@ -80,6 +80,15 @@ pub async fn install_happs(happ_file: &HappsFile, config: &Config) -> Result<()>
                 if err.to_string().contains("AppAlreadyInstalled") {
                     info!("app {} was previously installed, re-activating", &happ.id());
                     admin_websocket.activate_app(happ).await?;
+                } else if err.to_string().contains("CellAlreadyExists") {
+                    // TODO / Question - should we do any extra measure of verification to check that the "already exisiting cells"
+                    // are iindeed the ones that we have connected to an older version of the happ?
+                    warn!("cells for app {} already exist", &happ.id());
+                    info!(
+                        "activating new app {} that uses already existing cells",
+                        &happ.id()
+                    );
+                    admin_websocket.activate_app(happ).await?;
                 } else {
                     return Err(err);
                 }
