@@ -16,9 +16,12 @@ pub enum Opt {
     /// Pay your first pending invoice
     #[structopt(name = "pay")]
     PayInvoice,
+    /// List all happs registered in hha
+    #[structopt(name = "all-happs")]
+    AllHapps,
     /// List all happs published by me
     #[structopt(name = "my-happs")]
-    Happs,
+    HappsByMe,
     /// List all happs by provided publisher
     #[structopt(name = "publisher-happs")]
     GetHappsForPublisher { publisher_pubkey: String },
@@ -63,7 +66,8 @@ impl Opt {
             Opt::Ledger => core_app_cli::ledger::get().await?,
             Opt::Transactions => core_app_cli::list_all_tx::get().await?,
             Opt::PayInvoice => core_app_cli::pay_invoices::get().await?,
-            Opt::Happs => core_app_cli::list_all_my_happs::get().await?,
+            Opt::AllHapps => core_app_cli::list_all_happs::get().await?,
+            Opt::HappsByMe => core_app_cli::list_all_my_happs::get().await?,
             Opt::Hosts { happ_id } => core_app_cli::get_happ_hosts::get(happ_id).await?,
             Opt::GetPreferenceByHash { pref_hash } => {
                 core_app_cli::get_specific_happ_prefs::get(pref_hash).await?
@@ -78,7 +82,7 @@ impl Opt {
                 core_app_cli::enable_happ_for_host::get(happ_id, host_id).await?
             }
             Opt::GetHappPrefHashForHost { happ_id, host_id } => {
-                core_app_cli::get_happ_pref_hash_for_host::get(happ_id, host_id).await?
+                core_app_cli::get_happ_pref_for_host::get(happ_id, host_id).await?
             }
             Opt::SetHappPreferences {
                 happ_id,
@@ -89,7 +93,7 @@ impl Opt {
                 max_time_before_invoice_sec,
                 max_time_before_invoice_ms,
             } => {
-                core_app_cli::set_host_happ_prefs::get(
+                core_app_cli::set_happ_prefs::get(
                     happ_id,
                     price_compute,
                     price_bandwidth,
