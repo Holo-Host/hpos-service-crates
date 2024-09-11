@@ -80,9 +80,12 @@ pub async fn install_happs(happ_file: &HappsFile, config: &Config) -> Result<()>
                 if err.to_string().contains("AppAlreadyInstalled") {
                     info!("app {} was previously installed, re-activating", &happ.id());
                     admin_websocket.activate_app(happ).await?;
-                } else if err.to_string().contains("CellAlreadyExists") {
-                    // TODO / Question - should we do any extra measure of verification to check that the "already exisiting cells"
-                    // are iindeed the ones that we have connected to an older version of the happ?
+                } else if err.to_string().contains("CellAlreadyExists")
+                    && (happ.id().contains("core-app") || happ.id().contains("servicelogger"))
+                {
+                    // Note: We will only ever encouter the issue of a happ's `installed-app-id` being updated alongside changes that *do not* cause a DNA integrity zome change
+                    // as only the core-app and servicelogger use the version number of the happ in their id, and otherwise hosted happs are forced to have their id as their associated action hash from hha.
+                    // TODO: Revisit this exception with team - are there any blindspots of making this exception?
                     warn!("cells for app {} already exist", &happ.id());
                     info!(
                         "activating new app {} that uses already existing cells",
