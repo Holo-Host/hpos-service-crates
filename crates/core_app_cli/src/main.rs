@@ -25,7 +25,7 @@ pub enum Opt {
     /// List all happs by provided publisher
     #[structopt(name = "publisher-happs")]
     GetHappsForPublisher { publisher_pubkey: String },
-    /// List all happs by provided publisher
+    /// List the jurisdiction for the provided agent
     #[structopt(name = "jurisdiction")]
     GetAgentsJurisdiction { agent_pubkey: String },
     /// List all hosts for a happ by `happ_id``
