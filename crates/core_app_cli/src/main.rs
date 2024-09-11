@@ -16,12 +16,18 @@ pub enum Opt {
     /// Pay your first pending invoice
     #[structopt(name = "pay")]
     PayInvoice,
+    /// List all happs registered in hha
+    #[structopt(name = "all-happs")]
+    AllHapps,
     /// List all happs published by me
     #[structopt(name = "my-happs")]
-    Happs,
+    HappsByMe,
     /// List all happs by provided publisher
     #[structopt(name = "publisher-happs")]
     GetHappsForPublisher { publisher_pubkey: String },
+    /// List the jurisdiction for the provided agent
+    #[structopt(name = "jurisdiction")]
+    GetAgentsJurisdiction { agent_pubkey: String },
     /// List all hosts for a happ by `happ_id``
     #[structopt(name = "hosts")]
     Hosts { happ_id: String },
@@ -60,13 +66,17 @@ impl Opt {
             Opt::Ledger => core_app_cli::ledger::get().await?,
             Opt::Transactions => core_app_cli::list_all_tx::get().await?,
             Opt::PayInvoice => core_app_cli::pay_invoices::get().await?,
-            Opt::Happs => core_app_cli::list_all_my_happs::get().await?,
+            Opt::AllHapps => core_app_cli::list_all_happs::get().await?,
+            Opt::HappsByMe => core_app_cli::list_all_my_happs::get().await?,
             Opt::Hosts { happ_id } => core_app_cli::get_happ_hosts::get(happ_id).await?,
             Opt::GetPreferenceByHash { pref_hash } => {
                 core_app_cli::get_specific_happ_prefs::get(pref_hash).await?
             }
             Opt::GetHappsForPublisher { publisher_pubkey } => {
                 core_app_cli::get_all_happs_by::get(publisher_pubkey).await?
+            }
+            Opt::GetAgentsJurisdiction { agent_pubkey } => {
+                core_app_cli::get_agents_jurisdiction::get(agent_pubkey).await?
             }
             Opt::EnableHappForHost { happ_id, host_id } => {
                 core_app_cli::enable_happ_for_host::get(happ_id, host_id).await?
