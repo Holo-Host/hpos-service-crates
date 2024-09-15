@@ -76,7 +76,7 @@ pub async fn install_happs(happ_file: &HappsFile, config: &Config) -> Result<()>
             if let Err(err) = admin_websocket
                 .install_and_activate_app(
                     happ,
-                    Some(mem_proof_vec),
+                    Some(mem_proof_vec.clone()),
                     agent.clone(),
                     HashMap::new(),
                     false,
