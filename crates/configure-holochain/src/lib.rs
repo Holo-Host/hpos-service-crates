@@ -74,7 +74,13 @@ pub async fn install_happs(happ_file: &HappsFile, config: &Config) -> Result<()>
                     .await?;
 
             if let Err(err) = admin_websocket
-                .install_and_activate_app(happ, Some(mem_proof_vec), agent.clone(), HashMap::new())
+                .install_and_activate_app(
+                    happ,
+                    Some(mem_proof_vec),
+                    agent.clone(),
+                    HashMap::new(),
+                    false,
+                )
                 .await
             {
                 if err.to_string().contains("AppAlreadyInstalled") {
@@ -91,7 +97,15 @@ pub async fn install_happs(happ_file: &HappsFile, config: &Config) -> Result<()>
                         "activating new app {} that uses already existing cells",
                         &happ.id()
                     );
-                    admin_websocket.activate_app(happ).await?;
+                    return admin_websocket
+                        .install_and_activate_app(
+                            happ,
+                            Some(mem_proof_vec),
+                            agent.clone(),
+                            HashMap::new(),
+                            true,
+                        )
+                        .await;
                 } else {
                     return Err(err);
                 }
