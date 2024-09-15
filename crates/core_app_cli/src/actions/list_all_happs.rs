@@ -19,7 +19,7 @@ pub async fn get() -> Result<()> {
 
     println!("===================");
     println!("All Holo Happs: ");
-    println!("{:?}", happs);
+    println!("{:#?}", happs);
     println!("===================");
 
     Ok(())
