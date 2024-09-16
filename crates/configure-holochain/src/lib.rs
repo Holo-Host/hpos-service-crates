@@ -1,4 +1,6 @@
 use anyhow::{Context, Result};
+use holochain_conductor_api::CellInfo;
+pub use holochain_types::prelude::CellId;
 pub use hpos_hc_connect::AdminWebsocket;
 pub use hpos_hc_connect::{
     holo_config::{Config, Happ, HappsFile, MembraneProofFile, ProofPayload},
@@ -7,7 +9,7 @@ pub use hpos_hc_connect::{
 use hpos_hc_connect::{hpos_agent::Agent, hpos_membrane_proof};
 use std::collections::HashMap;
 use std::sync::Arc;
-use tracing::{debug, info, instrument, warn};
+use tracing::{debug, info, instrument, trace, warn};
 
 mod utils;
 
@@ -55,7 +57,7 @@ pub async fn install_happs(happ_file: &HappsFile, config: &Config) -> Result<()>
         admin_websocket
             .list_enabled_apps()
             .await
-            .context("failed to get installed hApps")?,
+            .context("failed to get active hApps")?,
     );
 
     let happs_to_install: Vec<&Happ> = happ_file
@@ -79,7 +81,6 @@ pub async fn install_happs(happ_file: &HappsFile, config: &Config) -> Result<()>
                     Some(mem_proof_vec.clone()),
                     agent.clone(),
                     HashMap::new(),
-                    false,
                 )
                 .await
             {
@@ -87,23 +88,76 @@ pub async fn install_happs(happ_file: &HappsFile, config: &Config) -> Result<()>
                     info!("app {} was previously installed, re-activating", &happ.id());
                     admin_websocket.activate_app(happ).await?;
                 } else if err.to_string().contains("CellAlreadyExists")
-                    && (happ.id().contains("core-app") || happ.id().contains("servicelogger"))
+                    && (happ.id().contains("core-app")
+                        || happ.id().contains("holofuel")
+                        || happ.id().contains("servicelogger"))
                 {
-                    // Note: We will only ever encouter the issue of a happ's `installed-app-id` being updated alongside changes that *do not* cause a DNA integrity zome change
-                    // as only the core-app and servicelogger use the version number of the happ in their id, and otherwise hosted happs are forced to have their id as their associated action hash from hha.
                     // TODO: Revisit this exception with team - are there any blindspots of making this exception?
+                    // Note: We currently will only encounter the case of a happ's `installed-app-id` being updated alongside changes that *do not* cause a DNA integrity zome change
+                    // for our core-app, holofuel, and root servicelogger instance as they are the only apps to use the version number of the happ in their id;
+                    // whereas all other hosted happs are forced to have their installed app id be their hha happ id
+                    // ...and currently there is no way to update ONLY the coordinator zome without creating a new happ.
+                    // ^^^^ TODO: Make it possible to update ONLY the coordinator for hosted happs too / add to cloud console flow.
                     warn!("cells for app {} already exist", &happ.id());
-                    info!(
-                        "activating new app {} that uses already existing cells",
-                        &happ.id()
+
+                    // // TEMPORARY HACK:
+                    // // Until we have an integrated holochain solution to only upating the conductor zome,
+                    // // we simply will uninstall the app that shares the cells and re-attempt installation.
+                    // // This is NOT a permenant solution as it does not allow for data to persist.
+                    // info!(
+                    //     "de-activating prior app {} that uses shared cells",
+                    //     &happ.id()
+                    // );
+                    // admin_websocket
+                    //     .uninstall_app(<installed_app_id>, true)
+                    //     .await?;
+
+                    debug!("Getting a list of all installed happs");
+                    let installed_apps = Arc::new(
+                        admin_websocket
+                            .list_apps(None)
+                            .await
+                            .context("failed to get installed hApps")?,
                     );
+
+                    let get_existing_cells = move |id: &str| -> HashMap<String, CellId> {
+                        let mut cells = HashMap::new();
+                        let core_installed_app = installed_apps
+                            .iter()
+                            .find(|a| a.installed_app_id.contains(id));
+
+                        if let Some(app_info) = core_installed_app {
+                            for cell in &app_info.cell_info {
+                                let cell_role_name = cell.0.clone();
+                                let maybe_cell_info = cell
+                                    .1
+                                    .iter()
+                                    .find(|i| matches!(i, CellInfo::Provisioned(_)));
+
+                                if let Some(CellInfo::Provisioned(cell)) = maybe_cell_info {
+                                    cells.insert(cell_role_name, cell.cell_id.clone());
+                                }
+                            }
+                        };
+                        cells
+                    };
+
+                    let existing_cells = if happ.id().contains("core-app") {
+                        get_existing_cells("core-app")
+                    } else if happ.id().contains("holofuel") {
+                        get_existing_cells("holofuel")
+                    } else {
+                        get_existing_cells("servicelogger")
+                    };
+
+                    trace!("App has existing_cells : {:#?}", existing_cells);
+
                     return admin_websocket
                         .install_and_activate_app(
                             happ,
                             Some(mem_proof_vec),
                             agent.clone(),
-                            HashMap::new(),
-                            true,
+                            existing_cells,
                         )
                         .await;
                 } else {

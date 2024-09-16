@@ -117,7 +117,6 @@ impl AdminWebsocket {
         membrane_proofs: Option<HashMap<String, Arc<SerializedBytes>>>,
         agent: Agent,
         existing_cells: HashMap<String, CellId>,
-        ignore_genesis_failure: bool,
     ) -> Result<()> {
         let source = app.source().await?;
 

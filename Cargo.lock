@@ -621,6 +621,7 @@ dependencies = [
  "dotenv",
  "env_logger 0.10.2",
  "holo_happ_manager",
+ "holochain_conductor_api",
  "holochain_env_setup",
  "holochain_types",
  "hpos-config-core",
