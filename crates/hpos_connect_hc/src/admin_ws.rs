@@ -118,7 +118,8 @@ impl AdminWebsocket {
         agent: Agent,
         existing_cells: HashMap<String, CellId>,
     ) -> Result<()> {
-        let source = app.source().await?;
+        let should_use_existing_cells_provisioning = !existing_cells.is_empty();
+        let source = app.source(should_use_existing_cells_provisioning).await?;
 
         let agent_key = if let Some(admin) = &app.agent_override_details().await? {
             admin.key.clone()

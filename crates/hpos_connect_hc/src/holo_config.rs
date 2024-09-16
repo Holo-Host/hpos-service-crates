@@ -1,6 +1,6 @@
 use super::hpos_agent::{read_hpos_config, Admin};
 use anyhow::{anyhow, Context, Result};
-use holochain_types::prelude::{AgentPubKey, AppBundleSource};
+use holochain_types::prelude::{AgentPubKey, AppBundleSource, CellProvisioning};
 use holochain_types::{app::AppManifest, prelude::YamlProperties};
 use lair_keystore_api::{
     dependencies::{serde_yaml, url::Url},
@@ -165,7 +165,7 @@ impl Happ {
         }
     }
     // get the source of the happ by retrieving the happ and updating the properties if any
-    pub async fn source(&self) -> Result<AppBundleSource> {
+    pub async fn source(&self, use_exisiting_cells_provisioning: bool) -> Result<AppBundleSource> {
         let path = self.download().await?;
         let mut source = AppBundleSource::Path(path);
         if self.dnas.is_some() {
@@ -186,7 +186,12 @@ impl Happ {
                             properties =
                                 Some(YamlProperties::new(serde_yaml::from_str(&prop).unwrap()));
                         }
-                        role_manifest.dna.modifiers.properties = properties
+                        role_manifest.dna.modifiers.properties = properties;
+
+                        if use_exisiting_cells_provisioning {
+                            role_manifest.provisioning =
+                                Some(CellProvisioning::UseExisting { protected: false })
+                        }
                     }
                 }
                 source = AppBundleSource::Bundle(
@@ -199,6 +204,7 @@ impl Happ {
         }
         Ok(source)
     }
+
     // returns pub key is agent override exists
     pub async fn agent_override_details(&self) -> Result<Option<Admin>> {
         if let Some(agent_bundle_override) = &self.agent_bundle_override {
