@@ -197,6 +197,7 @@ impl Happ {
                                 Some(CellProvisioning::UseExisting { protected: false });
 
                             if let Some(cell) = exisiting_cell_map.get(&role_manifest.name) {
+                                tracing::trace!("Adding installed hash from cell : {:#?}", cell);
                                 role_manifest.dna.installed_hash =
                                     Some(cell.dna_hash().to_owned().into());
                             };
