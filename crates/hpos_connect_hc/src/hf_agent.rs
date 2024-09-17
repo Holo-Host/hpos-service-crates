@@ -23,7 +23,7 @@ impl HfAgent {
         let app_file = HappsFile::load_happ_file_from_env(config)?;
         let holofuel = app_file
             .holofuel()
-            .ok_or(anyhow!("There's no core-app defined in a happs file"))?;
+            .ok_or(anyhow!("There's no holofuel app defined in a happs file"))?;
 
         // connect to lair
         let passphrase = sodoken::BufRead::from(default_password()?.as_bytes().to_vec());

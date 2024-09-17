@@ -2,11 +2,11 @@ use anyhow::Result;
 use holochain_types::dna::AgentPubKey;
 use holochain_types::prelude::{FunctionName, ZomeName};
 use hpos_hc_connect::app_connection::CoreAppRoleName;
-use hpos_hc_connect::hf_agent::HfAgent;
+use hpos_hc_connect::hha_agent::CoreAppAgent;
 use hpos_hc_connect::holofuel_types::MigrationCloseStateV1Handler;
 
 pub async fn get_my_summary() -> Result<()> {
-    let mut agent = HfAgent::spawn(None).await?;
+    let mut agent = CoreAppAgent::spawn(None).await?;
 
     let summary: MigrationCloseStateV1Handler = agent
         .app
@@ -23,7 +23,7 @@ pub async fn get_my_summary() -> Result<()> {
 }
 
 pub async fn get_agent_summary(pub_key: AgentPubKey) -> Result<()> {
-    let mut agent = HfAgent::spawn(None).await?;
+    let mut agent = CoreAppAgent::spawn(None).await?;
 
     let summary: MigrationCloseStateV1Handler = agent
         .app
