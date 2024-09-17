@@ -1,6 +1,6 @@
 # core_app_cli
 
->Note: In holoports, this command can be used with the command `holo-host`
+>Note: In holoports, this command can be used with the command: `holo-host <SUBCOMMAND>`
 
 ```
 core_app_cli 0.1.1
