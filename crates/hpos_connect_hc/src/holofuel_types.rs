@@ -1,8 +1,14 @@
 use anyhow::{Context, Result};
+use holochain_types::prelude::ActionHash;
+use holochain_types::prelude::AgentPubKey;
+use holochain_types::prelude::AnyLinkableHash;
+use holochain_types::prelude::EntryHash;
+use holochain_types::prelude::Signature;
 use holochain_types::prelude::{
     holochain_serial, ActionHashB64, AgentPubKeyB64, AnyDhtHashB64, CapSecret, EntryHashB64,
     SerializedBytes, Timestamp, X25519PubKey,
 };
+use holofuel_types::fuel::Fuel;
 use serde::Deserialize;
 use serde::Serialize;
 use std::time::Duration;
@@ -167,6 +173,140 @@ pub struct ReserveSalePrice {
     pub inputs_used: Vec<String>,
 }
 
+/// Summary
+///
+
+#[derive(Serialize, Deserialize, Debug, SerializedBytes)]
+pub struct MigrationCloseStateV1Handler {
+    pub opening_balance: Fuel,
+    pub closing_balance: Fuel,
+    pub number_of_declined: usize,
+    pub multi_sig_authorizer: Option<MultiSigAuthorizers>,
+    pub reserve_setting: Option<ReserveSetting>,
+    pub reserve_sale_price: Option<ReserveSalePrice>,
+    pub cs_txs: Vec<CounterSignedTxBundle>,
+    pub tx_parked_links: Vec<TxParkedLink>,
+    pub incomplete_invoice_txs: Vec<InvoiceBundle>,
+    pub incomplete_promise_txs: Vec<PromiseBundle>,
+}
+
+pub type CounterSignedTxBundle = (CounterSignedTx, ActionHash, Timestamp);
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, SerializedBytes)]
+pub struct TxParkedLink {
+    pub id: ActionHash,
+    pub parking_spot_hash: AnyLinkableHash,
+    pub timestamp: Timestamp,
+    pub fees: Fuel,
+}
+
+pub type InvoiceBundle = (Invoice, EntryHash, Timestamp);
+pub type PromiseBundle = (Promise, EntryHash, Timestamp);
+
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, SerializedBytes)]
+pub struct Promise {
+    pub timestamp: Timestamp,
+    pub promise_details: TxDetails,
+    pub fee: Fuel,
+    pub expiration_date: Timestamp,
+    pub invoice_hash: Option<EntryHash>,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, SerializedBytes)]
+pub struct Invoice {
+    pub timestamp: Timestamp,
+    pub invoice_details: TxDetails,
+    pub expiration_date: Option<Timestamp>,
+    pub promise_hash: Option<EntryHash>,
+}
+#[derive(Serialize, Deserialize, Debug, Clone, SerializedBytes, PartialEq, Eq)]
+pub struct TxDetails {
+    pub spender: AgentPubKey,
+    pub receiver: AgentPubKey,
+    pub amount: Fuel,
+    pub payload: Payload,
+}
+#[derive(Serialize, Deserialize, Debug, SerializedBytes)]
+pub struct MultiSigAuthorizers(Vec<AuthorizerRules>);
+#[derive(Serialize, Deserialize, SerializedBytes, Debug, Clone, PartialEq, Eq)]
+pub struct AuthorizerRules {
+    condition: MultiSigCondition, // MultiSig expected when conditions are met
+    m_of_n: i8,                   // is the M of N of the signers whose signatures are required
+    signer_keys: Vec<X25519PubKey>, // are a vector of keys used for authorization of the action
+}
+#[derive(Serialize, Deserialize, SerializedBytes, Debug, Clone, PartialEq, Eq)]
+pub struct MultiSigCondition {
+    above_hf_amt: Fuel, // MultiSig will be expected on values above this amt
+}
+
+// Countersigning tx
+#[derive(Serialize, Deserialize, SerializedBytes, Debug, Clone, PartialEq, Eq)]
+pub struct CounterSignedTx {
+    pub tx_body: CounterSignedTxBody,
+    pub spender_state: FuelState,
+    pub receiver_state: FuelState,
+}
+#[derive(Serialize, Deserialize, SerializedBytes, Debug, Clone, PartialEq, Eq)]
+pub struct FuelState {
+    pub new_bal: Fuel,
+    pub new_promise: Fuel,
+    pub tx_fees_owed: Fuel,
+    pub tx_body_signature: Signature,
+}
+#[derive(Serialize, Deserialize, SerializedBytes, Debug, Clone, PartialEq, Eq)]
+pub struct CounterSignedTxBody {
+    pub tx_amt: Fuel,
+    pub tx_fee: Fuel,
+    pub spender_payload: Payload,
+    pub receiver_payload: Payload,
+    pub spender_chain_info: ChainInfo,
+    pub receiver_chain_info: ChainInfo,
+}
+#[derive(Serialize, Deserialize, Debug, Clone, SerializedBytes, Default, PartialEq, Eq)]
+pub struct Payload {
+    pub note: Option<NoteTypes>,
+    pub proof_of_service: Option<POS>,
+    pub url: Option<String>,
+}
+#[derive(Serialize, Deserialize, SerializedBytes, Debug, Clone, PartialEq, Eq)]
+pub struct ChainInfo {
+    pub agent_address: AgentPubKey,
+    pub pre_auth: EntryHash,
+    pub prior_action: ActionHash,
+    pub tx_seq_num: u32,
+}
+#[derive(Serialize, Deserialize, Debug, Clone, SerializedBytes, PartialEq, Eq)]
+pub enum NoteTypes {
+    ReserveNote(ReserveNote),
+    MultiSigPayload(MultiSigNote),
+    SimpleNote(String),
+}
+#[derive(Serialize, Deserialize, Debug, Clone, SerializedBytes, PartialEq, Eq)]
+pub struct ReserveNote {
+    pub details: ReserveProof,
+    pub signature: Signature,
+    pub extra_note: Option<String>,
+}
+#[derive(Serialize, Deserialize, Debug, Clone, SerializedBytes, PartialEq, Eq)]
+pub struct ReserveProof {
+    pub ext_amt_transferred: Fuel, // Amount of external currency
+    pub nonce: String,
+    pub reserve_sales_price: Fuel, // Number of HF units one external currency unit purchases, at the time of promise or request based off the ReserveSalePrice
+    pub ext_tx_id: Option<String>,
+}
+
+#[derive(serde::Serialize, serde::Deserialize, Debug, Clone, PartialEq, Eq)]
+pub struct MultiSigNote {
+    pub details: MultiSigPayload,
+    pub list_of_sig: Vec<Signature>,
+    pub extra_note: Option<String>,
+}
+#[derive(serde::Serialize, serde::Deserialize, SerializedBytes, Debug, Clone, PartialEq, Eq)]
+pub struct MultiSigPayload {
+    pub role: String,
+    pub amt: Fuel,
+    pub counterparty: String, // using AgentPubKeyB64 has serde deserialization issues
+    pub auth_date: Timestamp,
+}
 #[cfg(test)]
 pub mod tests {
     use crate::holofuel_types::ReserveSettingFile;

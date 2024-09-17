@@ -9,3 +9,4 @@ pub mod list_all_tx;
 pub mod pay_invoices;
 pub mod profile;
 pub mod set_happ_prefs;
+pub mod summary;
