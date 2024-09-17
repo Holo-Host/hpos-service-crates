@@ -1,5 +1,5 @@
 use anyhow::Result;
-use holochain_types::dna::{AgentPubKey, AgentPubKeyB64};
+use holochain_types::dna::AgentPubKeyB64;
 use structopt::StructOpt;
 
 #[derive(Debug, StructOpt)]
