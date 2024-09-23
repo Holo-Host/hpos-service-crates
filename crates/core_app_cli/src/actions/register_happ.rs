@@ -35,7 +35,7 @@ pub async fn get(
 
     println!("===================");
     println!("Your Published Happ Bundle is: ");
-    println!("{:?}", published_happ);
+    println!("{:#?}", published_happ);
     println!("===================");
 
     Ok(())
