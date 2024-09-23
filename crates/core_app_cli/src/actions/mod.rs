@@ -6,6 +6,8 @@ pub mod get_happ_pref_hash_for_host;
 pub mod get_specific_happ_prefs;
 pub mod ledger;
 pub mod list_all_happs;
+pub mod get_happ_details;
+pub mod register_happ;
 pub mod list_all_my_happs;
 pub mod list_all_tx;
 pub mod pay_invoices;
