@@ -19,12 +19,26 @@ pub enum Opt {
     /// List all happs registered in hha
     #[structopt(name = "all-happs")]
     AllHapps,
+    /// List happ setting details
+    #[structopt(name = "happ-details")]
+    HappDetails { happ_id: String },
+    /// Register happ
+    #[structopt(name = "register")]
+    RegisterHapp  {
+        #[structopt(name = "hosted-urls")]
+        hosted_urls: Vec<String>,
+        bundle_url: String,
+        name: String,
+        #[structopt(name = "special-uid")]
+        uid: Option<String>,
+        special_id: Option<String>,
+    },
     /// List all happs published by me
     #[structopt(name = "my-happs")]
     HappsByMe,
     /// List all happs by provided publisher
     #[structopt(name = "publisher-happs")]
-    GetHappsForPublisher { publisher_pubkey: String },
+    GetHappsByPublisher { publisher_pubkey: String },
     /// List the jurisdiction for the provided agent
     #[structopt(name = "jurisdiction")]
     GetAgentsJurisdiction { agent_pubkey: String },
@@ -67,12 +81,29 @@ impl Opt {
             Opt::Transactions => core_app_cli::list_all_tx::get().await?,
             Opt::PayInvoice => core_app_cli::pay_invoices::get().await?,
             Opt::AllHapps => core_app_cli::list_all_happs::get().await?,
+            Opt::HappDetails { happ_id } => core_app_cli::get_happ_details::get(happ_id).await?,
+            Opt::RegisterHapp {
+                hosted_urls,
+                bundle_url,
+                name,
+                uid,
+                special_id,
+            } => {
+                core_app_cli::register_happ::get(
+                    hosted_urls,
+                    bundle_url,
+                    name,
+                    uid,
+                    special_id,
+                )
+                .await?
+            },
             Opt::HappsByMe => core_app_cli::list_all_my_happs::get().await?,
             Opt::Hosts { happ_id } => core_app_cli::get_happ_hosts::get(happ_id).await?,
             Opt::GetPreferenceByHash { pref_hash } => {
                 core_app_cli::get_specific_happ_prefs::get(pref_hash).await?
             }
-            Opt::GetHappsForPublisher { publisher_pubkey } => {
+            Opt::GetHappsByPublisher { publisher_pubkey } => {
                 core_app_cli::get_all_happs_by::get(publisher_pubkey).await?
             }
             Opt::GetAgentsJurisdiction { agent_pubkey } => {

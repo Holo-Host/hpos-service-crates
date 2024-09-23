@@ -133,7 +133,7 @@ pub struct LoginConfig {
     pub registration_info_url: Option<String>,
 }
 
-#[derive(Debug, Serialize, Deserialize, SerializedBytes, Clone)]
+#[derive(Default, Debug, Serialize, Deserialize, SerializedBytes, Clone)]
 pub struct HappInput {
     #[serde(default)]
     pub hosted_urls: Vec<String>,
