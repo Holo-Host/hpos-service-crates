@@ -18,7 +18,7 @@ pub async fn get(happ_id: String) -> Result<()> {
         .await?;
 
     println!("===================");
-    println!("Happ Details {:?}", happ);
+    println!("Happ Details {:#?}", happ);
     println!("===================");
 
     Ok(())

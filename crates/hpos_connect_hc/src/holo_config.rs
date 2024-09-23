@@ -1,12 +1,13 @@
 use super::hpos_agent::{read_hpos_config, Admin};
 use anyhow::{anyhow, Context, Result};
-use holochain_types::prelude::{AgentPubKey, AppBundleSource};
+use holochain_types::prelude::{AgentPubKey, AppBundleSource, CellId, CellProvisioning};
 use holochain_types::{app::AppManifest, prelude::YamlProperties};
 use lair_keystore_api::{
     dependencies::{serde_yaml, url::Url},
     prelude::LairServerConfigInner,
 };
 use serde::Deserialize;
+use std::collections::HashMap;
 use std::env;
 use std::path::{Path, PathBuf};
 use structopt::StructOpt;
@@ -165,7 +166,10 @@ impl Happ {
         }
     }
     // get the source of the happ by retrieving the happ and updating the properties if any
-    pub async fn source(&self) -> Result<AppBundleSource> {
+    pub async fn source(
+        &self,
+        maybe_exisiting_cell_map: Option<&HashMap<String, CellId>>,
+    ) -> Result<AppBundleSource> {
         let path = self.download().await?;
         let mut source = AppBundleSource::Path(path);
         if self.dnas.is_some() {
@@ -186,7 +190,18 @@ impl Happ {
                             properties =
                                 Some(YamlProperties::new(serde_yaml::from_str(&prop).unwrap()));
                         }
-                        role_manifest.dna.modifiers.properties = properties
+                        role_manifest.dna.modifiers.properties = properties;
+
+                        if let Some(exisiting_cell_map) = maybe_exisiting_cell_map {
+                            role_manifest.provisioning =
+                                Some(CellProvisioning::UseExisting { protected: false });
+
+                            if let Some(cell) = exisiting_cell_map.get(&role_manifest.name) {
+                                tracing::trace!("Adding installed hash from cell : {:#?}", cell);
+                                role_manifest.dna.installed_hash =
+                                    Some(cell.dna_hash().to_owned().into());
+                            };
+                        }
                     }
                 }
                 source = AppBundleSource::Bundle(
@@ -199,6 +214,7 @@ impl Happ {
         }
         Ok(source)
     }
+
     // returns pub key is agent override exists
     pub async fn agent_override_details(&self) -> Result<Option<Admin>> {
         if let Some(agent_bundle_override) = &self.agent_bundle_override {

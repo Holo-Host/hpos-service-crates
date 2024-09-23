@@ -25,13 +25,14 @@ pub enum Opt {
     /// Register happ
     #[structopt(name = "register")]
     RegisterHapp  {
-        #[structopt(name = "hosted-urls")]
-        hosted_urls: Vec<String>,
-        bundle_url: String,
         name: String,
-        #[structopt(name = "special-uid")]
-        uid: Option<String>,
+        #[structopt(name = "domains")]
+        hosted_urls: Vec<String>,
+        #[structopt(name = "bundle-url")]
+        bundle_url: String,
+        #[structopt(name = "special-id")]
         special_id: Option<String>,
+        uid: Option<String>,
     },
     /// List all happs published by me
     #[structopt(name = "my-happs")]
@@ -83,11 +84,11 @@ impl Opt {
             Opt::AllHapps => core_app_cli::list_all_happs::get().await?,
             Opt::HappDetails { happ_id } => core_app_cli::get_happ_details::get(happ_id).await?,
             Opt::RegisterHapp {
+                name,
                 hosted_urls,
                 bundle_url,
-                name,
-                uid,
                 special_id,
+                uid,
             } => {
                 core_app_cli::register_happ::get(
                     hosted_urls,
