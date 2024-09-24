@@ -30,7 +30,7 @@ pub async fn get(happ_id: String, host_id: String) -> Result<()> {
     println!("Enabled Happ ID {} for Host {}: ", happ_id, host_id);
     println!("Fetching happ preference hash...");
 
-    crate::get_happ_pref_for_host::get(happ_id, host_id).await?;
+    crate::get_happ_pref_hash_for_host::get(happ_id, host_id).await?;
 
     println!("===================");
 
