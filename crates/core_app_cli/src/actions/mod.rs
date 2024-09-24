@@ -13,3 +13,4 @@ pub mod pay_invoices;
 pub mod profile;
 pub mod register_happ;
 pub mod set_host_happ_prefs;
+pub mod summary;
