@@ -1,9 +1,10 @@
 use anyhow::Result;
 use holochain_types::prelude::{FunctionName, ZomeName};
 use hpos_hc_connect::{
-    app_connection::CoreAppRoleName, hha_agent::CoreAppAgent, hha_types::{PresentedHappBundle, HappInput},
+    app_connection::CoreAppRoleName,
+    hha_agent::CoreAppAgent,
+    hha_types::{HappInput, PresentedHappBundle},
 };
-
 
 pub async fn get(
     hosted_urls: Vec<String>,
@@ -13,7 +14,7 @@ pub async fn get(
     special_installed_app_id: Option<String>,
 ) -> Result<()> {
     let mut agent = CoreAppAgent::spawn(None).await?;
-   
+
     let register_payload = HappInput {
         name,
         bundle_url,

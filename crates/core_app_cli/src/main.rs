@@ -24,7 +24,7 @@ pub enum Opt {
     HappDetails { happ_id: String },
     /// Register happ
     #[structopt(name = "register")]
-    RegisterHapp  {
+    RegisterHapp {
         #[structopt(name = "hosted-urls")]
         hosted_urls: Vec<String>,
         bundle_url: String,
@@ -89,15 +89,9 @@ impl Opt {
                 uid,
                 special_id,
             } => {
-                core_app_cli::register_happ::get(
-                    hosted_urls,
-                    bundle_url,
-                    name,
-                    uid,
-                    special_id,
-                )
-                .await?
-            },
+                core_app_cli::register_happ::get(hosted_urls, bundle_url, name, uid, special_id)
+                    .await?
+            }
             Opt::HappsByMe => core_app_cli::list_all_my_happs::get().await?,
             Opt::Hosts { happ_id } => core_app_cli::get_happ_hosts::get(happ_id).await?,
             Opt::GetPreferenceByHash { pref_hash } => {
