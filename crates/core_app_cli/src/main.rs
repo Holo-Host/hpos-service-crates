@@ -1,4 +1,5 @@
 use anyhow::Result;
+use holochain_types::dna::AgentPubKeyB64;
 use structopt::StructOpt;
 
 #[derive(Debug, StructOpt)]
@@ -71,6 +72,12 @@ pub enum Opt {
         #[structopt(name = "max-time-ms")]
         max_time_before_invoice_ms: String,
     },
+    /// Get My Summary
+    #[structopt(name = "gms")]
+    GetMySummary,
+    /// Get Summary by providing an agent public key
+    #[structopt(name = "gas")]
+    GetAgentSummary { pub_key: String },
 }
 impl Opt {
     /// Run this command
@@ -134,6 +141,12 @@ impl Opt {
                     max_time_before_invoice_ms,
                 )
                 .await?
+            }
+            Opt::GetMySummary => core_app_cli::summary::get_my_summary().await?,
+            Opt::GetAgentSummary { pub_key } => {
+                let pub_key = AgentPubKeyB64::from_b64_str(&pub_key)
+                    .expect("Failed to serialize string into AgentPubKey");
+                core_app_cli::summary::get_agent_summary(pub_key.into()).await?
             }
         }
         Ok(())
