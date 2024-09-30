@@ -1,7 +1,8 @@
-use holochain_client::{AdminWebsocket, AppWebsocket};
-use holochain_keystore::MetaLairClient;
-use holochain_types::prelude::{ActionHash, ActionHashB64, Nonce256Bits, Signature, Timestamp};
-use snafu::{ResultExt, Snafu};
+use futures::channel::oneshot::Canceled;
+use holochain_types::prelude::{AppBundleError, HoloHashError};
+use snafu::Snafu;
+use tokio_tungstenite::tungstenite;
+use url::Url;
 
 #[derive(Debug, Snafu)]
 pub enum ChcError {
@@ -46,6 +47,31 @@ pub enum ProtocolError {
     BadActionHashChc { source: HoloHashError },
     #[snafu(display("Websocket error while using conductor api"))]
     WebsocketError,
+}
+
+#[derive(Debug, Snafu)]
+pub enum ConnectionError {
+    #[snafu(display("Could not connect to endpoint at address {}: {}", addr, source))]
+    Connect {
+        source: tungstenite::Error,
+        addr: Box<Url>,
+    },
+    #[snafu(display("Could not send to Holochain: {}", source))]
+    SendToHolochain {
+        source: tungstenite::Error,
+    },
+    #[snafu(display("Could not manage connection in the background: {}", source))]
+    Listen {
+        source: holochain_ws::Error,
+    },
+    #[snafu(display("Could not connect to endpoint at address {}: {}", addr, source))]
+    HolochainRustClient {
+        addr: Box<Url>,
+        source: anyhow::Error,
+    },
+    Other {
+        message: String,
+    },
 }
 
 #[derive(Debug, Snafu)]
