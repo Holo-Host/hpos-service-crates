@@ -1,4 +1,5 @@
 use holo_happ_manager;
+use hpos_hc_connect::hha_agent::CoreAppAgent;
 
 #[tokio::test]
 async fn run_happ_manager() {
@@ -50,7 +51,7 @@ async fn run_happ_manager() {
     set_var("IS_INTEGRATION_TEST", "TRUE");
 
     let device_bundle = match get_hpos_config().unwrap() {
-        Config::V2 { device_bundle, .. } => device_bundle,
+        Config::V3 { device_bundle, .. } | Config::V2 { device_bundle, .. } => device_bundle,
         _ => panic!("Unsupported Config version"),
     };
 
@@ -82,13 +83,9 @@ async fn run_happ_manager() {
     println!("Run holo happ manager script");
     holo_happ_manager::run(&config).await.unwrap();
 
-    pub use hpos_hc_connect::holo_config::HappsFile;
-    let happ_file = HappsFile::load_happ_file(&config.happs_file_path).unwrap();
-    let core_happ = happ_file.core_app().unwrap();
+    let mut hha = CoreAppAgent::spawn(Some(&config)).await.unwrap();
 
-    let published_happ = holo_happ_manager::get_my_apps::published(&core_happ, &config)
-        .await
-        .unwrap();
+    let published_happ = hha.get_my_happs().await.unwrap();
 
     println!("Published happ: {:?}", published_happ);
     assert_eq!(published_happ.len(), 2);

@@ -1,4 +1,5 @@
 pub mod enable_happ_for_host;
+pub mod get_all_happs_by;
 pub mod get_happ_hosts;
 pub mod get_happ_pref_for_host;
 pub mod get_specific_happ_prefs;
@@ -8,3 +9,4 @@ pub mod list_all_tx;
 pub mod pay_invoices;
 pub mod profile;
 pub mod set_happ_prefs;
+pub mod summary;

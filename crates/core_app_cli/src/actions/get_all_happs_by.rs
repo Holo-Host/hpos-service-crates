@@ -4,7 +4,7 @@ use hpos_hc_connect::{
     app_connection::CoreAppRoleName, hha_agent::CoreAppAgent, hha_types::PresentedHappBundle,
 };
 
-pub async fn get() -> Result<()> {
+pub async fn get(publisher_pubkey: String) -> Result<()> {
     let mut agent = CoreAppAgent::spawn(None).await?;
 
     let happs: Vec<PresentedHappBundle> = agent
@@ -12,14 +12,19 @@ pub async fn get() -> Result<()> {
         .zome_call_typed(
             CoreAppRoleName::HHA.into(),
             ZomeName::from("hha"),
-            FunctionName::from("get_my_happs"),
+            FunctionName::from("get_happs"),
             (),
         )
         .await?;
 
+    let publisher_happs: Vec<&PresentedHappBundle> = happs
+        .iter()
+        .filter(|h| h.provider_pubkey.to_string() == publisher_pubkey)
+        .collect();
+
     println!("===================");
-    println!("Your Published Happs are: ");
-    println!("{:?}", happs);
+    println!("All Published Happs by {} are: ", publisher_pubkey);
+    println!("{:?}", publisher_happs);
     println!("===================");
 
     Ok(())

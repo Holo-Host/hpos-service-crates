@@ -8,15 +8,19 @@ edition = "2021"
 anyhow = "1.0"
 serde = { workspace = true }
 serde_json = "1.0"
-tokio = { version = "1", features = ["full"] }
+tokio = { version =  "1.36.0", features = ["full"] }
 tracing = { version = "0.1", features = ["attributes"] }
 tracing-subscriber = "0.2"
 url = "2.2"
 holo_happ_manager = { version = "0.1.0", path = "../holo_happ_manager" }
 hpos_hc_connect = { path = "../hpos_connect_hc" }
 hpos-config-core = { workspace = true }
+holochain_types = { workspace = true }
+reqwest = { workspace = true }
 
 [dev-dependencies]
 test-case = "2.2.2"
 serial_test = { version = "1.0.0", features = ["async"] }
 holochain_env_setup = { path = "../holochain_env_setup" }
+dotenv = "0.15.0"
+env_logger = "0.10.0"

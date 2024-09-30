@@ -3,18 +3,19 @@ use crate::utils::WsPollRecv;
 
 use super::holo_config::Happ;
 use super::hpos_agent::Agent;
-use super::hpos_membrane_proof::MembraneProofs;
 use anyhow::{anyhow, Context, Result};
 use holochain_conductor_api::{
-    AdminRequest, AdminResponse, AppAuthenticationToken, AppAuthenticationTokenIssued,
-    AppStatusFilter, IssueAppAuthenticationTokenPayload,
+    AdminRequest, AdminResponse, AppAuthenticationToken, AppAuthenticationTokenIssued, AppInfo,
+    AppInterfaceInfo, AppStatusFilter, IssueAppAuthenticationTokenPayload,
 };
 use holochain_types::{
-    app::{AppBundleSource, InstallAppPayload, InstalledAppId},
+    app::{DeleteCloneCellPayload, InstallAppPayload, InstalledAppId},
+    dna::AgentPubKey,
+    prelude::{CellId, SerializedBytes},
     websocket::AllowedOrigins,
 };
 use holochain_websocket::{connect, ConnectRequest, WebsocketConfig, WebsocketSender};
-use std::{env, net::ToSocketAddrs, sync::Arc};
+use std::{collections::HashMap, env, net::ToSocketAddrs, sync::Arc};
 use tracing::{debug, info, instrument, trace};
 
 #[allow(dead_code)]
@@ -47,16 +48,28 @@ impl AdminWebsocket {
 
     /// Attach an interface for app calls. If a port numer is None conductor will choose an available port
     /// Returns attached port number
-    pub async fn attach_app_interface(&mut self, happ_port: Option<u16>) -> Result<u16> {
+    pub async fn attach_app_interface(
+        &mut self,
+        happ_port: Option<u16>,
+        installed_app_id: Option<InstalledAppId>,
+    ) -> Result<u16> {
         info!(port = ?happ_port, "starting app interface");
         let msg = AdminRequest::AttachAppInterface {
             port: happ_port,
             allowed_origins: AllowedOrigins::Any,
-            installed_app_id: None,
+            installed_app_id,
         };
-        match self.send(msg).await? {
+        match self.send(msg, None).await? {
             AdminResponse::AppInterfaceAttached { port } => Ok(port),
             _ => Err(anyhow!("Failed to attach app interface")),
+        }
+    }
+
+    pub async fn list_app_interfaces(&mut self) -> Result<Vec<AppInterfaceInfo>> {
+        debug!("listing app interfaces");
+        match self.send(AdminRequest::ListAppInterfaces, None).await? {
+            AdminResponse::AppInterfacesListed(app_interfaces) => Ok(app_interfaces),
+            _ => Err(anyhow!("Failed to fetch list of attached app interfaces")),
         }
     }
 
@@ -67,7 +80,7 @@ impl AdminWebsocket {
             expiry_seconds: 30,
             single_use: true,
         });
-        let response = self.send(msg).await?;
+        let response = self.send(msg, None).await?;
 
         match response {
             AdminResponse::AppAuthenticationTokenIssued(AppAuthenticationTokenIssued {
@@ -82,7 +95,9 @@ impl AdminWebsocket {
         &mut self,
         status_filter: Option<AppStatusFilter>,
     ) -> Result<Vec<InstalledAppId>> {
-        let response = self.send(AdminRequest::ListApps { status_filter }).await?;
+        let response = self
+            .send(AdminRequest::ListApps { status_filter }, None)
+            .await?;
         match response {
             AdminResponse::AppsListed(info) => {
                 Ok(info.iter().map(|i| i.installed_app_id.to_owned()).collect())
@@ -91,68 +106,69 @@ impl AdminWebsocket {
         }
     }
 
-    pub async fn list_running_app(&mut self) -> Result<Vec<InstalledAppId>> {
-        let mut running = self.list_app(Some(AppStatusFilter::Running)).await?;
-        let mut enabled = self.list_app(Some(AppStatusFilter::Enabled)).await?;
-        running.append(&mut enabled);
-        Ok(running)
+    pub async fn list_enabled_apps(&mut self) -> Result<Vec<InstalledAppId>> {
+        let enabled = self.list_app(Some(AppStatusFilter::Enabled)).await?;
+        Ok(enabled)
     }
 
-    #[instrument(skip(self, happ, membrane_proofs, agent))]
-    pub async fn install_and_activate_happ(
+    #[instrument(skip(self, app, membrane_proofs, agent))]
+    pub async fn install_and_activate_app(
         &mut self,
-        happ: &Happ,
-        membrane_proofs: MembraneProofs,
+        app: &Happ,
+        membrane_proofs: Option<HashMap<String, Arc<SerializedBytes>>>,
         agent: Agent,
+        existing_cells: HashMap<String, CellId>,
         chc_credentials: Option<chc::ChcCredentials>,
     ) -> Result<()> {
-        let source = happ.source().await?;
-        self.install_happ(happ, source, membrane_proofs, agent, chc_credentials)
+        let source = app.source().await?;
+        self.inner_install_happ(app, source, membrane_proofs, agent, existing_cells, chc_credentials)
             .await?;
-        self.activate_app(happ).await?;
+        self.activate_app(app).await?;
         debug!("installed & activated hApp: {}", happ.id());
         Ok(())
     }
 
     #[instrument(err, skip(self, happ, source, membrane_proofs, agent))]
-    async fn install_happ(
+    async fn inner_install_happ(
         &mut self,
         happ: &Happ,
         source: AppBundleSource,
         membrane_proofs: MembraneProofs,
         agent: Agent,
+        existing_cells: HashMap<String, CellId>,
         chc_credentials: Option<chc::ChcCredentials>,
     ) -> Result<()> {
-        let mut agent_key = agent.admin.key.clone();
-
-        if let Some(admin) = &happ.agent_override_details().await? {
-            agent_key = admin.key.clone();
+        let agent_key = if let Some(admin) = &app.agent_override_details().await? {
+            admin.key.clone()
+        } else {
+            agent.admin.key.clone()  
         };
 
         let payload = if let Ok(id) = env::var("DEV_UID_OVERRIDE") {
             debug!("using network_seed to install: {}", id);
             InstallAppPayload {
-                agent_key,
-                installed_app_id: Some(happ.id()),
+                agent_key: Some(agent_key),
+                installed_app_id: Some(app.id()),
                 source,
                 membrane_proofs,
                 network_seed: Some(id),
                 ignore_genesis_failure: false,
+                existing_cells,
             }
         } else {
             debug!("using default network_seed to install");
             InstallAppPayload {
-                agent_key,
-                installed_app_id: Some(happ.id()),
+                agent_key: Some(agent_key),
+                installed_app_id: Some(app.id()),
                 source,
                 membrane_proofs,
                 network_seed: None,
                 ignore_genesis_failure: false,
+                existing_cells,
             }
         };
 
-        let msg = AdminRequest::InstallApp(Box::new(payload));
-        match self.send(msg).await {
+        match self.install_app(payload).await {
             Ok(_) => Ok(()),
             Err(e) => {
                 if e.to_string().contains("AppAlreadyInstalled") {
@@ -193,29 +209,37 @@ impl AdminWebsocket {
                 Err(e)
             }
         }
-    }
 
-    #[instrument(skip(self, happ))]
-    pub async fn activate_happ(&mut self, happ: &Happ) -> Result<()> {
-        self.activate_app(happ).await?;
-        debug!("activated hApp: {}", happ.id());
+        self.activate_app(app).await?;
+        debug!("installed & activated hApp: {}", app.id());
         Ok(())
     }
 
-    #[instrument(skip(self), err)]
-    async fn activate_app(&mut self, happ: &Happ) -> Result<AdminResponse> {
-        let msg = AdminRequest::EnableApp {
-            installed_app_id: happ.id(),
-        };
-        self.send(msg).await
+    #[instrument(err, skip(self))]
+    pub async fn install_app(&mut self, payload: InstallAppPayload) -> Result<AdminResponse> {
+        let msg = AdminRequest::InstallApp(Box::new(payload));
+        self.send(msg, Some(300)).await // First install takes a while due to compile to WASM step
     }
 
     #[instrument(skip(self), err)]
-    pub async fn uninstall_app(&mut self, installed_app_id: &str) -> Result<AdminResponse> {
+    pub async fn activate_app(&mut self, happ: &Happ) -> Result<AdminResponse> {
+        let msg = AdminRequest::EnableApp {
+            installed_app_id: happ.id(),
+        };
+        self.send(msg, None).await
+    }
+
+    #[instrument(skip(self), err)]
+    pub async fn uninstall_app(
+        &mut self,
+        installed_app_id: &str,
+        force: bool,
+    ) -> Result<AdminResponse> {
         let msg = AdminRequest::UninstallApp {
             installed_app_id: installed_app_id.to_string(),
+            force,
         };
-        self.send(msg).await
+        self.send(msg, None).await
     }
 
     #[instrument(skip(self), err)]
@@ -223,7 +247,7 @@ impl AdminWebsocket {
         let msg = AdminRequest::EnableApp {
             installed_app_id: installed_app_id.to_string(),
         };
-        self.send(msg).await
+        self.send(msg, None).await
     }
 
     #[instrument(skip(self), err)]
@@ -231,16 +255,57 @@ impl AdminWebsocket {
         let msg = AdminRequest::DisableApp {
             installed_app_id: installed_app_id.to_string(),
         };
-        self.send(msg).await
+        self.send(msg, None).await
+    }
+
+    #[instrument(skip(self), err)]
+    pub async fn list_apps(
+        &mut self,
+        status_filter: Option<AppStatusFilter>,
+    ) -> Result<Vec<AppInfo>> {
+        let response = self
+            .send(AdminRequest::ListApps { status_filter }, None)
+            .await?;
+        match response {
+            AdminResponse::AppsListed(apps_infos) => Ok(apps_infos),
+            _ => unreachable!("Unexpected response {:?}", response),
+        }
+    }
+
+    pub async fn generate_agent_pub_key(&mut self) -> Result<AgentPubKey> {
+        // Create agent key in Lair and save it in file
+        let response = self.send(AdminRequest::GenerateAgentPubKey, None).await?;
+        match response {
+            AdminResponse::AgentPubKeyGenerated(key) => Ok(key),
+            _ => unreachable!("Unexpected response {:?}", response),
+        }
+    }
+
+    /// Deletes a clone cell
+    pub async fn delete_clone(&mut self, payload: DeleteCloneCellPayload) -> Result<()> {
+        let admin_request = AdminRequest::DeleteCloneCell(Box::new(payload.clone()));
+        let response = self.send(admin_request, None).await?;
+        match response {
+            AdminResponse::CloneCellDeleted => Ok(()),
+            _ => Err(anyhow!("Error creating clone {:?}", payload)),
+        }
     }
 
     #[instrument(skip(self))]
-    pub async fn send(&mut self, msg: AdminRequest) -> Result<AdminResponse> {
+    pub async fn send(
+        &mut self,
+        msg: AdminRequest,
+        duration: Option<u64>,
+    ) -> Result<AdminResponse> {
+        // default timeout is 60 seconds
+        let timeout_duration = std::time::Duration::from_secs(duration.unwrap_or(60));
+
         let response = self
             .tx
-            .request(msg)
+            .request_timeout(msg, timeout_duration)
             .await
             .context("failed to send message")?;
+
         match response {
             AdminResponse::Error(error) => Err(anyhow!("error: {:?}", error)),
             _ => {

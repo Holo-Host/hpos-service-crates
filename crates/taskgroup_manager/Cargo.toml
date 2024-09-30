@@ -12,4 +12,4 @@ futures = "0.3.17"
 nix = "0.26.2"
 
 [dev-dependencies]
-tokio = { version = "1.12.0", features = ["rt-multi-thread", "macros"] }
+tokio = { version =  "1.36.0", features = ["rt-multi-thread", "macros"] }

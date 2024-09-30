@@ -11,5 +11,5 @@ hpos_hc_connect = { path = "../hpos_connect_hc" }
 serde = { workspace = true }
 tracing = "0.1.37"
 tracing-subscriber = "0.2"
-tokio = { version = "1.11", features = [ "full" ] }
-rmp-serde = "1.1.1"
+tokio = { version = "1.36.0", features = [ "full" ] }
+rmp-serde = { workspace = true }

@@ -1,20 +1,21 @@
 use anyhow::Result;
-use holochain_types::prelude::{ExternIO, FunctionName, ZomeName};
-use hpos_hc_connect::{hha_types::HoloportDetails, CoreAppAgent, CoreAppRoleName};
+use holochain_types::prelude::{FunctionName, ZomeName};
+use hpos_hc_connect::{
+    app_connection::CoreAppRoleName, hha_agent::CoreAppAgent, hha_types::HoloportDetails,
+};
 
 pub async fn get(happ_id: String) -> Result<()> {
-    let mut agent = CoreAppAgent::connect().await?;
+    let mut agent = CoreAppAgent::spawn(None).await?;
 
-    let result = agent
-        .zome_call(
-            CoreAppRoleName::HHA,
+    let hosts: Vec<HoloportDetails> = agent
+        .app
+        .zome_call_typed(
+            CoreAppRoleName::HHA.into(),
             ZomeName::from("hha"),
             FunctionName::from("get_hosts"),
-            ExternIO::encode(happ_id.clone())?,
+            happ_id.clone(),
         )
         .await?;
-
-    let hosts: Vec<HoloportDetails> = rmp_serde::from_slice(result.as_bytes())?;
 
     println!("===================");
     println!("All Hosts for Happ ID {} are: ", happ_id);

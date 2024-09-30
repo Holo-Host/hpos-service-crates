@@ -1,5 +1,5 @@
 use anyhow::{Context, Result};
-pub use hpos_hc_connect::AdminWebsocket;
+pub use hpos_hc_connect::{AdminWebsocket, AppWebsocket};
 pub use hpos_hc_connect::{
     chc::ChcCredentials,
     holo_config::{Config, Happ, HappsFile, MembraneProofFile, ProofPayload},
@@ -7,12 +7,14 @@ pub use hpos_hc_connect::{
     hpos_membrane_proof,
     utils::{download_file, extract_zip},
 };
-pub use hpos_hc_connect::{hpos_agent::Agent, hpos_membrane_proof};
-pub use hpos_hc_connect::{AdminWebsocket, AppWebsocket};
+use hpos_hc_connect::{hpos_agent::Agent, hpos_membrane_proof};
+use std::collections::HashMap;
 use std::sync::Arc;
 use tracing::{debug, info, instrument, warn};
 
 pub mod hpos_holochain_api;
+pub mod jurisdictions;
+use jurisdictions::HbsClient;
 mod utils;
 
 #[instrument(err, skip(config))]
@@ -23,7 +25,13 @@ pub async fn run(config: Config) -> Result<()> {
         .context("failed to load hApps YAML config")?;
     install_happs(&happ_file, &config).await?;
 
-    update_host_jurisdiction_if_changed(&config).await?;
+    if let Err(e) = update_host_jurisdiction_if_changed(&config).await {
+        warn!(
+            "Note: This is only needed for holoports. Failed to update jurisdiction.  Error: {}",
+            e
+        );
+    }
+
     Ok(())
 }
 
@@ -55,7 +63,7 @@ pub async fn install_happs(happ_file: &HappsFile, config: &Config) -> Result<()>
         .context("failed to connect to holochain's app interface")?;
 
     if let Err(error) = admin_websocket
-        .attach_app_interface(Some(config.happ_port))
+        .attach_app_interface(Some(config.happ_port), None)
         .await
     {
         warn!(port = ?config.happ_port, ?error, "failed to start app interface for hosted happs, maybe it's already up?");
@@ -68,7 +76,7 @@ pub async fn install_happs(happ_file: &HappsFile, config: &Config) -> Result<()>
     debug!("Getting a list of active happ");
     let active_happs = Arc::new(
         admin_websocket
-            .list_running_app()
+            .list_enabled_apps()
             .await
             .context("failed to get installed hApps")?,
     );
@@ -89,21 +97,16 @@ pub async fn install_happs(happ_file: &HappsFile, config: &Config) -> Result<()>
                     .await?;
 
             if let Err(err) = admin_websocket
-                .install_and_activate_happ(
-                    happ,
-                    mem_proof_vec,
-                    agent.clone(),
-                    Some(ChcCredentials {
-                        app_websocket: &app_websocket,
-                        keystore: &keystore,
-                        chc_url: chc_string,
-                    }),
-                )
+                .install_and_activate_app(happ, Some(mem_proof_vec), agent.clone(), HashMap::new(), Some(ChcCredentials {
+                    app_websocket: &app_websocket,
+                    keystore: &keystore,
+                    chc_url: chc_string,
+                })
                 .await
             {
                 if err.to_string().contains("AppAlreadyInstalled") {
                     info!("app {} was previously installed, re-activating", &happ.id());
-                    admin_websocket.activate_happ(happ).await?;
+                    admin_websocket.activate_app(happ).await?;
                 } else {
                     return Err(err);
                 }
@@ -121,7 +124,9 @@ pub async fn install_happs(happ_file: &HappsFile, config: &Config) -> Result<()>
         let installed_app_id = app.to_string();
         if !utils::keep_app_active(&installed_app_id, happs_to_keep.clone()) {
             info!("deactivating app {}", &installed_app_id);
-            admin_websocket.uninstall_app(&installed_app_id).await?;
+            admin_websocket
+                .uninstall_app(&installed_app_id, false)
+                .await?;
         }
     }
 
@@ -161,13 +166,8 @@ pub async fn update_host_jurisdiction_if_changed(config: &Config) -> Result<()> 
     }
 
     // get current jurisdiction in hbs
-    let hbs_jurisdiction = match hpos_holochain_api::get_jurisdiction().await {
-        Ok(hbs_jurisdiction) => hbs_jurisdiction,
-        Err(e) => {
-            debug!("Failed to get jurisdiction from hbs {}", e);
-            return Ok(());
-        }
-    };
+    let hbs = HbsClient::connect().await?;
+    let hbs_jurisdiction = hbs.get_host_registration().await?.jurisdiction;
 
-    holo_happ_manager::update_jurisdiction_if_changed(config, hbs_jurisdiction).await
+    jurisdictions::update_jurisdiction_if_changed(config, hbs_jurisdiction).await
 }

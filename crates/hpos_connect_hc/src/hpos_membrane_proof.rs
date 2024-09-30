@@ -45,8 +45,6 @@ struct RegistrationRequest {
     mem_proof: String,
 }
 
-pub type MembraneProofs = HashMap<String, Arc<SerializedBytes>>;
-
 lazy_static! {
     static ref CLIENT: Client = Client::new();
 }
@@ -80,10 +78,17 @@ pub async fn get_mem_proof(admin: Admin) -> Result<MembraneProof> {
 
     let memproof_path =
         env::var("MEM_PROOF_PATH").context("Failed to read MEM_PROOF_PATH. Is it set in env?")?;
+
+    debug!(
+        "Looking for memproof in provided file at {:?}",
+        memproof_path
+    );
     if let Ok(m) = load_mem_proof_from_file(&memproof_path) {
         debug!("Using memproof from file");
         return Ok(m);
     }
+    debug!("No Membrane Proof found locally.");
+
     let role = env::var("HOLOFUEL_INSTANCE_ROLE")
         .context("Failed to read HOLOFUEL_INSTANCE_ROLE. Is it set in env?")?;
     let payload = Registration {
@@ -92,9 +97,14 @@ pub async fn get_mem_proof(admin: Admin) -> Result<MembraneProof> {
         email: admin.email,
         payload: RegistrationPayload { role },
     };
+
+    debug!("Getting memproof from Membrane Proof server...");
     let (mem_proof_str, mem_proof_serialized) = download_memproof(payload).await?;
+
+    debug!("Saving memproof to local file...");
     save_mem_proof_to_file(&mem_proof_str, &memproof_path)?;
-    debug!("Using memproof downloaded from HBS server");
+
+    debug!("Using memproof downloaded from Membrane Proof server");
     Ok(mem_proof_serialized)
 }
 
@@ -103,7 +113,10 @@ pub async fn get_mem_proof(admin: Admin) -> Result<MembraneProof> {
 /// Currently creates memproofs only for core-app
 /// otherwise returns empty HashMap
 /// Returns HashMap<dna_name, memproof_bytes>
-pub async fn create_vec_for_happ(happ: &Happ, mem_proof: MembraneProof) -> Result<MembraneProofs> {
+pub async fn create_vec_for_happ(
+    happ: &Happ,
+    mem_proof: MembraneProof,
+) -> Result<HashMap<String, Arc<SerializedBytes>>> {
     let happ_id = happ.id();
     let mut mem_proofs_vec = HashMap::new();
     if happ_id.contains("core-app") {
@@ -130,7 +143,7 @@ pub async fn create_vec_for_happ(happ: &Happ, mem_proof: MembraneProof) -> Resul
 }
 
 /// returns core-app specic vec of memproofs for each core-app DNA
-fn add_core_app(mem_proof: MembraneProof) -> Result<MembraneProofs> {
+fn add_core_app(mem_proof: MembraneProof) -> Result<HashMap<String, Arc<SerializedBytes>>> {
     let mut vec = HashMap::new();
     vec.insert("core-app".to_string(), mem_proof.clone());
     vec.insert("holofuel".to_string(), mem_proof);
@@ -138,7 +151,7 @@ fn add_core_app(mem_proof: MembraneProof) -> Result<MembraneProofs> {
 }
 
 /// returns holofuel specic vec of memproofs for each holofuel DNA
-fn add_holofuel(mem_proof: MembraneProof) -> Result<MembraneProofs> {
+fn add_holofuel(mem_proof: MembraneProof) -> Result<HashMap<String, Arc<SerializedBytes>>> {
     let mut vec = HashMap::new();
     vec.insert("holofuel".to_string(), mem_proof);
     Ok(vec)
@@ -199,8 +212,7 @@ async fn download_memproof(
         }
         Err(e) => {
             error!("Error: {:?}", e);
-            let err: RegistrationError = resp.json().await?;
-            Err(AuthError::RegistrationError(err.to_string()).into())
+            Err(AuthError::RegistrationError(e.to_string()).into())
         }
     }
 }

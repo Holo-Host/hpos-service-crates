@@ -1,5 +1,7 @@
 # core_app_cli
 
+>Note: In holoports, this command can be used with the command: `holo-host <SUBCOMMAND>`
+
 ```
 core_app_cli 0.1.1
 
@@ -11,13 +13,19 @@ FLAGS:
     -V, --version    Prints version information
 
 SUBCOMMANDS:
-    b                Gets your balance, fees, promised and available Fuel
-    happs            List all happs published by me
-    help             Prints this message or the help of the given subcommand(s)
-    hosts            List all hosts for a happ by `happ_id``
-    pay              Pay your first pending invoice
-    pr               Gets profile details
-    prefs            Fetch the happ preferences associated with a `pref_hash`
-    set-prefs        Set new happ preferences
-    tx               Gets the list of all your transactions
+    all-happs          List all happs registered in hha
+    b                  Gets your balance, fees, promised and available Fuel
+    enable-happ        Enable hosting for a specific happ
+    help               Prints this message or the help of the given subcommand(s)
+    host-prefs         Fetch the happ preference hash for a specific host for a specific happ
+    hosts              List all hosts for a happ by `happ_id``
+    jurisdiction       List the jurisdiction for the provided agent
+    my-happs           List all happs published by me
+    pay                Pay your first pending invoice
+    pr                 Gets profile details
+    pref-details       Fetch the happ preferences associated with a happ preference hash
+    publisher-happs    List all happs by provided publisher
+    set-prefs          Set new happ preferences
+    tx                 Gets the list of all your transactions
 ```
+
