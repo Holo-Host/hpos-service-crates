@@ -136,6 +136,7 @@ impl AdminWebsocket {
                 network_seed: Some(id),
                 ignore_genesis_failure: false,
                 existing_cells,
+                allow_throwaway_random_agent_key: false,
             }
         } else {
             debug!("using default network_seed to install");
@@ -147,6 +148,7 @@ impl AdminWebsocket {
                 network_seed: None,
                 ignore_genesis_failure: false,
                 existing_cells,
+                allow_throwaway_random_agent_key: false,
             }
         };
 
