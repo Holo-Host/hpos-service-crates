@@ -8,9 +8,9 @@ use holochain_conductor_api::{
     AppInterfaceInfo, AppStatusFilter, IssueAppAuthenticationTokenPayload,
 };
 use holochain_types::{
-    app::{DeleteCloneCellPayload, InstallAppPayload, InstalledAppId},
+    app::{DeleteCloneCellPayload, InstallAppPayload, InstalledAppId, RoleSettings, RoleSettingsMap},
     dna::AgentPubKey,
-    prelude::{CellId, SerializedBytes},
+    prelude::{CellId, MembraneProof, SerializedBytes},
     websocket::AllowedOrigins,
 };
 use holochain_websocket::{connect, ConnectRequest, WebsocketConfig, WebsocketSender};
@@ -126,16 +126,34 @@ impl AdminWebsocket {
             agent.admin.key.clone()
         };
 
+        // Convert old membrane_proofs into the new roles_settings map.
+        let roles_settings: Option<RoleSettingsMap> = membrane_proofs.map(|mp_map| {
+            mp_map
+                .into_iter()
+                .map(|(role_name, serialized)| {
+                    // Convert SerializedBytes into MembraneProof.
+                    let membrane_proof: MembraneProof = serialized;
+
+                    (
+                        role_name,
+                        RoleSettings::Provisioned {
+                            membrane_proof: Some(membrane_proof),
+                            modifiers: None,
+                        },
+                    )
+                })
+                .collect()
+        });
+
         let payload = if let Ok(id) = env::var("DEV_UID_OVERRIDE") {
             debug!("using network_seed to install: {}", id);
             InstallAppPayload {
                 agent_key: Some(agent_key),
                 installed_app_id: Some(app.id()),
                 source,
-                membrane_proofs,
+                roles_settings,
                 network_seed: Some(id),
                 ignore_genesis_failure: false,
-                existing_cells,
                 allow_throwaway_random_agent_key: false,
             }
         } else {
@@ -144,10 +162,9 @@ impl AdminWebsocket {
                 agent_key: Some(agent_key),
                 installed_app_id: Some(app.id()),
                 source,
-                membrane_proofs,
+                roles_settings,
                 network_seed: None,
                 ignore_genesis_failure: false,
-                existing_cells,
                 allow_throwaway_random_agent_key: false,
             }
         };
