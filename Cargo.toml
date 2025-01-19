@@ -16,9 +16,9 @@ members = [
 hpos-config-core = { git = "https://github.com/Holo-Host/hpos-config", rev = "77d740c83a02e322e670e360eb450076b593b328" }
 hpos-config-seed-bundle-explorer ={ git = "https://github.com/Holo-Host/hpos-config", rev = "77d740c83a02e322e670e360eb450076b593b328" }
 ed25519-dalek = "2.1.1"
-holochain_keystore = "0.4.0-rc.0"
-holochain_types = { version = "0.4.0-rc.0" }
-holochain_conductor_api = "0.4.0-rc.0"
+holochain_keystore = "0.4.0"
+holochain_types = { version = "0.4.0" }
+holochain_conductor_api = "0.4.0"
 lair_keystore_api = "0.5.3"
 holochain_websocket = "0.4.0-rc.0"
 holofuel_types = "0.5.14"
