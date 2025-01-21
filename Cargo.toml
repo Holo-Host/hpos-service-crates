@@ -20,12 +20,12 @@ holochain_keystore = "0.4.0"
 holochain_types = { version = "0.4.0" }
 holochain_conductor_api = "0.4.0"
 lair_keystore_api = "0.5.3"
-holochain_websocket = "0.4.0-rc.0"
-holofuel_types = "0.5.14"
+holochain_websocket = "0.4.0"
+holofuel_types = { git = "https://github.com/holo-host/holofuel.git", rev = "f0804f2fef01af394772a4dc177b8385ab13e6a4" }
 sodoken = "0.0.11"
 serde = { version = "1.0", features = ["derive", "rc"] } 
 rmp-serde = "1.1.1"
-mr_bundle = { version = "0.4.0-rc.0" }
+mr_bundle = { version = "0.4.0" }
 reqwest = { version = "0.12.4", features = ["json"]}
 
 [profile.dev]
