@@ -167,14 +167,13 @@ impl Happ {
     // get the source of the happ by retrieving the happ and updating the properties if any
     pub async fn source(&self) -> Result<AppBundleSource> {
         let path = self.download().await?;
-        let mut source = AppBundleSource::Path(path);
-        if self.dnas.is_some() {
-            for dna in self.dnas.clone().unwrap().iter() {
+        let source = if self.dnas.is_some() {
+            let mut bundle: mr_bundle::Bundle<AppManifest> = {
                 use mr_bundle::Bundle;
-                let bundle = match source {
-                    AppBundleSource::Bundle(bundle) => bundle.into_inner(),
-                    AppBundleSource::Path(path) => Bundle::read_from_file(&path).await.unwrap(),
-                };
+                Bundle::read_from_file(&path).await.unwrap()
+            };
+
+            for dna in self.dnas.clone().unwrap().iter() {
                 let AppManifest::V1(mut manifest) = bundle.manifest().clone();
                 for role_manifest in &mut manifest.roles {
                     if role_manifest.name == dna.role_name {
@@ -189,14 +188,14 @@ impl Happ {
                         role_manifest.dna.modifiers.properties = properties
                     }
                 }
-                source = AppBundleSource::Bundle(
-                    bundle
-                        .update_manifest(AppManifest::V1(manifest))
-                        .unwrap()
-                        .into(),
-                )
+                bundle = bundle.update_manifest(AppManifest::V1(manifest)).unwrap();
             }
-        }
+
+            // Convert the modified bundle to bytes
+            AppBundleSource::Bytes(bundle.encode().unwrap())
+        } else {
+            AppBundleSource::Path(path)
+        };
         Ok(source)
     }
     // returns pub key is agent override exists

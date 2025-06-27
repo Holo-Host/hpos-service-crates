@@ -65,11 +65,11 @@ pub fn spawn_holochain(
 }
 
 pub fn create_tmp_dir() -> PathBuf {
-    TempDir::new().unwrap().into_path()
+    TempDir::new().unwrap().keep()
 }
 
 pub fn create_log_dir() -> PathBuf {
-    TempDir::new().unwrap().into_path()
+    TempDir::new().unwrap().keep()
 }
 
 #[derive(Debug, Snafu)]
@@ -94,11 +94,14 @@ fn write_holochain_config(
         keystore: KeystoreConfig,
         dpki: DpkiConfig,
         admin_interfaces: Option<Vec<AdminInterfaceConfig>>,
+        network: NetworkConfig,
+        db_sync_strategy: String,
     }
     #[derive(Serialize)]
     pub struct DpkiConfig {
         pub dna_path: Option<PathBuf>,
-        pub device_seed_lair_tag: String,
+        pub network_seed: String,
+        pub allow_throwaway_random_dpki_agent_key: bool,
         pub no_dpki: bool,
     }
     #[derive(Serialize)]
@@ -118,6 +121,16 @@ fn write_holochain_config(
         Websocket { port: u16, allowed_origins: String },
     }
 
+    #[derive(Serialize)]
+    struct NetworkConfig {
+        bootstrap_url: String,
+        signal_url: String,
+        disable_bootstrap: bool,
+        disable_publish: bool,
+        disable_gossip: bool,
+        mem_bootstrap: bool,
+    }
+
     let config = HolochainConfig {
         data_root_path: "./databases".into(),
         keystore: KeystoreConfig::LairServer {
@@ -126,7 +139,8 @@ fn write_holochain_config(
         // Holo does not use DPKI, when we start using it this should be updated
         dpki: DpkiConfig {
             dna_path: None,
-            device_seed_lair_tag: "dont-use-dpki".to_string(),
+            network_seed: "".to_string(),
+            allow_throwaway_random_dpki_agent_key: false,
             no_dpki: true,
         },
         admin_interfaces: Some(vec![AdminInterfaceConfig {
@@ -135,6 +149,15 @@ fn write_holochain_config(
                 allowed_origins: "*".to_string(),
             },
         }]),
+        network: NetworkConfig {
+            bootstrap_url: "https://dev-test-bootstrap2.holochain.org/".to_string(),
+            signal_url: "wss://dev-test-bootstrap2.holochain.org/".to_string(),
+            disable_bootstrap: false,
+            disable_publish: false,
+            disable_gossip: false,
+            mem_bootstrap: true,
+        },
+        db_sync_strategy: "Resilient".to_string(),
     };
     serde_yaml::to_writer(&mut holochain_config_file, &config).unwrap();
 

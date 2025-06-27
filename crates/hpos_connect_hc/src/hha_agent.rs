@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use std::sync::{Arc, Mutex};
 
 use crate::app_connection::CoreAppRoleName;
 use crate::hha_types::{
@@ -33,7 +33,11 @@ impl CoreAppAgent {
             .ok_or(anyhow!("There's no core-app defined in a happs file"))?;
 
         // connect to lair
-        let passphrase = sodoken::BufRead::from(default_password()?.as_bytes().to_vec());
+        let passphrase = Arc::new(Mutex::new(
+            lair_keystore_api::dependencies::sodoken::LockedArray::from(
+                default_password()?.as_bytes().to_vec(),
+            ),
+        ));
 
         let keystore = holochain_keystore::lair_keystore::spawn_lair_keystore(
             url2::url2!("{}", get_lair_url(config)?),

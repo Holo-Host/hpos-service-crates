@@ -8,9 +8,11 @@ use holochain_conductor_api::{
     AppInterfaceInfo, AppStatusFilter, IssueAppAuthenticationTokenPayload,
 };
 use holochain_types::{
-    app::{DeleteCloneCellPayload, InstallAppPayload, InstalledAppId},
+    app::{
+        DeleteCloneCellPayload, InstallAppPayload, InstalledAppId, RoleSettings, RoleSettingsMap,
+    },
     dna::AgentPubKey,
-    prelude::{CellId, SerializedBytes},
+    prelude::{CellId, MembraneProof, SerializedBytes},
     websocket::AllowedOrigins,
 };
 use holochain_websocket::{connect, ConnectRequest, WebsocketConfig, WebsocketSender};
@@ -126,30 +128,52 @@ impl AdminWebsocket {
             agent.admin.key.clone()
         };
 
-        let payload = if let Ok(id) = env::var("DEV_UID_OVERRIDE") {
-            debug!("using network_seed to install: {}", id);
-            InstallAppPayload {
-                agent_key: Some(agent_key),
-                installed_app_id: Some(app.id()),
-                source,
-                membrane_proofs,
-                network_seed: Some(id),
-                ignore_genesis_failure: false,
-                existing_cells,
-                allow_throwaway_random_agent_key: false,
+        // Build roles_settings from membrane_proofs and existing_cells
+        let mut roles_settings = RoleSettingsMap::new();
+
+        // Handle existing cells
+        for (role_name, cell_id) in existing_cells {
+            roles_settings.insert(role_name, RoleSettings::UseExisting { cell_id });
+        }
+
+        // Handle membrane proofs for roles that don't have existing cells
+        if let Some(proofs) = membrane_proofs {
+            for (role_name, proof_bytes) in proofs {
+                if !roles_settings.contains_key(&role_name) {
+                    // Convert SerializedBytes to MembraneProof
+                    let membrane_proof =
+                        Some(MembraneProof::try_from(proof_bytes.as_ref().clone())?);
+                    roles_settings.insert(
+                        role_name,
+                        RoleSettings::Provisioned {
+                            membrane_proof,
+                            modifiers: None,
+                        },
+                    );
+                }
             }
+        }
+
+        let roles_settings = if roles_settings.is_empty() {
+            None
         } else {
-            debug!("using default network_seed to install");
-            InstallAppPayload {
-                agent_key: Some(agent_key),
-                installed_app_id: Some(app.id()),
-                source,
-                membrane_proofs,
-                network_seed: None,
-                ignore_genesis_failure: false,
-                existing_cells,
-                allow_throwaway_random_agent_key: false,
-            }
+            Some(roles_settings)
+        };
+
+        let payload = InstallAppPayload {
+            source,
+            agent_key: Some(agent_key),
+            installed_app_id: Some(app.id()),
+            network_seed: if let Ok(id) = env::var("DEV_UID_OVERRIDE") {
+                debug!("using network_seed to install: {}", id);
+                Some(id)
+            } else {
+                debug!("using default network_seed to install");
+                None
+            },
+            roles_settings,
+            ignore_genesis_failure: false,
+            allow_throwaway_random_agent_key: false,
         };
 
         if let Err(e) = self.install_app(payload).await {

@@ -3,17 +3,17 @@
     [
       {
         'app_id': 'core-app',
-        'bundle_url': 'https://holo-host.github.io/holo-hosting-app-rsm/releases/downloads/core-app/0_6_2/core-app.0_6_2-skip-proof.happ',
+        'bundle_url': 'https://holo-host.github.io/holo-hosting-app-rsm/releases/downloads/core-app/0_7_2/core-app.0_7_2-skip-proof.happ',
       },
       {
         'app_id': 'servicelogger',
-        'bundle_url': 'https://holo-host.github.io/servicelogger-rsm/releases/downloads/0_5_4/servicelogger.0_5_4.happ',
+        'bundle_url': 'https://holo-host.github.io/servicelogger-rsm/releases/downloads/0_6_1/servicelogger.0_6_1.happ',
       },
     ],
   'self_hosted_happs':
     [
       {
-        'bundle_url': 'https://github.com/Holo-Host/dummy-dna/releases/download/0.6.9/test-skip-proof.happ',
+        'bundle_url': 'https://github.com/Holo-Host/dummy-dna/releases/download/0.8.0/test-skip-proof.happ',
         'ui_url': 'https://github.com/holochain/elemental-chat-ui/releases/download/v0.0.1-alpha40/elemental-chat-ui.zip',
         "agent_bundle_override" : "../holochain_env_setup/config/hp-primary-bzywj.json",
       },

@@ -5,12 +5,12 @@ use crate::{
 use anyhow::{anyhow, Context, Result};
 use core::fmt::Debug;
 use holochain_conductor_api::{
-    AppAuthenticationRequest, AppInfo, AppRequest, AppResponse, CellInfo, ZomeCall,
+    AppAuthenticationRequest, AppInfo, AppRequest, AppResponse, CellInfo, ZomeCallParamsSigned,
 };
 use holochain_keystore::MetaLairClient;
 use holochain_types::{
     app::{CreateCloneCellPayload, DisableCloneCellPayload, EnableCloneCellPayload},
-    prelude::{CellId, ClonedCell, ExternIO, FunctionName, RoleName, ZomeCallUnsigned, ZomeName},
+    prelude::{CellId, ClonedCell, ExternIO, FunctionName, RoleName, ZomeCallParams, ZomeName},
 };
 use holochain_websocket::{connect, ConnectRequest, WebsocketConfig, WebsocketSender};
 use serde::{de::DeserializeOwned, Serialize};
@@ -130,7 +130,7 @@ impl AppConnection {
             return Ok(c);
         }
 
-        self.cell_info = Some(self.app_info().await?.cell_info);
+        self.cell_info = Some(self.app_info().await?.cell_info.into_iter().collect());
         Ok(self.cell_info.clone().unwrap())
     }
 
@@ -216,10 +216,10 @@ impl AppConnection {
         }
     }
 
-    /// Raw zome call function taking holochain_conductor_api::app_interface::ZomeCall as an argument
+    /// Raw zome call function taking holochain_conductor_api::app_interface::ZomeCallParamsSigned as an argument
     /// and returning AppResponse without checking an outcomeor deserializing
     #[instrument(skip(self))]
-    pub async fn zome_call(&mut self, msg: ZomeCall) -> Result<AppResponse> {
+    pub async fn zome_call(&mut self, msg: ZomeCallParamsSigned) -> Result<AppResponse> {
         let app_request = AppRequest::CallZome(Box::new(msg));
         self.send(app_request).await
     }
@@ -255,18 +255,18 @@ impl AppConnection {
     ) -> Result<ExternIO> {
         let (nonce, expires_at) = fresh_nonce()?;
 
-        let zome_call_unsigned = ZomeCallUnsigned {
+        let zome_call_params = ZomeCallParams {
+            provenance: cell_id.agent_pubkey().clone(),
             cell_id: cell_id.clone(),
             zome_name,
             fn_name,
-            payload: ExternIO::encode(payload)?,
             cap_secret: None,
-            provenance: cell_id.agent_pubkey().clone(),
+            payload: ExternIO::encode(payload)?,
             nonce,
             expires_at,
         };
         let signed_zome_call =
-            ZomeCall::try_from_unsigned_zome_call(&self.keystore, zome_call_unsigned).await?;
+            ZomeCallParamsSigned::try_from_params(&self.keystore, zome_call_params).await?;
 
         match self.zome_call(signed_zome_call).await {
             Ok(AppResponse::ZomeCalled(r)) => Ok(*r),

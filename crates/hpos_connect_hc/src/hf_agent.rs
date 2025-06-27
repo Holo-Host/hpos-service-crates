@@ -5,7 +5,7 @@ use anyhow::{anyhow, Context, Result};
 use holochain_keystore::AgentPubKeyExt;
 use holochain_types::dna::AgentPubKey;
 use holochain_types::prelude::Signature;
-use std::sync::Arc;
+use std::sync::{Arc, Mutex};
 
 /// Struct giving access to local instance of HHA on HPOS
 /// `config` of type `holo_config::Config` represents CLI params and can be passed
@@ -26,7 +26,11 @@ impl HfAgent {
             .ok_or(anyhow!("There's no holofuel app defined in a happs file"))?;
 
         // connect to lair
-        let passphrase = sodoken::BufRead::from(default_password()?.as_bytes().to_vec());
+        let passphrase = Arc::new(Mutex::new(
+            lair_keystore_api::dependencies::sodoken::LockedArray::from(
+                default_password()?.as_bytes().to_vec(),
+            ),
+        ));
 
         let keystore = holochain_keystore::lair_keystore::spawn_lair_keystore(
             url2::url2!("{}", get_lair_url(config)?),

@@ -116,7 +116,7 @@ async fn get_agent_key(
     {
         // Try agent key from disc
         if let Ok(key_vec) = fs::read(&pubkey_path) {
-            if let Ok(key) = AgentPubKey::from_raw_39(key_vec) {
+            if let Ok(key) = AgentPubKey::try_from_raw_39(key_vec) {
                 info!("returning random agent key from file");
                 return Ok(key);
             }

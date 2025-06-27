@@ -2,6 +2,7 @@ use holochain_keystore::MetaLairClient;
 use lair_keystore_api::prelude::{
     LairServerConfigInner as LairConfig, LairServerSignatureFallback,
 };
+use lair_keystore_api::types::SharedLockedArray;
 use snafu::{ResultExt, Snafu};
 use std::{
     fs::File,
@@ -9,6 +10,7 @@ use std::{
     path::{Path, PathBuf},
     process::{self, Command},
     str,
+    sync::{Arc, Mutex},
 };
 use taskgroup_manager::kill_on_drop::{kill_on_drop, KillChildOnDrop};
 
@@ -68,7 +70,9 @@ pub async fn spawn(
 
     let env_pw = std::env::var("HOLOCHAIN_DEFAULT_PASSWORD")
         .expect("HOLOCHAIN_DEFAULT_PASSWORD must be set");
-    let passphrase: sodoken::BufRead = sodoken::BufRead::from(env_pw.to_string().as_bytes());
+    let passphrase: SharedLockedArray = Arc::new(Mutex::new(
+        lair_keystore_api::dependencies::sodoken::LockedArray::from(env_pw.as_bytes().to_vec()),
+    ));
 
     let keystore = match holochain_keystore::lair_keystore::spawn_lair_keystore(
         connection_url.into(),
