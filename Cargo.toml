@@ -19,7 +19,7 @@ ed25519-dalek = "2.1.1"
 holochain_keystore = "0.5.2"
 holochain_types = { version = "0.5.2" }
 holochain_conductor_api = "0.5.2"
-lair_keystore_api = "0.6.1"
+lair_keystore_api = "0.6.2"
 holochain_websocket = "0.5.2"
 holofuel_types = { git = "https://github.com/holo-host/holofuel", rev = "ca256cbb6cacf40c841e8017610628663ab321c5" }
 sodoken = "0.0.11"
