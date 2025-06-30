@@ -82,7 +82,7 @@ pub async fn download_file(url: &Url) -> Result<PathBuf> {
         let basename = url_path
             .file_name()
             .context("failed to get basename from url")?;
-        let path = dir.keep().join(basename);
+        let path = dir.into_path().join(basename);
         let mut file = fs::File::create(&path).context("failed to create target file")?;
         response
             .copy_to(&mut file)
