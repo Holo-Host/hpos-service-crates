@@ -65,11 +65,11 @@ pub fn spawn_holochain(
 }
 
 pub fn create_tmp_dir() -> PathBuf {
-    TempDir::new().unwrap().keep()
+    TempDir::new().unwrap().into_path()
 }
 
 pub fn create_log_dir() -> PathBuf {
-    TempDir::new().unwrap().keep()
+    TempDir::new().unwrap().into_path()
 }
 
 #[derive(Debug, Snafu)]
