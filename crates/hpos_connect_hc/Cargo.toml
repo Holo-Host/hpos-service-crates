@@ -36,3 +36,4 @@ holofuel_types = { workspace = true }
 chrono = "0.4.19"
 const_env = "0.1"
 log = "0.4.17"
+holochain_serialized_bytes = { workspace = true }

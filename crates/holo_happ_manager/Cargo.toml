@@ -22,6 +22,7 @@ tokio = "1.28.2"
 url2 = "0.0.6"
 hpos-config-core = { workspace = true }
 holofuel_types = { workspace = true }
+holochain_serialized_bytes = { workspace = true }
 
 [dev-dependencies]
 configure-holochain = { path = "../configure-holochain"}

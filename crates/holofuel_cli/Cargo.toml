@@ -12,3 +12,4 @@ serde = { workspace = true }
 structopt = "0.3.0"
 tokio = { version = "1.11", features = [ "full" ] }
 rmp-serde = { workspace = true }
+holochain_serialized_bytes = { workspace = true }

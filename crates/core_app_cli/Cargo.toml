@@ -13,3 +13,4 @@ structopt = "0.3.0"
 rmp-serde = { workspace = true }
 tokio = { version = "1.11", features = [ "full" ] }
 holofuel_types = { workspace = true }
+holochain_serialized_bytes = { workspace = true }

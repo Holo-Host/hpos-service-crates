@@ -1,10 +1,10 @@
 {
-  "holochain_rev": "holochain-0.5.2",
-  "holochain_types": "0.5.2",
-  "holofuel_types": { "git": "https://github.com/holo-host/holofuel", "rev": "976e27827d653570669f5a1801d64b09ba5647ed" },
-  "holochain_keystore": "0.5.2",
-  "holochain_conductor_api": "0.5.2",
-  "holochain_websocket": "0.5.2",
-  "lair_keystore_api": "0.6.1",
-  "mr_bundle": "0.5.2"
+  "holochain_rev": "holochain-0.5.3",
+  "holochain_types": "0.5.3",
+  "holofuel_types": "0.5.14",
+  "holochain_keystore": "0.5.3",
+  "holochain_conductor_api": "0.5.3",
+  "holochain_websocket": "0.5.3",
+  "lair_keystore_api": "0.6.2",
+  "mr_bundle": "0.5.3"
 }

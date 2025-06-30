@@ -22,3 +22,4 @@ sodoken = { workspace = true }
 reqwest = { workspace = true }
 tracing = { version = "0.1", features = ["attributes"] }
 taskgroup_manager = { path = "../taskgroup_manager" }
+holochain_serialized_bytes = { workspace = true }
