@@ -21,7 +21,7 @@ holochain_types = { version = "0.5.3" }
 holochain_conductor_api = "0.5.3"
 lair_keystore_api = "0.6.2"
 holochain_websocket = "0.5.3"
-holofuel_types = { git = "https://github.com/holo-host/holofuel", rev = "b8832eaadfd858440fa780d212882cc68913381f" }
+holofuel_types = { git = "https://github.com/holo-host/holofuel", rev = "ef7a5116f0774aa08579182ca1de758d5f38a0e2" }
 sodoken = "0.1.0"
 serde = { version = "1", features = ["derive", "rc"] } 
 rmp-serde = "1.1.1"

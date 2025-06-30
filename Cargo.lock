@@ -1959,7 +1959,7 @@ dependencies = [
 [[package]]
 name = "holofuel_types"
 version = "0.6.0"
-source = "git+https://github.com/holo-host/holofuel?rev=b8832eaadfd858440fa780d212882cc68913381f#b8832eaadfd858440fa780d212882cc68913381f"
+source = "git+https://github.com/holo-host/holofuel?rev=ef7a5116f0774aa08579182ca1de758d5f38a0e2#ef7a5116f0774aa08579182ca1de758d5f38a0e2"
 dependencies = [
  "hdi",
  "lazy_static",
