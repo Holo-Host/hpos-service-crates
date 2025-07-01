@@ -3,7 +3,7 @@
     [
       {
         'app_id': 'core-app',
-        'bundle_url': 'https://holo-host.github.io/holo-hosting-app-rsm/releases/downloads/core-app/0_6_1/core-app.0_6_1-skip-proof.happ',
+        'bundle_url': 'https://holo-host.github.io/holo-hosting-app-rsm/releases/downloads/core-app/0_7_4/core-app.0_7_4-skip-proof.happ',
       }
     ],
   'self_hosted_happs': [],
